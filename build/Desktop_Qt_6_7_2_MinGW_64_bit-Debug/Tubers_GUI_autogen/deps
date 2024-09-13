@@ -605,6 +605,7 @@ Tubers_GUI_autogen/timestamp: \
 	D:/Qt/6.7.2/mingw_64/include/QtOpenGLWidgets/qtopenglwidgetsversion.h \
 	D:/Qt/6.7.2/mingw_64/include/QtWidgets/QCommonStyle \
 	D:/Qt/6.7.2/mingw_64/include/QtWidgets/QDialog \
+	D:/Qt/6.7.2/mingw_64/include/QtWidgets/QFileDialog \
 	D:/Qt/6.7.2/mingw_64/include/QtWidgets/QGraphicsItemGroup \
 	D:/Qt/6.7.2/mingw_64/include/QtWidgets/QGraphicsPathItem \
 	D:/Qt/6.7.2/mingw_64/include/QtWidgets/QGraphicsView \
@@ -614,6 +615,7 @@ Tubers_GUI_autogen/timestamp: \
 	D:/Qt/6.7.2/mingw_64/include/QtWidgets/QMainWindow \
 	D:/Qt/6.7.2/mingw_64/include/QtWidgets/QMessageBox \
 	D:/Qt/6.7.2/mingw_64/include/QtWidgets/QScrollerProperties \
+	D:/Qt/6.7.2/mingw_64/include/QtWidgets/QStyleFactory \
 	D:/Qt/6.7.2/mingw_64/include/QtWidgets/QWidget \
 	D:/Qt/6.7.2/mingw_64/include/QtWidgets/QtWidgets \
 	D:/Qt/6.7.2/mingw_64/include/QtWidgets/QtWidgetsDepends \

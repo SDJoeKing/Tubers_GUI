@@ -3,20 +3,21 @@
 
 #include <QMainWindow>
 #include <QMainWindow>
-#include "mtcpclient.h"
+#include <QStyleFactory>
 #include <QMessageBox>
 #include <QTimer>
 #include <QtCharts>
 #include <QValueAxis>
 #include <QLineSeries>
 #include <QInputDialog>
-#include "tgate.h"
 #include <QEvent>
 #include <QWheelEvent>
+
 #include "filt.h"
 #include "tsettings.h"
 #include "tlogging.h"
-
+#include "tgate.h"
+#include "mtcpclient.h"
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class MainWindow;
@@ -38,13 +39,16 @@ private slots:
     void on_actionTools_triggered(bool checked);
     void on_actionSettings_triggered(bool checked);
     void doSettingsConfirmed(QString );
+    void on_actionLogging_triggered(bool checked);
+
 private:
     Ui::MainWindow *ui;
     mTcpClient *m_client;
     QTimer *m_timer;
     TSettings *m_settings;
     QChartView *_temp;
-    TLogging *m_logging;
+    Tlogging *m_logging;
+    QLabel *m_status;
 // private functions
 private:
     void resetUI();

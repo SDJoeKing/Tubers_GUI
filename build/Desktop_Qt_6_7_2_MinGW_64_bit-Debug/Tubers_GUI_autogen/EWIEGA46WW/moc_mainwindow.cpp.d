@@ -3,6 +3,7 @@ D:/GUI/Tubers_GUI/build/Desktop_Qt_6_7_2_MinGW_64_bit-Debug/Tubers_GUI_autogen/E
   D:/GUI/Tubers_GUI/filt.h \
   D:/GUI/Tubers_GUI/mtcpclient.h \
   D:/GUI/Tubers_GUI/tgate.h \
+  D:/GUI/Tubers_GUI/tlogging.h \
   D:/GUI/Tubers_GUI/tsettings.h \
   D:/Qt/6.7.2/mingw_64/include/QtCharts/QAbstractAxis \
   D:/Qt/6.7.2/mingw_64/include/QtCharts/QAbstractBarSeries \
@@ -591,6 +592,7 @@ D:/GUI/Tubers_GUI/build/Desktop_Qt_6_7_2_MinGW_64_bit-Debug/Tubers_GUI_autogen/E
   D:/Qt/6.7.2/mingw_64/include/QtOpenGLWidgets/qtopenglwidgetsversion.h \
   D:/Qt/6.7.2/mingw_64/include/QtWidgets/QCommonStyle \
   D:/Qt/6.7.2/mingw_64/include/QtWidgets/QDialog \
+  D:/Qt/6.7.2/mingw_64/include/QtWidgets/QFileDialog \
   D:/Qt/6.7.2/mingw_64/include/QtWidgets/QGraphicsItemGroup \
   D:/Qt/6.7.2/mingw_64/include/QtWidgets/QGraphicsPathItem \
   D:/Qt/6.7.2/mingw_64/include/QtWidgets/QGraphicsView \
@@ -600,6 +602,7 @@ D:/GUI/Tubers_GUI/build/Desktop_Qt_6_7_2_MinGW_64_bit-Debug/Tubers_GUI_autogen/E
   D:/Qt/6.7.2/mingw_64/include/QtWidgets/QMainWindow \
   D:/Qt/6.7.2/mingw_64/include/QtWidgets/QMessageBox \
   D:/Qt/6.7.2/mingw_64/include/QtWidgets/QScrollerProperties \
+  D:/Qt/6.7.2/mingw_64/include/QtWidgets/QStyleFactory \
   D:/Qt/6.7.2/mingw_64/include/QtWidgets/QWidget \
   D:/Qt/6.7.2/mingw_64/include/QtWidgets/QtWidgets \
   D:/Qt/6.7.2/mingw_64/include/QtWidgets/QtWidgetsDepends \

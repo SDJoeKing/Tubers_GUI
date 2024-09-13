@@ -5,8 +5,19 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
+    // style
+    setStyle(QStyleFactory::create("Windows"));
+    qDebug() << QStyleFactory::keys();
     ui->setupUi(this);
     setWindowState(Qt::WindowMaximized);
+
+    // status bar
+    m_status= new QLabel(QString::asprintf("Ultrasound Velocity: %.2f m/s", 0.0), this);
+    ui->statusBar->addPermanentWidget(m_status);
+
+    // TCP Client
+    m_client = new mTcpClient(this);
+
     // action status
     ui->actionConnection_Status->setChecked(true);
     ui->actionSettings->setChecked(true);
@@ -31,15 +42,15 @@ MainWindow::MainWindow(QWidget *parent)
     m_settings = new TSettings();
     settingDock->setWidget(m_settings);
     graphFrame->addDockWidget(Qt::LeftDockWidgetArea, settingDock);
-    m_settings->setVisible(true);
+    // m_settings->setVisible(true);
 
     // logging dock
     QDockWidget *loggingDock = new QDockWidget(graphFrame,Qt::CustomizeWindowHint);
     loggingDock->setFeatures(QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable);
-    m_logging = new Tlogging();
-    settingDock->setWidget(m_logging);
-    graphFrame->addDockWidget(Qt::RightDockWidgetArea, settingDock);
-    m_logging->setVisible(false);
+    m_logging = new Tlogging(m_client);
+    loggingDock->setWidget(m_logging);
+    graphFrame->addDockWidget(Qt::RightDockWidgetArea, loggingDock);
+    loggingDock->setVisible(false);
 
     // connect
     connect(m_settings, &TSettings::settingReady, this, &MainWindow::doSettingsConfirmed);
@@ -95,7 +106,6 @@ void MainWindow::on_actionSettings_triggered(bool checked)
 {
     auto dock = static_cast<QDockWidget *>(m_settings->parent());
     dock->setVisible(checked);
-    m_settings->setVisible(checked);
 }
 
 void MainWindow::doSettingsConfirmed(QString str)
@@ -103,5 +113,11 @@ void MainWindow::doSettingsConfirmed(QString str)
     ui->actionSettings->trigger();
     //TBC sending to client
     qDebug() << str;
+}
+
+void MainWindow::on_actionLogging_triggered(bool checked)
+{
+    auto dock = static_cast<QDockWidget *>(m_logging->parent());
+    dock->setVisible(checked);
 }
 

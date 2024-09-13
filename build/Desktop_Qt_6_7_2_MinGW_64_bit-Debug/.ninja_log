@@ -1,0 +1,22 @@
+# ninja log v6
+1580	5808	7478599066989857	CMakeFiles/Tubers_GUI.dir/main.cpp.obj	76eed47d9f952225
+12	317	7478599554302341	Tubers_GUI_autogen/timestamp	64013e0d5afd1b1f
+12	317	7478599554302341	Tubers_GUI_autogen/mocs_compilation.cpp	64013e0d5afd1b1f
+12	317	7478599554302341	D:/GUI/Tubers_GUI/build/Desktop_Qt_6_7_2_MinGW_64_bit-Debug/Tubers_GUI_autogen/timestamp	64013e0d5afd1b1f
+12	317	7478599554302341	D:/GUI/Tubers_GUI/build/Desktop_Qt_6_7_2_MinGW_64_bit-Debug/Tubers_GUI_autogen/mocs_compilation.cpp	64013e0d5afd1b1f
+1675	1967	7478417092540157	CMakeFiles/Tubers_GUI.dir/filt.cpp.obj	f2def4902d33c840
+335	2101	7478599557525413	CMakeFiles/Tubers_GUI.dir/tsettings.cpp.obj	10d43189d8827cfa
+1692	4860	7478417092733882	CMakeFiles/Tubers_GUI.dir/mtcpclient.cpp.obj	267d3588598762e8
+1710	3288	7478417092948602	CMakeFiles/Tubers_GUI.dir/tgate.cpp.obj	66b8701d2a59f0c1
+317	4937	7478599557351935	CMakeFiles/Tubers_GUI.dir/mainwindow.cpp.obj	b8040be8dcc65f2c
+4937	5288	7478599603553465	Tubers_GUI.exe	88e6411e1d2641f0
+1564	5846	7478599066828906	CMakeFiles/Tubers_GUI.dir/Tubers_GUI_autogen/mocs_compilation.cpp.obj	1c2e7dd5b1123cf4
+8	600	7478604567462635	Tubers_GUI_autogen/timestamp	64013e0d5afd1b1f
+8	600	7478604567462635	Tubers_GUI_autogen/mocs_compilation.cpp	64013e0d5afd1b1f
+8	600	7478604567462635	D:/GUI/Tubers_GUI/build/Desktop_Qt_6_7_2_MinGW_64_bit-Debug/Tubers_GUI_autogen/timestamp	64013e0d5afd1b1f
+8	600	7478604567462635	D:/GUI/Tubers_GUI/build/Desktop_Qt_6_7_2_MinGW_64_bit-Debug/Tubers_GUI_autogen/mocs_compilation.cpp	64013e0d5afd1b1f
+647	2359	7478604568831191	CMakeFiles/Tubers_GUI.dir/tlogging.cpp.obj	bc6773ecbd851a04
+629	2483	7478604568657215	CMakeFiles/Tubers_GUI.dir/tsettings.cpp.obj	10d43189d8827cfa
+616	5029	7478604568520193	CMakeFiles/Tubers_GUI.dir/mainwindow.cpp.obj	b8040be8dcc65f2c
+601	5092	7478604568377107	CMakeFiles/Tubers_GUI.dir/Tubers_GUI_autogen/mocs_compilation.cpp.obj	1c2e7dd5b1123cf4
+5092	5456	7478604613284173	Tubers_GUI.exe	4c044975acd9b058

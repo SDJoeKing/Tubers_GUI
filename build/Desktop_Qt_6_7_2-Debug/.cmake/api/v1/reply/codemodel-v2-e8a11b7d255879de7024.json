@@ -1,0 +1,79 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-Debug-a035e2a6023d9ba44ff2.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.16"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "Tubers_GUI",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "Tubers_GUI::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-Tubers_GUI-Debug-e3b8b1f63c3d3548886c.json",
+					"name" : "Tubers_GUI",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "Tubers_GUI_autogen::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-Tubers_GUI_autogen-Debug-690a2a08b4f9dfcdf32c.json",
+					"name" : "Tubers_GUI_autogen",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "Tubers_GUI_autogen_timestamp_deps::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-Tubers_GUI_autogen_timestamp_deps-Debug-27a21759fb61dde3d352.json",
+					"name" : "Tubers_GUI_autogen_timestamp_deps",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home/jialin/Tubers_GUI/build/Desktop_Qt_6_7_2-Debug",
+		"source" : "/home/jialin/Tubers_GUI"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 7
+	}
+}

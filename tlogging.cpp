@@ -70,11 +70,6 @@ void Tlogging::reset()
 
 void Tlogging::on_btnSingle_clicked()
 {
-    doWriteData();
-}
-
-void Tlogging::doWriteData()
-{
     // open device
     if(!m_file.open(QIODevice::Append))
     {
@@ -82,8 +77,17 @@ void Tlogging::doWriteData()
         return;
     }
 
-    m_file.write(m_client->data());
+    doWriteData();
     m_file.close();
+}
+
+void Tlogging::doWriteData()
+{
+    if(m_file.isOpen())
+    {
+        m_file.write(m_client->data());
+        QMessageBox::information(this, "Error", "File not open, cannot write data");
+    }
 }
 
 void Tlogging::on_btnContinuous_clicked(bool checked)

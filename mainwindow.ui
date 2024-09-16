@@ -188,16 +188,23 @@
              </widget>
             </item>
             <item>
-             <widget class="QCheckBox" name="checkDepthAxis">
+             <widget class="QCheckBox" name="ckDepthAxis">
               <property name="text">
                <string>Depth as X-axis</string>
               </property>
              </widget>
             </item>
             <item>
-             <widget class="QCheckBox" name="checkGates">
+             <widget class="QCheckBox" name="ckGates">
               <property name="text">
                <string>Add gates</string>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QCheckBox" name="ckBscan">
+              <property name="text">
+               <string>Add B-scan</string>
               </property>
              </widget>
             </item>
@@ -348,7 +355,7 @@
      <x>0</x>
      <y>0</y>
      <width>1415</width>
-     <height>25</height>
+     <height>26</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuViews">

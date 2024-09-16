@@ -6,12 +6,14 @@
 #include <QStyleFactory>
 #include <QMessageBox>
 #include <QTimer>
+#include <QSplitter>
 #include <QtCharts>
 #include <QValueAxis>
 #include <QLineSeries>
 #include <QInputDialog>
 #include <QEvent>
 #include <QWheelEvent>
+#include <QVBoxLayout>
 
 #include "filt.h"
 #include "tsettings.h"
@@ -49,6 +51,7 @@ private:
     QChartView *_temp;
     Tlogging *m_logging;
     QLabel *m_status;
+
 // private functions
 private:
     void resetUI();

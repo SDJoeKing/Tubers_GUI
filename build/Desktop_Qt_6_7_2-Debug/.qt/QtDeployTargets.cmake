@@ -1,0 +1,2 @@
+set(__QT_DEPLOY_TARGET_Tubers_GUI_FILE /home/jialin/Tubers_GUI/build/Desktop_Qt_6_7_2-Debug/Tubers_GUI)
+set(__QT_DEPLOY_TARGET_Tubers_GUI_TYPE EXECUTABLE)

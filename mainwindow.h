@@ -43,12 +43,15 @@ private slots:
     void doSettingsConfirmed(QString );
     void on_actionLogging_triggered(bool checked);
 
+    void on_ckBscan_clicked(bool checked);
+
 private:
     Ui::MainWindow *ui;
     mTcpClient *m_client;
     QTimer *m_timer;
     TSettings *m_settings;
     QChartView *_temp;
+    QChartView *_temp2;
     Tlogging *m_logging;
     QLabel *m_status;
 

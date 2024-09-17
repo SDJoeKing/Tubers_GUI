@@ -1,9 +1,0 @@
-/home/jialin/Tubers_GUI/build/Desktop_Qt_6_7_2-Debug/CMakeFiles/Tubers_GUI.dir
-/home/jialin/Tubers_GUI/build/Desktop_Qt_6_7_2-Debug/CMakeFiles/edit_cache.dir
-/home/jialin/Tubers_GUI/build/Desktop_Qt_6_7_2-Debug/CMakeFiles/rebuild_cache.dir
-/home/jialin/Tubers_GUI/build/Desktop_Qt_6_7_2-Debug/CMakeFiles/list_install_components.dir
-/home/jialin/Tubers_GUI/build/Desktop_Qt_6_7_2-Debug/CMakeFiles/install.dir
-/home/jialin/Tubers_GUI/build/Desktop_Qt_6_7_2-Debug/CMakeFiles/install/local.dir
-/home/jialin/Tubers_GUI/build/Desktop_Qt_6_7_2-Debug/CMakeFiles/install/strip.dir
-/home/jialin/Tubers_GUI/build/Desktop_Qt_6_7_2-Debug/CMakeFiles/Tubers_GUI_autogen_timestamp_deps.dir
-/home/jialin/Tubers_GUI/build/Desktop_Qt_6_7_2-Debug/CMakeFiles/Tubers_GUI_autogen.dir

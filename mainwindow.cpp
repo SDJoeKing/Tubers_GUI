@@ -7,10 +7,11 @@ MainWindow::MainWindow(QWidget *parent)
 {
     // style
     setStyle(QStyleFactory::create("Windows"));
-    qDebug() << QStyleFactory::keys();
+
     ui->setupUi(this);
     setWindowState(Qt::WindowMaximized);
     ui->log->setEnabled(false);
+
 
     // status bar
     m_status= new QLabel(QString::asprintf("Ultrasound Velocity: %.2f m/s", 0.0), this);
@@ -19,11 +20,6 @@ MainWindow::MainWindow(QWidget *parent)
     // TCP Client
     m_client = new mTcpClient(this);
 
-    // action status
-    ui->actionConnection_Status->setChecked(true);
-    ui->actionSettings->setChecked(true);
-    ui->actionTools->setChecked(true);
-    ui->actionLogging->setChecked(false);
 
     // Graph page & Dock widget
     QMainWindow *graphFrame = new QMainWindow();
@@ -32,16 +28,14 @@ MainWindow::MainWindow(QWidget *parent)
     graphFrame->setWindowState(Qt::WindowMaximized);
     graphFrame->show();
 
-
+    // A/B scan screen splitter - verticle
     QSplitter *_splitter = new QSplitter(Qt::Orientation::Vertical, graphFrame);
     graphFrame->setCentralWidget(_splitter);
     ui->mdiArea->setViewMode(QMdiArea::SubWindowView);
 
-
-
     // A/B-scan dock
     _temp = new QChartView(_splitter);
-    auto _temp2 = new QChartView(_splitter);
+    _temp2 = new QChartView(_splitter);
     _splitter->addWidget(_temp);
     _splitter->addWidget(_temp2);
 
@@ -52,7 +46,7 @@ MainWindow::MainWindow(QWidget *parent)
     m_settings = new TSettings();
     settingDock->setWidget(m_settings);
     graphFrame->addDockWidget(Qt::LeftDockWidgetArea, settingDock);
-    // settingDock->setVisible(false);
+
 
     // logging dock
     QDockWidget *loggingDock = new QDockWidget(graphFrame,Qt::CustomizeWindowHint);
@@ -61,8 +55,6 @@ MainWindow::MainWindow(QWidget *parent)
     loggingDock->setWidget(m_logging);
     graphFrame->addDockWidget(Qt::LeftDockWidgetArea, loggingDock);
     loggingDock->setVisible(false);
-
-
 
 
     // connect
@@ -77,6 +69,17 @@ MainWindow::MainWindow(QWidget *parent)
 void MainWindow::resetUI()
 {
 
+    setWindowState(Qt::WindowMaximized);
+    ui->log->setEnabled(false);
+
+    // action status
+    ui->actionConnection_Status->setChecked(true);
+    ui->actionSettings->setChecked(true);
+    ui->actionTools->setChecked(true);
+    ui->actionLogging->setChecked(false);
+
+    // UI elements
+    _temp2->setVisible(false);
     ui->log->clear();
 
 }
@@ -116,7 +119,6 @@ void MainWindow::on_actionTools_triggered(bool checked)
 
 
 
-
 void MainWindow::on_actionSettings_triggered(bool checked)
 {
     auto dock = static_cast<QDockWidget *>(m_settings->parent());
@@ -135,5 +137,11 @@ void MainWindow::on_actionLogging_triggered(bool checked)
 {
     auto dock = static_cast<QDockWidget *>(m_logging->parent());
     dock->setVisible(checked);
+}
+
+
+void MainWindow::on_ckBscan_clicked(bool checked)
+{
+    _temp2->setVisible(checked);
 }
 

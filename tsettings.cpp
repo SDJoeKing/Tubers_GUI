@@ -15,6 +15,11 @@ TSettings::~TSettings()
     delete ui;
 }
 
+void TSettings::updateHz(QString arg)
+{
+    ui->labelHz->setText(arg);
+}
+
 void TSettings::on_btnConfirm_clicked()
 {
     QString setting;
@@ -24,8 +29,8 @@ void TSettings::on_btnConfirm_clicked()
     setting+= QString::number(ui->spinPower->value()) + ";";
     setting+= QString::number(ui->spinGain->value()) + ";";
     setting+= QString::number(ui->spinAvg->value())+ ";";
-    setting+= QString::number(ui->spinRefresh->value());
-
-    emit settingReady(setting);
+    setting+= QString::number(ui->spinRefresh->value()) +";";
+    setting+= QString::number(ui->spinVel->value());
+    emit settingConfirm(setting);
 }
 

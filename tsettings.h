@@ -14,12 +14,12 @@ class TSettings : public QDialog
 public:
     explicit TSettings(QWidget *parent = nullptr);
     ~TSettings();
-
+    void updateHz(QString);
 private slots:
     void on_btnConfirm_clicked();
 
 signals:
-    void settingReady(QString settings);
+    void settingConfirm(QString settings);
 
 private:
     Ui::TSettings *ui;

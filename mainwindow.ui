@@ -57,6 +57,9 @@
          <property name="text">
           <string>Connect</string>
          </property>
+         <property name="checkable">
+          <bool>true</bool>
+         </property>
         </widget>
        </item>
        <item row="1" column="0">
@@ -152,9 +155,12 @@
         </property>
         <layout class="QHBoxLayout" name="horizontalLayout_4">
          <item>
-          <widget class="QPushButton" name="pushButton">
+          <widget class="QPushButton" name="btnRun">
            <property name="text">
             <string>Run</string>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
            </property>
           </widget>
          </item>
@@ -240,6 +246,12 @@
              <property name="buttonSymbols">
               <enum>QAbstractSpinBox::NoButtons</enum>
              </property>
+             <property name="minimum">
+              <number>-1</number>
+             </property>
+             <property name="value">
+              <number>-1</number>
+             </property>
             </widget>
            </item>
           </layout>
@@ -252,7 +264,7 @@
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="pushButton_2">
+          <widget class="QPushButton" name="btnFilter">
            <property name="text">
             <string>Filters</string>
            </property>
@@ -306,7 +318,7 @@
           </layout>
          </item>
          <item>
-          <widget class="QPushButton" name="pushButton_3">
+          <widget class="QPushButton" name="btnCal">
            <property name="text">
             <string>Calibrate</string>
            </property>
@@ -355,7 +367,7 @@
      <x>0</x>
      <y>0</y>
      <width>1415</width>
-     <height>26</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuViews">

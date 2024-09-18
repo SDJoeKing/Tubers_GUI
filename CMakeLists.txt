@@ -25,6 +25,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         ${PROJECT_SOURCES}
         filt.cpp filt.h mtcpclient.cpp mtcpclient.h tgate.cpp tgate.h tsettings.cpp tsettings.h tsettings.ui
         tlogging.h tlogging.cpp tlogging.ui
+        tchartview.h tchartview.cpp
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET Tubers_GUI APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR
@@ -42,6 +43,11 @@ else()
             ${PROJECT_SOURCES}
         )
     endif()
+endif()
+
+string(TOLOWER ${CMAKE_BUILD_TYPE} build_type)
+if(build_type STREQUAL release)
+    target_compile_definitions(Tubers_GUI PUBLIC QT_NO_DEBUG_OUTPUT)
 endif()
 
 target_link_libraries(Tubers_GUI PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Charts Qt${QT_VERSION_MAJOR}::Network)

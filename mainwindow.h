@@ -20,6 +20,8 @@
 #include "tlogging.h"
 #include "tgate.h"
 #include "mtcpclient.h"
+#include "tchartview.h"
+
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class MainWindow;
@@ -51,17 +53,17 @@ private slots:
     void runAcquisition();
     void stopAcquisition();
     void doDataReady();
-
     void on_btnRun_clicked(bool checked);
-
     void on_spinEnvLevel_valueChanged(int arg1);
+
+    void on_ckGates_clicked(bool checked);
 
 private:
     Ui::MainWindow *ui;
     mTcpClient *m_client;
     QTimer *m_timer;
     TSettings *m_settings;
-    QChartView *m_Ascan;
+    TChartView *m_Ascan;
     QChartView *m_Bscan;
     Tlogging *m_logging;
     QLabel *m_status;

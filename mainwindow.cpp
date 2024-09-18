@@ -31,7 +31,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->mdiArea->setViewMode(QMdiArea::SubWindowView);
 
     // A/B-scan dock
-    m_Ascan = new QChartView(_splitter);
+    m_Ascan = new TChartView(_splitter);
     m_Bscan = new QChartView(_splitter);
     _splitter->addWidget(m_Ascan);
     _splitter->addWidget(m_Bscan);
@@ -93,7 +93,7 @@ void MainWindow::resetUI()
     ui->actionLogging->setChecked(false);
 
     // tool bar
-    ui->frameTools->setEnabled(false);
+    ui->frameTools->setEnabled(true);
 
     // UI elements
     m_Bscan->setVisible(false);
@@ -290,7 +290,7 @@ void MainWindow::doDataReady()
 
         j += 2;
     }
-
+    m_Ascan->plot(calPoint, ui->ckDepthAxis->isChecked());
     emit dataReceived();
 
     // !## Need to implement interface with A-scan and B-scan class;
@@ -332,5 +332,11 @@ void MainWindow::on_spinEnvLevel_valueChanged(int arg1)
 {
     qfloat16 _release = arg1 * 125 /10.0f;
     set_envelope(0.01f, _release );
+}
+
+
+void MainWindow::on_ckGates_clicked(bool checked)
+{
+    m_Ascan->toogleGates(checked);
 }
 

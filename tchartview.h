@@ -18,7 +18,7 @@ public:
     void plot(QList<QPointF> data, bool axisIsDepth);
 
 public slots:
-    // void toogleGates(bool);
+    void toogleGates(bool);
 
 private:
 
@@ -35,7 +35,7 @@ private:
 
     // QWidget interface
 protected:
-    // virtual void resizeEvent(QResizeEvent *event) override;
+    virtual void resizeEvent(QResizeEvent *event) override;
 };
 
 #endif // TCHARTVIEW_H

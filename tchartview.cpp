@@ -17,8 +17,9 @@ TChartView::TChartView(QWidget *parent) : QChartView{parent}
     this->setContextMenuPolicy(Qt::CustomContextMenu);
 
     // chart scene
-    // auto frameRect = this->rect();
-    // this->setSceneRect(frameRect.x()+10, frameRect.y()+10, frameRect.height()-20, frameRect.width()-20);
+    auto frameRect = this->geometry();
+    this->setSceneRect(frameRect.x()+10, frameRect.y()+10, frameRect.height()-20, frameRect.width()-20);
+    qDebug() << this->geometry();
 
     // label and axis format
     m_series->setName("A-scan");
@@ -41,26 +42,32 @@ TChartView::TChartView(QWidget *parent) : QChartView{parent}
     // add gate to scene
     this->scene()->addItem(m_gate1);
     this->scene()->addItem(m_gate2);
-    m_gate1->moveBy(-10, 0);
-    m_gate2->moveBy(10, 0);
 
 }
 
 void TChartView::plot(QList<QPointF> data, bool axisIsDepth)
 {
+    m_series->replace(data);
 
 }
 
-// void TChartView::toogleGates(bool arg)
-// {
-//     m_gate1->setVisible(arg);
-//     m_gate2->setVisible(arg);
-// }
+void TChartView::toogleGates(bool arg)
+{
+    m_gate1->setVisible(arg);
+    m_gate2->setVisible(arg);
+
+    QRectF sceneRect = this->sceneRect();
+    QPointF gate1ScenePos = m_gate1->scenePos();
+    QPointF gate2ScenePos = m_gate2->scenePos();
+    m_gate1->moveBy(sceneRect.width()/2 - gate1ScenePos.x() - 30, sceneRect.height()/2 - gate1ScenePos.y());
+    m_gate2->moveBy(sceneRect.width()/2- gate2ScenePos.x() + 30, sceneRect.height()/2- gate2ScenePos.y());
+
+}
 
 
-// void TChartView::resizeEvent(QResizeEvent *event)
-// {
-//     auto frameRect = this->rect();
-//     this->setSceneRect(frameRect.x()+10, frameRect.y()+10, frameRect.height()-20, frameRect.width()-20);
-//     QChartView::resizeEvent(event);
-// }
+void TChartView::resizeEvent(QResizeEvent *event)
+{
+    auto frameRect = this->geometry();
+    this->setSceneRect(frameRect.x()+10, frameRect.y()+10, frameRect.height()-20, frameRect.width()-20);
+    QChartView::resizeEvent(event);
+}

@@ -76,3 +76,4 @@ build/
 *-Debug/
 *-Release/
 *.cmake
+*.user

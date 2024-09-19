@@ -45,10 +45,38 @@ TChartView::TChartView(QWidget *parent) : QChartView{parent}
 
 }
 
-void TChartView::plot(QList<QPointF> data, bool axisIsDepth)
+void TChartView::plot(QList<QPointF> data)
 {
     m_series->replace(data);
+}
 
+void TChartView::changeAxisType(TChartView::AXISTYPE type)
+{
+    if(type == AXISTYPE::DEPTH)
+    {
+        m_X->setTitleText("Depth [mm]");
+        m_X->setRange(0, xMax / 2/ 125e6 * m_vel * 1000);
+
+    }else if(type == AXISTYPE::SAMPLE)
+    {
+        m_X->setTitleText("A-scan data points");
+        m_X->setRange(0, xMax);
+
+    }else if(type == AXISTYPE::ABSOLUTEY)
+    {
+        m_Y->setRange(0, yMax);
+    }else
+        m_Y->setRange(yMin, yMax);
+}
+
+void TChartView::setVelocity(qfloat16 vel)
+{
+    m_vel=vel;
+}
+
+void TChartView::clear()
+{
+    m_series->clear();
 }
 
 void TChartView::toogleGates(bool arg)
@@ -61,7 +89,6 @@ void TChartView::toogleGates(bool arg)
     QPointF gate2ScenePos = m_gate2->scenePos();
     m_gate1->moveBy(sceneRect.width()/2 - gate1ScenePos.x() - 30, sceneRect.height()/2 - gate1ScenePos.y());
     m_gate2->moveBy(sceneRect.width()/2- gate2ScenePos.x() + 30, sceneRect.height()/2- gate2ScenePos.y());
-
 }
 
 
@@ -71,3 +98,5 @@ void TChartView::resizeEvent(QResizeEvent *event)
     this->setSceneRect(frameRect.x()+10, frameRect.y()+10, frameRect.height()-20, frameRect.width()-20);
     QChartView::resizeEvent(event);
 }
+
+

@@ -69,6 +69,7 @@ void mTcpClient::updateState(QTcpSocket::SocketState state)
 void mTcpClient::clearData()
 {
     m_data.clear();
+    m_readSize = 0;
 }
 
 void mTcpClient::flush()
@@ -77,6 +78,7 @@ void mTcpClient::flush()
     m_socket->flush();
     if(temp.size()!=0)
         temp=m_socket->readAll();
+    m_readSize = 0;
 }
 
 bool mTcpClient::isOpen()

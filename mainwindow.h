@@ -21,6 +21,7 @@
 #include "tgate.h"
 #include "mtcpclient.h"
 #include "tchartview.h"
+#include "tchartviewform.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -55,15 +56,17 @@ private slots:
     void doDataReady();
     void on_btnRun_clicked(bool checked);
     void on_spinEnvLevel_valueChanged(int arg1);
-
     void on_ckGates_clicked(bool checked);
+    void on_ckDepthAxis_clicked(bool checked);
+
+    void on_ckRectify_clicked(bool checked);
 
 private:
     Ui::MainWindow *ui;
     mTcpClient *m_client;
     QTimer *m_timer;
     TSettings *m_settings;
-    TChartView *m_Ascan;
+    TChartViewForm *m_Ascan;
     QChartView *m_Bscan;
     Tlogging *m_logging;
     QLabel *m_status;
@@ -75,6 +78,8 @@ private:
     // envelope coefficients
     qfloat16 m_ga;
     qfloat16 m_gr;
+    static qfloat16 _env;
+    static void resetEnv();
 // private functions
 private:
     void resetUI();
@@ -84,6 +89,8 @@ private:
     void set_envelope(float, float);
     qfloat16 envelope(qfloat16);
 signals:
+    void velocitySet(qfloat16);
     void dataReceived();
+    void axisTypeChanged(TChartViewForm::AXISTYPE type);
 };
 #endif // MAINWINDOW_H

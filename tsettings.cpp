@@ -29,8 +29,8 @@ void TSettings::on_btnConfirm_clicked()
     setting+= QString::number(ui->spinPower->value()) + ";";
     setting+= QString::number(ui->spinGain->value()) + ";";
     setting+= QString::number(ui->spinAvg->value())+ ";";
-    setting+= QString::number(ui->spinRefresh->value()) +";";
-    setting+= QString::number(ui->spinVel->value());
+    setting+= QString::number(ui->spinVel->value()) + ";";
+    setting+= QString::number(ui->spinRefresh->value());
     emit settingConfirm(setting);
 }
 

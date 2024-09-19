@@ -1,21 +1,30 @@
-#ifndef TCHARTVIEW_H
-#define TCHARTVIEW_H
+#ifndef TCHARTVIEWFORM_H
+#define TCHARTVIEWFORM_H
 
+#include <QWidget>
 #include <QChartView>
 #include <QObject>
 #include <QChart>
 #include <QLineSeries>
 #include <QValueAxis>
 #include <QToolButton>
+#include <QVBoxLayout>
+#include <QLabel>
 
 #include "mtcpclient.h"
 #include "tgate.h"
 
-class TChartView : public QChartView
+namespace Ui {
+class TChartViewForm;
+}
+
+class TChartViewForm : public QWidget
 {
     Q_OBJECT
+
 public:
-    explicit TChartView(QWidget *parent = nullptr);
+    explicit TChartViewForm(QWidget *parent = nullptr);
+    ~TChartViewForm();
     void plot(QList<QPointF> data);
     enum AXISTYPE
     {
@@ -27,13 +36,22 @@ public:
 
 public slots:
     void toogleGates(bool);
-    void changeAxisType(TChartView::AXISTYPE);
+    void changeAxisType(TChartViewForm::AXISTYPE);
     void setVelocity(qfloat16);
     void clear();
-private:
 
+private slots:
+
+
+    void on_btnDataTip_clicked(bool checked);
+
+    void on_btnZoom_clicked(bool checked);
+
+private:
+    QChartView *m_chartView;
     QChart *m_chart;
     QLineSeries *m_series;
+    QLabel *m_dataTip;
     QValueAxis *m_X;
     QValueAxis *m_Y;
     TGate *m_gate1;
@@ -44,8 +62,14 @@ private:
     float xMax = mTcpClient::DATA_SIZE/2;
     qfloat16 m_vel;
     // QWidget interface
-protected:
-    virtual void resizeEvent(QResizeEvent *event) override;
+
+
+private:
+    Ui::TChartViewForm *ui;
+
+    // QObject interface
+public:
+    virtual bool eventFilter(QObject *watched, QEvent *event) override;
 };
 
-#endif // TCHARTVIEW_H
+#endif // TCHARTVIEWFORM_H

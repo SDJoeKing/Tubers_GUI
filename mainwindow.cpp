@@ -1,6 +1,8 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
 
+qfloat16 MainWindow::_env=0;
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -31,7 +33,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->mdiArea->setViewMode(QMdiArea::SubWindowView);
 
     // A/B-scan dock
-    m_Ascan = new TChartView(_splitter);
+    m_Ascan = new TChartViewForm(_splitter);
     m_Bscan = new QChartView(_splitter);
     _splitter->addWidget(m_Ascan);
     _splitter->addWidget(m_Bscan);
@@ -63,7 +65,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // connect
     connect(m_settings, &TSettings::settingConfirm, this, &MainWindow::doSettingsConfirmed);
-    connect(m_client, &mTcpClient::serverReady, ui->frameTools, &QFrame::setEnabled);
+    connect(m_client, &mTcpClient::settingReady, ui->frameTools, &QFrame::setEnabled);
     connect(m_client, &mTcpClient::clientMessage, this, &MainWindow::logMsg);
     connect(m_client, qOverload<const QString &>(&mTcpClient::tcpMessage), this, &MainWindow::logMsg);
     connect(m_client, &mTcpClient::serverReady, this, &MainWindow::toogleStatus);
@@ -72,6 +74,10 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_client, &mTcpClient::acquisitionStop, this, &MainWindow::stopAcquisition);
     connect(this, &MainWindow::dataReceived, m_client, &mTcpClient::clearData);
     connect(m_client, &mTcpClient::dataReady, this, &MainWindow::doDataReady);
+
+    connect(this, &MainWindow::velocitySet, m_Ascan, &TChartViewForm::setVelocity);
+    connect(this, &MainWindow::axisTypeChanged, m_Ascan, &TChartViewForm::changeAxisType);
+
 
     // final finish
     setConnectionIndicator();
@@ -83,7 +89,6 @@ MainWindow::MainWindow(QWidget *parent)
 void MainWindow::resetUI()
 {
 
-    setWindowState(Qt::WindowMaximized);
     ui->log->setEnabled(false);
 
     // action status
@@ -93,14 +98,18 @@ void MainWindow::resetUI()
     ui->actionLogging->setChecked(false);
 
     // tool bar
-    ui->frameTools->setEnabled(true);
+    ui->frameTools->setEnabled(false);
 
     // UI elements
+    // ui->actionSettings->trigger();
     m_Bscan->setVisible(false);
     ui->log->clear();
     ui->btnRun->setChecked(false);
     ui->btnConnect->setChecked(false);
     ui->spinEnvLevel->setMinimum(0);
+    ui->spinEnvLevel->setValue(0);
+
+    m_Ascan->clear();
 }
 
 void MainWindow::setConnectionIndicator()
@@ -149,23 +158,24 @@ void MainWindow::doSettingsConfirmed(QString str)
 {
     ui->actionSettings->trigger();
     //TBC sending to client
-    quint8 _indexVel = str.lastIndexOf(";");
-    quint8 _indexHz = str.sliced(0, _indexVel).lastIndexOf(";");
+    quint8 _indexHz = str.lastIndexOf(";");
+    quint8 _indexVel = str.sliced(0, _indexHz).lastIndexOf(";");
 
     // update internal timer logic
     auto list = str.split(";");
     auto avg = list[5].toInt();
     auto prf = list[2].toInt();
     auto _interval = list[7].toInt();
+    m_vel = list[6].toFloat();
 
     m_minTimerInterval = ((350*(avg-1) + 600) + (1.0/prf*1e6 + 200) *  avg + 350)/1000/0.9; // 10% safety margin
     m_minTimerInterval = qMax(17, m_minTimerInterval);
     m_settings->updateHz(QString("Refresh rate (max %1 Hz)").arg(1.0/m_minTimerInterval*1000, 0, 'f', 1));
+
     m_timerInterval = 1.0/_interval * 1000;
     updateTimer();
 
-    auto settings = str.sliced(0, _indexHz);
-    m_vel = str.sliced(_indexVel+1, str.length() - _indexVel -1).toFloat();
+    auto settings = str.sliced(0, _indexVel);
 
     auto _status = ui->statusBar->findChild<QLabel *>("m_status");
     if(_status)
@@ -177,12 +187,15 @@ void MainWindow::doSettingsConfirmed(QString str)
     {
         ui->btnRun->click();
         connect(m_client, &mTcpClient::settingReady, ui->btnRun, &QPushButton::click);
-        QTimer::singleShot(130, this, [&](){m_client->sendSetting(settings);});
-        QTimer::singleShot(200, this, [&](){disconnect(m_client, &mTcpClient::settingReady, ui->btnRun, &QPushButton::click);});
-    }else
+        QTimer::singleShot(120, this, [this, settings](){qDebug() << settings; m_client->sendSetting(settings); });
+        QTimer::singleShot(130, this, [this](){ disconnect(m_client, &mTcpClient::settingReady, ui->btnRun, &QPushButton::click);});
+    }
+    else
     {
+
         m_client->sendSetting(settings);
     }
+    emit velocitySet(m_vel);
 }
 
 void MainWindow::on_actionLogging_triggered(bool checked)
@@ -233,7 +246,7 @@ void MainWindow::logMsg(QString str)
 {
     auto _dateTime = QDateTime::currentDateTime();
     QString _prefix = _dateTime.toString("[dd/MM/yyyy hh:mm:ss]\n");
-    ui->log->appendPlainText(_prefix + "    " + str);
+    ui->log->append(_prefix + "    " + str);
 }
 
 void MainWindow::toogleStatus(bool arg)
@@ -270,6 +283,10 @@ void MainWindow::doDataReady()
     quint16 temp2;
     float dataPoint;
 
+    bool _tempDepthFlag = false;
+    if(ui->ckDepthAxis->isChecked())
+        _tempDepthFlag = true;
+
     for (int i = 0; i < mTcpClient::DATA_SIZE/2; i++)
     {
         temp1 =(m_serverData[j + 1] << 8) & 0xFF00;
@@ -278,19 +295,19 @@ void MainWindow::doDataReady()
 
         xpoint = i;
 
-        if(ui->ckDepthAxis->isChecked())
+        if(_tempDepthFlag)
             xpoint = i/2.0/125e6 * m_vel * 1000;
 
         if(ui->ckRectify->isChecked())
         {
-            dataPoint = qAbs(dataPoint);
             dataPoint = envelope(dataPoint);
         }
         calPoint[i] = QPointF(xpoint, dataPoint);
 
         j += 2;
     }
-    m_Ascan->plot(calPoint, ui->ckDepthAxis->isChecked());
+    resetEnv();
+    m_Ascan->plot(calPoint);
     emit dataReceived();
 
     // !## Need to implement interface with A-scan and B-scan class;
@@ -316,27 +333,51 @@ void MainWindow::on_btnRun_clicked(bool checked)
 
 void MainWindow::set_envelope(float attack, float release)
 {
-    m_ga = attack < 1e-20 ? 0 : qExp(-1.0 / (attack * 125e6));
-    m_gr = attack < 1e-20 ? 0 : qExp(-1.0 / (attack * 125e6));
-
+    m_ga = attack < 1e-20 ? 0 :1 - qExp(-1.0 / (attack * 125e6));
+    m_gr = attack < 1e-20 ? 0 :1 - qExp(-1.0 / (release * 125e6));
 }
 
 qfloat16 MainWindow::envelope(qfloat16 sample)
 {
     auto s = qAbs(sample);
-    qfloat16 _env;
-    return  _env = _env < s ? m_ga * _env + (1 - m_ga) * s : m_gr * _env + (1 - m_gr) * s;
+    _env += (s - _env) * (s > _env ? m_ga : m_gr);
+    return  _env;
 }
 
 void MainWindow::on_spinEnvLevel_valueChanged(int arg1)
 {
-    qfloat16 _release = arg1 * 125 /10.0f;
-    set_envelope(0.01f, _release );
+    qfloat16 _release = arg1 * 1e-7;
+    set_envelope(1e-7, _release );
 }
 
 
 void MainWindow::on_ckGates_clicked(bool checked)
 {
     m_Ascan->toogleGates(checked);
+}
+
+
+void MainWindow::on_ckDepthAxis_clicked(bool checked)
+{
+    m_Ascan->clear();
+    if(checked)
+        emit axisTypeChanged(TChartViewForm::DEPTH);
+    else
+        emit axisTypeChanged(TChartViewForm::SAMPLE);
+}
+
+
+void MainWindow::resetEnv()
+{
+    _env=0;
+}
+
+void MainWindow::on_ckRectify_clicked(bool checked)
+{
+
+    if(checked)
+        emit axisTypeChanged(TChartViewForm::ABSOLUTEY);
+    else
+        emit axisTypeChanged(TChartViewForm::FULLY);
 }
 

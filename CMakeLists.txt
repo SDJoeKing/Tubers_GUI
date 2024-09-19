@@ -26,6 +26,8 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         filt.cpp filt.h mtcpclient.cpp mtcpclient.h tgate.cpp tgate.h tsettings.cpp tsettings.h tsettings.ui
         tlogging.h tlogging.cpp tlogging.ui
         tchartview.h tchartview.cpp
+        tchartviewform.h tchartviewform.cpp tchartviewform.ui
+
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET Tubers_GUI APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

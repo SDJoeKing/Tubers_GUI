@@ -98,7 +98,7 @@ void MainWindow::resetUI()
     ui->actionLogging->setChecked(false);
 
     // tool bar
-    ui->frameTools->setEnabled(false);
+    // ui->frameTools->setEnabled(false);
 
     // UI elements
     // ui->actionSettings->trigger();
@@ -110,6 +110,12 @@ void MainWindow::resetUI()
     ui->spinEnvLevel->setValue(0);
 
     m_Ascan->clear();
+
+    QList<QPointF> list;
+    float j=0;
+    for(int i=0; i<8092; i++)
+        list.emplaceBack(i, 500*qSin(j+=0.001)+QRandomGenerator::global()->bounded(0, 1));
+    m_Ascan->plot(list);
 }
 
 void MainWindow::setConnectionIndicator()
@@ -360,6 +366,7 @@ void MainWindow::on_ckGates_clicked(bool checked)
 void MainWindow::on_ckDepthAxis_clicked(bool checked)
 {
     m_Ascan->clear();
+
     if(checked)
         emit axisTypeChanged(TChartViewForm::DEPTH);
     else

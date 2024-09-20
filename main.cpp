@@ -4,12 +4,16 @@
 
 int main(int argc, char *argv[])
 {
+    auto style = QApplication::setStyle("fusion");
 
+    if(style){
     // QApplication::setDesktopSettingsAware(false);
     QApplication a(argc, argv);
-    a.setStyle("fusion");
+
     MainWindow w;
     w.show();
-    return a.exec();
 
+    return a.exec();
+    }
+    return 0;
 }

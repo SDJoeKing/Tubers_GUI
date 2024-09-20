@@ -10,6 +10,8 @@
 #include <QToolButton>
 #include <QVBoxLayout>
 #include <QLabel>
+#include <QSizePolicy>
+#include <QFileDialog>
 
 #include "mtcpclient.h"
 #include "tgate.h"
@@ -42,10 +44,15 @@ public slots:
 
 private slots:
 
+    void backButtonEnabled();
 
     void on_btnDataTip_clicked(bool checked);
 
     void on_btnZoom_clicked(bool checked);
+
+    void on_btnReset_clicked(bool checked);
+
+    void on_btnSave_clicked();
 
 private:
     QChartView *m_chartView;
@@ -60,10 +67,16 @@ private:
     float yMax = 500;
     float xMin=0;
     float xMax = mTcpClient::DATA_SIZE/2;
-    qfloat16 m_vel;
-    // QWidget interface
-
-
+    qfloat16 m_vel = 5890.0;
+    void updateXRange(float);
+    bool _dataTipOn=false;
+    bool _zoomOn=false;
+    AXISTYPE _xAxisType = AXISTYPE::SAMPLE;
+    AXISTYPE _yAxisType = AXISTYPE::FULLY;
+    QList<QLabel *>_dataTipList;
+    QLabel *generateLabel(QWidget *parent);
+    int depthToPoint(qfloat16 depth);
+    qfloat16 pointToDepth(int point);
 private:
     Ui::TChartViewForm *ui;
 

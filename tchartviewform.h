@@ -15,7 +15,7 @@
 
 #include "mtcpclient.h"
 #include "tgate.h"
-
+#include "tchartview.h"
 namespace Ui {
 class TChartViewForm;
 }
@@ -41,7 +41,7 @@ public slots:
     void changeAxisType(TChartViewForm::AXISTYPE);
     void setVelocity(qfloat16);
     void clear();
-
+    void doZoomInOut(QRectF);
 private slots:
 
     void backButtonEnabled();
@@ -58,6 +58,7 @@ private:
     QChartView *m_chartView;
     QChart *m_chart;
     QLineSeries *m_series;
+    QLineSeries *m_ruler;
     QLabel *m_dataTip;
     QValueAxis *m_X;
     QValueAxis *m_Y;
@@ -83,6 +84,7 @@ private:
     // QObject interface
 public:
     virtual bool eventFilter(QObject *watched, QEvent *event) override;
+
 };
 
 #endif // TCHARTVIEWFORM_H

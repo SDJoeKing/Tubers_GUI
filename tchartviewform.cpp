@@ -1,4 +1,5 @@
 #include "tchartviewform.h"
+#include "qlegendmarker.h"
 #include "ui_tchartviewform.h"
 
 TChartViewForm::TChartViewForm(QWidget *parent)
@@ -10,11 +11,23 @@ TChartViewForm::TChartViewForm(QWidget *parent)
     m_chartView = ui->graphicsView;
     m_chart = new QChart();
     m_series = new QLineSeries();
+    m_ruler = new QLineSeries();
+
+    // config m_ruler
+    QBrush brush(Qt::red, Qt::SolidPattern);
+    QPen pen(brush, 2, Qt::DashDotLine);
+    m_ruler->setPen(pen);
+    m_ruler->setVisible(false);
+    m_ruler->append(QPointF(0, yMin));
+    m_ruler->append(QPointF(0, yMax));
+    m_ruler->setOpacity(0.3);
 
     m_X = new QValueAxis();
     m_Y = new QValueAxis();
 
     m_chart->addSeries(m_series);
+    m_chart->addSeries(m_ruler);
+    m_chart->legend()->markers(m_ruler).at(0)->setVisible(false);
 
 
     m_chart->addAxis(m_X, Qt::AlignBottom);
@@ -22,7 +35,8 @@ TChartViewForm::TChartViewForm(QWidget *parent)
 
     m_series->attachAxis(m_X);
     m_series->attachAxis(m_Y);
-
+    m_ruler->attachAxis(m_X);
+    m_ruler->attachAxis(m_Y);
 
     m_chartView->setChart(m_chart);
     m_chartView->viewport()->setMouseTracking(true);
@@ -56,10 +70,10 @@ TChartViewForm::TChartViewForm(QWidget *parent)
     m_dataTip->setVisible(false);
     m_chartView->setDragMode(QGraphicsView::RubberBandDrag);
 
-    m_chartView->installEventFilter(this);
-    m_chartView->viewport()->installEventFilter(this);
+    // m_chartView->viewport()->installEventFilter(this);
 
     ui->btnBack->setEnabled(false);
+
 
     // connect
     connect(m_X, &QValueAxis::rangeChanged, ui->btnBack, &QPushButton::setEnabled);
@@ -93,6 +107,7 @@ void TChartViewForm::changeAxisType(TChartViewForm::AXISTYPE type)
         m_X->setRange(depthToPoint(m_X->min()), _tempMax);
         updateXRange(_tempMax);
         _xAxisType = AXISTYPE::SAMPLE;
+
     }else if(type == AXISTYPE::ABSOLUTEY)
     {
         m_Y->setRange(0, m_Y->max());
@@ -129,21 +144,6 @@ void TChartViewForm::toogleGates(bool arg)
     m_gate2->moveBy(sceneRect.width()/2- gate2ScenePos.x() + 30, sceneRect.height()/2- gate2ScenePos.y());
 }
 
-
-void TChartViewForm::on_btnDataTip_clicked(bool checked)
-{
-    // data tip
-    _dataTipOn = checked;
-    if(!checked)
-    {
-        m_series->deselectAllPoints();
-        for(auto &i:_dataTipList)
-            delete i;
-        _dataTipList.clear();
-    }
-
-}
-
 bool TChartViewForm::eventFilter(QObject *watched, QEvent *event)
 {
     if(watched == m_chartView->viewport() && _dataTipOn)
@@ -159,6 +159,10 @@ bool TChartViewForm::eventFilter(QObject *watched, QEvent *event)
             m_dataTip->move(pos.toPoint().x()+20, pos.toPoint().y()-35 );
             m_dataTip->setText(QString("X: %1\nY: %2").arg(value.x(), 0, 'f', 2).arg(value.y(), 0, 'f', 2));
 
+            // draw verticle line
+            m_ruler->replace(QList<QPointF>{QPointF(value.x(), m_Y->min()), QPointF(value.x(), m_Y->max())});
+
+
         }else if(event->type() == QEvent::Leave)
         {
             m_dataTip->setVisible(false);
@@ -172,20 +176,23 @@ bool TChartViewForm::eventFilter(QObject *watched, QEvent *event)
                 // get mouse pos
 
                 auto value = m_chart->mapToValue(mouse->pos(), m_series);
-                m_series->selectPoint(value.x());
-                m_series->setSelectedColor(Qt::red);
 
                 if(_xAxisType == AXISTYPE::DEPTH)
                     value.setX(depthToPoint(value.x()));
-                value.setY(m_series->at(value.x()).y());
 
-                auto labelPos = m_chart->mapToPosition(value, m_series);
-
-                auto _tempLabel = generateLabel(m_chartView);
-                _tempLabel->setText(QString("X: %1\nY: %2").arg(value.x(), 0, 'f', 2).arg(value.y(), 0, 'f', 2));
-                _tempLabel->move(labelPos.toPoint().x()+20, labelPos.toPoint().y()-35 );
-
-                _dataTipList.emplaceBack(_tempLabel);
+                qreal _Yvalue = m_series->at(value.x()).y();
+                if(qAbs(value.y() - _Yvalue)<0.01*(m_Y->max() - m_Y->min()))
+                {
+                    m_series->selectPoint(value.x());
+                    m_series->setSelectedColor(Qt::red);
+                    value.setY(m_series->at(value.x()).y());
+                    auto labelPos = m_chart->mapToPosition(value, m_series);
+                    auto _tempLabel = generateLabel(m_chartView);
+                    _tempLabel->setText(QString("X: %1\nY: %2").arg(value.x(), 0, 'f', 2).arg(value.y(), 0, 'f', 2));
+                    _tempLabel->move(labelPos.toPoint().x()+20, labelPos.toPoint().y()-35 );
+                    _tempLabel->setObjectName(QString("%1").arg(value.x()));
+                    _dataTipList.emplaceBack(_tempLabel);
+                }
 
             }
             else if(mouse->button()==Qt::RightButton && m_series->count() >0)
@@ -198,17 +205,58 @@ bool TChartViewForm::eventFilter(QObject *watched, QEvent *event)
         }
     }
 
-
     return QWidget::eventFilter(watched, event);
+}
+
+void TChartViewForm::on_btnDataTip_clicked(bool checked)
+{
+    // data tip
+    _dataTipOn = checked;
+    m_ruler->setVisible(checked);
+    m_chart->legend()->markers(m_ruler).at(0)->setVisible(false);
+    if(!checked)
+    {
+        m_series->deselectAllPoints();
+        for(auto &i:_dataTipList)
+            delete i;
+        _dataTipList.clear();
+        m_chartView->viewport()->removeEventFilter(this);
+        return;
+    }
+    auto mouse = m_chartView->mapFromGlobal(QCursor::pos());
+    auto value = m_chart->mapToValue(mouse, m_series);
+    // draw verticle line
+    m_ruler->replace(QList<QPointF>{QPointF(value.x(), yMin), QPointF(value.x(), yMax)});
+    m_chartView->viewport()->installEventFilter(this);
 }
 
 void TChartViewForm::on_btnZoom_clicked(bool checked)
 {
     _zoomOn = checked;
+    // m_chartView->rubberBandOn(checked);
+    // if(checked)
+    // {
+    //     connect(m_chartView, &TChartView::selectedRubberBand, this, &TChartViewForm::doZoomInOut);
+    // }
+    // else
+    // {
+    //     disconnect(m_chartView, &TChartView::selectedRubberBand, this, &TChartViewForm::doZoomInOut);
+    // }
     if(checked)
-        m_chartView->setRubberBand(QChartView::RubberBand::RectangleRubberBand);
+        m_chartView->setDragMode(QChartView::RubberBandDrag);
     else
-        m_chartView->setRubberBand(QChartView::RubberBand::NoRubberBand);
+        m_chartView->setDragMode(QChartView::NoDrag);
+}
+void TChartViewForm::doZoomInOut(QRectF rubberband)
+{
+    if(rubberband.right()-rubberband.left() <20)
+        return;
+
+    auto startPos = m_chart->mapToValue(rubberband.topLeft(), m_series);
+    auto endPos = m_chart->mapToValue(rubberband.bottomRight(), m_series);
+    m_X->setRange(startPos.x(), endPos.x());
+    m_Y->setRange(endPos.y(), startPos.y());
+    qDebug()<< startPos << endPos << rubberband;
 }
 
 

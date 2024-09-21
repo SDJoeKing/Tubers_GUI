@@ -16,36 +16,28 @@ class TChartView : public QChartView
     Q_OBJECT
 public:
     explicit TChartView(QWidget *parent = nullptr);
-    void plot(QList<QPointF> data);
-    enum AXISTYPE
-    {
-        SAMPLE = 0x0001,
-        DEPTH = 0x0002,
-        ABSOLUTEY=0x0003,
-        FULLY=0x0004
-    };
-
+    void rubberBandOn(bool);
 public slots:
-    void toogleGates(bool);
-    void changeAxisType(TChartView::AXISTYPE);
-    void setVelocity(qfloat16);
-    void clear();
+signals:
+    void selectedRubberBand(QRectF);
 private:
+    bool _move=false;
+    QPointF _start;
+    QPointF _end;
 
-    QChart *m_chart;
-    QLineSeries *m_series;
-    QValueAxis *m_X;
-    QValueAxis *m_Y;
-    TGate *m_gate1;
-    TGate *m_gate2;
-    float yMin=-500;
-    float yMax = 500;
-    float xMin=0;
-    float xMax = mTcpClient::DATA_SIZE/2;
-    qfloat16 m_vel;
+
+protected:
+
+
     // QWidget interface
 protected:
-    virtual void resizeEvent(QResizeEvent *event) override;
+    // virtual void mousePressEvent(QMouseEvent *event) override;
+    // virtual void mouseReleaseEvent(QMouseEvent *event) override;
+    // virtual void mouseMoveEvent(QMouseEvent *event) override;
+
+    // QWidget interface
+protected:
+    // virtual void wheelEvent(QWheelEvent *event) override;
 };
 
 #endif // TCHARTVIEW_H

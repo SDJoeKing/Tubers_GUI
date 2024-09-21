@@ -68,6 +68,8 @@ set_target_properties(Tubers_GUI PROPERTIES
     WIN32_EXECUTABLE TRUE
 )
 
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+
 include(GNUInstallDirs)
 install(TARGETS Tubers_GUI
     BUNDLE DESTINATION .

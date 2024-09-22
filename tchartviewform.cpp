@@ -77,6 +77,7 @@ TChartViewForm::TChartViewForm(QWidget *parent)
 
     // connect
     connect(m_X, &QValueAxis::rangeChanged, ui->btnBack, &QPushButton::setEnabled);
+    connect(m_X, &QValueAxis::rangeChanged, this, &TChartViewForm::backButtonEnabled);;
 }
 
 TChartViewForm::~TChartViewForm()
@@ -98,23 +99,42 @@ void TChartViewForm::changeAxisType(TChartViewForm::AXISTYPE type)
         float _tempMax = pointToDepth(m_X->max());
         m_X->setRange( pointToDepth(m_X->min()), _tempMax);
         _xAxisType = AXISTYPE::DEPTH;
-        updateXRange(_tempMax);
+        // updateXRange(_tempMax);
+
+        QList<QPointF> _tempPoints;
+        for(auto &point : m_series->points())
+            _tempPoints.emplace_back(pointToDepth(point.x()) , point.y());
+        plot(_tempPoints);
+
+        updateLabelPosition();
 
     }else if(type == AXISTYPE::SAMPLE)
     {
         auto _tempMax =depthToPoint(m_X->max() );
         m_X->setTitleText("A-scan data points");
         m_X->setRange(depthToPoint(m_X->min()), _tempMax);
-        updateXRange(_tempMax);
+        // updateXRange(_tempMax);
         _xAxisType = AXISTYPE::SAMPLE;
+
+        QList<QPointF> _tempPoints;
+        for(auto &point : m_series->points())
+            _tempPoints.emplace_back(depthToPoint(point.x()) , point.y());
+        plot(_tempPoints);
+        updateLabelPosition();
 
     }else if(type == AXISTYPE::ABSOLUTEY)
     {
         m_Y->setRange(0, m_Y->max());
         _yAxisType = AXISTYPE::ABSOLUTEY;
+        qDebug() << "in axischange" << _yAxisType;
+        updateLabelPosition();
     }else
+    {
         m_Y->setRange(-m_Y->max(), m_Y->max());
         _yAxisType = AXISTYPE::FULLY;
+        updateLabelPosition();
+    }
+
 }
 
 void TChartViewForm::setVelocity(qfloat16 vel)
@@ -127,9 +147,10 @@ void TChartViewForm::clear()
     m_series->clear();
 }
 
-void TChartViewForm::backButtonEnabled()
+void TChartViewForm::backButtonEnabled(bool arg)
 {
-    // ui->btnBack->setE
+    if(!arg)
+        zoomRectTrack.clear();
 }
 
 void TChartViewForm::toogleGates(bool arg)
@@ -151,24 +172,23 @@ bool TChartViewForm::eventFilter(QObject *watched, QEvent *event)
 
         if(event->type() == QEvent::MouseMove)
         {
-            m_dataTip->setVisible(true);
+
             auto mouse = static_cast<QMouseEvent *>(event);
             auto pos = mouse->position();
             auto value = m_chart->mapToValue(pos, m_series);
-
-            m_dataTip->move(pos.toPoint().x()+20, pos.toPoint().y()-35 );
-            m_dataTip->setText(QString("X: %1\nY: %2").arg(value.x(), 0, 'f', 2).arg(value.y(), 0, 'f', 2));
-
             // draw verticle line
             m_ruler->replace(QList<QPointF>{QPointF(value.x(), m_Y->min()), QPointF(value.x(), m_Y->max())});
 
+            m_dataTip->move(pos.toPoint().x()+20, pos.toPoint().y()-35 );
+            m_dataTip->setText(QString("X: %1\nY: %2").arg(value.x(), 0, 'f', 2).arg(value.y(), 0, 'f', 2));
+            m_dataTip->setVisible(true);
 
         }else if(event->type() == QEvent::Leave)
         {
             m_dataTip->setVisible(false);
         }
         // To implement click data points
-        else if(event->type() == QEvent::MouseButtonPress)
+        else if(event->type() == QEvent::MouseButtonPress && !acquisitionRunning)
         {
             auto mouse =  static_cast<QMouseEvent *>(event);
             if(mouse->button()==Qt::LeftButton && m_series->count() >0)
@@ -176,22 +196,28 @@ bool TChartViewForm::eventFilter(QObject *watched, QEvent *event)
                 // get mouse pos
 
                 auto value = m_chart->mapToValue(mouse->pos(), m_series);
+                auto xposition = value.x();
 
                 if(_xAxisType == AXISTYPE::DEPTH)
+                {
                     value.setX(depthToPoint(value.x()));
-
+                }
                 qreal _Yvalue = m_series->at(value.x()).y();
                 if(qAbs(value.y() - _Yvalue)<0.01*(m_Y->max() - m_Y->min()))
                 {
                     m_series->selectPoint(value.x());
                     m_series->setSelectedColor(Qt::red);
                     value.setY(m_series->at(value.x()).y());
-                    auto labelPos = m_chart->mapToPosition(value, m_series);
+
                     auto _tempLabel = generateLabel(m_chartView);
-                    _tempLabel->setText(QString("X: %1\nY: %2").arg(value.x(), 0, 'f', 2).arg(value.y(), 0, 'f', 2));
-                    _tempLabel->move(labelPos.toPoint().x()+20, labelPos.toPoint().y()-35 );
-                    _tempLabel->setObjectName(QString("%1").arg(value.x()));
+
+                    _tempLabel->setText(QString("X: %1\nY: %2").arg(xposition, 0, 'f', 2).arg(value.y(), 0, 'f', 2));
+
+                    // object name is always the index as x
+                    _tempLabel->setObjectName(QString("%1;%2").arg(value.x()).arg(value.y()));
                     _dataTipList.emplaceBack(_tempLabel);
+
+                    updateLabelPosition();
                 }
 
             }
@@ -210,6 +236,10 @@ bool TChartViewForm::eventFilter(QObject *watched, QEvent *event)
 
 void TChartViewForm::on_btnDataTip_clicked(bool checked)
 {
+
+    if(ui->btnZoom->isChecked() && checked)
+        ui->btnZoom->click();
+
     // data tip
     _dataTipOn = checked;
     m_ruler->setVisible(checked);
@@ -232,31 +262,43 @@ void TChartViewForm::on_btnDataTip_clicked(bool checked)
 
 void TChartViewForm::on_btnZoom_clicked(bool checked)
 {
+    if(ui->btnDataTip->isChecked() && checked)
+        ui->btnDataTip->click();
+
     _zoomOn = checked;
-    // m_chartView->rubberBandOn(checked);
-    // if(checked)
-    // {
-    //     connect(m_chartView, &TChartView::selectedRubberBand, this, &TChartViewForm::doZoomInOut);
-    // }
-    // else
-    // {
-    //     disconnect(m_chartView, &TChartView::selectedRubberBand, this, &TChartViewForm::doZoomInOut);
-    // }
+    m_chartView->rubberBandOn(checked);
     if(checked)
-        m_chartView->setDragMode(QChartView::RubberBandDrag);
+    {
+        connect(m_chartView, &TChartView::selectedRubberBand, this, &TChartViewForm::doZoomInOut);
+    }
     else
-        m_chartView->setDragMode(QChartView::NoDrag);
+    {
+        disconnect(m_chartView, &TChartView::selectedRubberBand, this, &TChartViewForm::doZoomInOut);
+    }
+
 }
 void TChartViewForm::doZoomInOut(QRectF rubberband)
 {
     if(rubberband.right()-rubberband.left() <20)
         return;
 
+    // push the rubberband into track queue
+    QRectF currentFrame(QPointF(m_X->min(), m_Y->max()), QPointF(m_X->max(), m_Y->min()));
+    zoomRectTrack.push(QPair<QRectF, AXISTYPE>(currentFrame, _xAxisType));
+
     auto startPos = m_chart->mapToValue(rubberband.topLeft(), m_series);
     auto endPos = m_chart->mapToValue(rubberband.bottomRight(), m_series);
     m_X->setRange(startPos.x(), endPos.x());
     m_Y->setRange(endPos.y(), startPos.y());
+
+    updateLabelPosition();
+
     qDebug()<< startPos << endPos << rubberband;
+}
+
+void TChartViewForm::acquisitionStatus(bool isRunning)
+{
+    acquisitionRunning = isRunning;
 }
 
 
@@ -264,6 +306,9 @@ void TChartViewForm::on_btnReset_clicked(bool checked)
 {
     m_X->setRange(xMin, xMax);
     m_Y->setRange(yMin, yMax);
+    auto currentPosition = m_ruler->points();
+    m_ruler->replace(QList<QPointF>{QPointF(currentPosition.at(0).x(), yMin), QPointF(currentPosition.at(0).x(), yMax)});
+    updateLabelPosition();
 }
 
 void TChartViewForm::updateXRange(float new_xMax)
@@ -303,4 +348,72 @@ void TChartViewForm::on_btnSave_clicked()
     if(!success)
         QMessageBox::warning(this, "Warning", "Not able to save the image");
 }
+
+void TChartViewForm::updateLabelPosition()
+{   qDebug() << "in UpdatePosition" <<_yAxisType;
+    if(!_dataTipList.empty())
+    {
+        for(auto &_tempLabel : _dataTipList)
+        {
+            QString strValue = _tempLabel->objectName();
+            QPointF value(strValue.split(";").at(0).toFloat(), strValue.split(";").at(1).toFloat());
+
+            if(_xAxisType == AXISTYPE::DEPTH)
+                value.setX(pointToDepth(value.x()));
+
+            _tempLabel->setVisible(true);
+
+            if(!inRange(value, m_X, m_Y))
+            {
+                _tempLabel->hide();
+                continue;
+            }
+            auto labelPos = m_chart->mapToPosition(value, m_series);
+            _tempLabel->move(labelPos.toPoint().x()+20, labelPos.toPoint().y()-35 );
+            _tempLabel->setText(QString("X: %1\nY: %2").arg(value.x(), 0, 'f', 2).arg(value.y(), 0, 'f', 2));
+        }
+    }
+}
+
+bool TChartViewForm::inRange(QPointF &a, QValueAxis *xaxis, QValueAxis *yaxis)
+{
+    return ((a.x() < xaxis->max()) && (a.x() > xaxis->min() )&& (a.y() < yaxis->max()) && (a.y() > yaxis->min()));
+}
+
+void TChartViewForm::on_btnBack_clicked()
+{
+    auto _pair = zoomRectTrack.pop();
+    auto rect = _pair.first;
+    AXISTYPE _axisType = _pair.second;
+
+    auto startPos = rect.topLeft();
+    auto endPos = rect.bottomRight();
+
+    if(_axisType==AXISTYPE::DEPTH && _xAxisType == AXISTYPE::SAMPLE)
+    {
+        startPos.setX(depthToPoint(startPos.x()));
+        endPos.setX(depthToPoint(endPos.x()));
+    }else if(_xAxisType==AXISTYPE::DEPTH && _axisType == AXISTYPE::SAMPLE)
+    {
+        startPos.setX(pointToDepth(startPos.x()));
+        endPos.setX(pointToDepth(endPos.x()));
+    }
+
+    m_X->setRange(startPos.x(), endPos.x());
+    m_Y->setRange(endPos.y(), startPos.y());
+    qDebug() << endPos.y() << _yAxisType;
+    if(endPos.y()< 0 && _yAxisType==AXISTYPE::ABSOLUTEY)
+    {
+        emit setRectifyUncheck();
+        _yAxisType = AXISTYPE::FULLY;
+    }
+
+    updateLabelPosition();
+
+    if(zoomRectTrack.isEmpty())
+        ui->btnBack->setEnabled(false);
+}
+
+
+
 

@@ -12,6 +12,7 @@
 #include <QLabel>
 #include <QSizePolicy>
 #include <QFileDialog>
+#include <QStack>
 
 #include "mtcpclient.h"
 #include "tgate.h"
@@ -30,10 +31,10 @@ public:
     void plot(QList<QPointF> data);
     enum AXISTYPE
     {
-        SAMPLE = 0x0001,
-        DEPTH = 0x0002,
-        ABSOLUTEY=0x0003,
-        FULLY=0x0004
+        SAMPLE = 4000,
+        DEPTH = 4001,
+        ABSOLUTEY=4002,
+        FULLY=4003
     };
 
 public slots:
@@ -42,20 +43,21 @@ public slots:
     void setVelocity(qfloat16);
     void clear();
     void doZoomInOut(QRectF);
+    void acquisitionStatus(bool);
 private slots:
 
-    void backButtonEnabled();
-
+    void backButtonEnabled(bool);
     void on_btnDataTip_clicked(bool checked);
-
     void on_btnZoom_clicked(bool checked);
-
     void on_btnReset_clicked(bool checked);
-
     void on_btnSave_clicked();
 
+    void on_btnBack_clicked();
+
+
+
 private:
-    QChartView *m_chartView;
+    TChartView *m_chartView;
     QChart *m_chart;
     QLineSeries *m_series;
     QLineSeries *m_ruler;
@@ -78,13 +80,18 @@ private:
     QLabel *generateLabel(QWidget *parent);
     int depthToPoint(qfloat16 depth);
     qfloat16 pointToDepth(int point);
+    void updateLabelPosition();
+    bool inRange(QPointF &, QValueAxis *, QValueAxis *);
+    bool acquisitionRunning = false;
+    QStack<QPair<QRectF, AXISTYPE>> zoomRectTrack;
 private:
     Ui::TChartViewForm *ui;
 
     // QObject interface
 public:
     virtual bool eventFilter(QObject *watched, QEvent *event) override;
-
+signals:
+    void setRectifyUncheck();
 };
 
 #endif // TCHARTVIEWFORM_H

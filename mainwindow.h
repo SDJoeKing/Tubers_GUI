@@ -61,7 +61,10 @@ private slots:
 
     void on_ckRectify_clicked(bool checked);
 
+    void on_actionReset_triggered(bool);
+    void setRectifyUnchecked();
 private:
+    QTimer _tempTimer;
     Ui::MainWindow *ui;
     mTcpClient *m_client;
     QTimer *m_timer;
@@ -88,9 +91,11 @@ private:
     void updateTimer();
     void set_envelope(float, float);
     qfloat16 envelope(qfloat16);
+
 signals:
     void velocitySet(qfloat16);
     void dataReceived();
     void axisTypeChanged(TChartViewForm::AXISTYPE type);
+    void acquisitionRun(bool);
 };
 #endif // MAINWINDOW_H

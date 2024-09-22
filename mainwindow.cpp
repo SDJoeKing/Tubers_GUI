@@ -78,7 +78,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(this, &MainWindow::velocitySet, m_Ascan, &TChartViewForm::setVelocity);
     connect(this, &MainWindow::axisTypeChanged, m_Ascan, &TChartViewForm::changeAxisType);
 
-
+    connect(this, &MainWindow::acquisitionRun, m_Ascan, &TChartViewForm::acquisitionStatus);
+    connect(m_Ascan, &TChartViewForm::setRectifyUncheck, this, &MainWindow::setRectifyUnchecked);
     // final finish
     setConnectionIndicator();
     ui->spinEnvLevel->setValue(0);
@@ -114,7 +115,7 @@ void MainWindow::resetUI()
     QList<QPointF> list;
     float j=0;
     for(int i=0; i<8092; i++)
-        list.emplaceBack(i, 500*qSin(j+=0.001)+QRandomGenerator::global()->bounded(0, 1));
+        list.emplaceBack(i, 500*qSin(j+=0.001)+QRandomGenerator::global()->bounded(0, 30));
     m_Ascan->plot(list);
 }
 
@@ -327,12 +328,13 @@ void MainWindow::on_btnRun_clicked(bool checked)
         m_client->startAcquisition();
         updateTimer();
         m_timer->start();
-
+        emit acquisitionRun(true);
     }else
     {
         m_timer->stop(); //stop timer immediately to avoid further commands
         QTimer::singleShot(100, m_client, &mTcpClient::stopAcquisition);
         m_client->flush();
+        emit acquisitionRun(false);
     }
 
 }
@@ -365,7 +367,6 @@ void MainWindow::on_ckGates_clicked(bool checked)
 
 void MainWindow::on_ckDepthAxis_clicked(bool checked)
 {
-    m_Ascan->clear();
 
     if(checked)
         emit axisTypeChanged(TChartViewForm::DEPTH);
@@ -386,5 +387,36 @@ void MainWindow::on_ckRectify_clicked(bool checked)
         emit axisTypeChanged(TChartViewForm::ABSOLUTEY);
     else
         emit axisTypeChanged(TChartViewForm::FULLY);
+}
+
+
+void MainWindow::on_actionReset_triggered(bool checked)
+{
+    if(checked)
+    {
+
+        _tempTimer.setInterval(1000);
+
+        connect(&_tempTimer, &QTimer::timeout, this, [&](){
+        QList<QPointF> list;
+        float j=0;
+        for(int i=0; i<8092; i++)
+            list.emplaceBack(i, 500*qSin(j+=0.001)+QRandomGenerator::global()->bounded(0, 30));
+        m_Ascan->plot(list);});
+        _tempTimer.start();
+        emit acquisitionRun(true);
+    }
+    else
+    {
+        _tempTimer.stop();
+        emit acquisitionRun(false);
+    }
+
+
+}
+
+void MainWindow::setRectifyUnchecked()
+{
+    ui->ckRectify->click();
 }
 

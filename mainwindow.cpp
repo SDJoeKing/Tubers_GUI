@@ -7,9 +7,6 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
-    // style
-    setStyle(QStyleFactory::create("Windows"));
-
     ui->setupUi(this);
     setWindowState(Qt::WindowMaximized);
     ui->log->setEnabled(false);

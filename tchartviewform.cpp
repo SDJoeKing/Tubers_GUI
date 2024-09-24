@@ -326,6 +326,7 @@ QLabel *TChartViewForm::generateLabel(QWidget *parent)
     _temp->setFont(font);
     _temp->setStyleSheet("QLabel {color:black;}");
     _temp->setVisible(true);
+    _temp->setStyleSheet("background-color: rgba(0,0,0,0%)");
     return _temp;
 }
 

@@ -27,6 +27,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         tlogging.h tlogging.cpp tlogging.ui
         tchartview.h tchartview.cpp
         tchartviewform.h tchartviewform.cpp tchartviewform.ui
+        styleConfig.h
 
     )
 # Define target properties for Android with Qt 6 as:

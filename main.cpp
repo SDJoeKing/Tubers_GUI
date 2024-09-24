@@ -1,15 +1,18 @@
 #include "mainwindow.h"
 #include <QApplication>
 #include <QStyleFactory>
+#include "styleConfig.h"
+
+extern QString styles;
 
 int main(int argc, char *argv[])
 {
-    auto style = QApplication::setStyle("fusion");
+    // auto style = QApplication::setStyle("fusion");
 
-    if(style){
+    if(true){
     // QApplication::setDesktopSettingsAware(false);
     QApplication a(argc, argv);
-
+    a.setStyleSheet(styles);
     MainWindow w;
     w.show();
 

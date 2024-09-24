@@ -13,7 +13,6 @@ QString styles =
         }\
     QFrame \
         { \
-        margin-color:white;\
         background-color:rgba(%1, %2, %3, %4); \
         border: 0.5px solid black; \
         border-radius: 4px;\
@@ -47,6 +46,11 @@ QString styles =
         {\
         border-bottom:4px solid blue;\
         border-style:groove;\
+        }\
+     QPushButton:disabled\
+        {\
+        border-style:groove;\
+        background-color:lightgrey;\
         }\
     QToolBar\
         {\

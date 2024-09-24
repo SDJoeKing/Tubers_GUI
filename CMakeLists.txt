@@ -28,6 +28,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         tchartview.h tchartview.cpp
         tchartviewform.h tchartviewform.cpp tchartviewform.ui
         styleConfig.h
+        tlabel.h tlabel.cpp
 
     )
 # Define target properties for Android with Qt 6 as:

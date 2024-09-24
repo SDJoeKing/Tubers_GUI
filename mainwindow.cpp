@@ -11,7 +11,7 @@ MainWindow::MainWindow(QWidget *parent)
     setWindowState(Qt::WindowMaximized);
     ui->log->setEnabled(false);
 
-
+    TLabel label;
     // status bar
     m_status= new QLabel(QString::asprintf("Ultrasound Velocity: %.2f m/s", 0.0), this);
     m_status->setObjectName("m_status");
@@ -31,7 +31,11 @@ MainWindow::MainWindow(QWidget *parent)
 
     // A/B-scan dock
     m_Ascan = new TChartViewForm(_splitter);
-    m_Bscan = new QChartView(_splitter);
+    m_Bscan = new QLabel(_splitter);
+    auto pixmap = QPixmap(m_Bscan->size());
+    pixmap.fill(Qt::blue);
+    m_Bscan->setPixmap(pixmap.scaled(m_Bscan->size(), Qt::KeepAspectRatio));
+    m_Bscan->adjustSize();
     _splitter->addWidget(m_Ascan);
     _splitter->addWidget(m_Bscan);
 
@@ -416,4 +420,5 @@ void MainWindow::setRectifyUnchecked()
 {
     ui->ckRectify->click();
 }
+
 

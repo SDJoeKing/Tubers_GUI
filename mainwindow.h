@@ -22,6 +22,7 @@
 #include "mtcpclient.h"
 #include "tchartview.h"
 #include "tchartviewform.h"
+#include "tlabel.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -70,7 +71,9 @@ private:
     QTimer *m_timer;
     TSettings *m_settings;
     TChartViewForm *m_Ascan;
-    QChartView *m_Bscan;
+
+    QLabel *m_Bscan;
+
     Tlogging *m_logging;
     QLabel *m_status;
     QByteArray m_serverData;
@@ -97,5 +100,7 @@ signals:
     void dataReceived();
     void axisTypeChanged(TChartViewForm::AXISTYPE type);
     void acquisitionRun(bool);
+
+    // QWidget interface
 };
 #endif // MAINWINDOW_H

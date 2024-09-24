@@ -33,6 +33,11 @@
       <layout class="QHBoxLayout" name="horizontalLayout">
        <item>
         <widget class="QPushButton" name="btnDataTip">
+         <property name="font">
+          <font>
+           <pointsize>8</pointsize>
+          </font>
+         </property>
          <property name="text">
           <string>Data Tip</string>
          </property>
@@ -43,6 +48,11 @@
        </item>
        <item>
         <widget class="QPushButton" name="btnZoom">
+         <property name="font">
+          <font>
+           <pointsize>8</pointsize>
+          </font>
+         </property>
          <property name="text">
           <string>Zoom</string>
          </property>
@@ -53,6 +63,11 @@
        </item>
        <item>
         <widget class="QPushButton" name="btnBack">
+         <property name="font">
+          <font>
+           <pointsize>8</pointsize>
+          </font>
+         </property>
          <property name="text">
           <string>Back</string>
          </property>
@@ -60,6 +75,11 @@
        </item>
        <item>
         <widget class="QPushButton" name="btnReset">
+         <property name="font">
+          <font>
+           <pointsize>8</pointsize>
+          </font>
+         </property>
          <property name="text">
           <string>Reset</string>
          </property>
@@ -67,6 +87,11 @@
        </item>
        <item>
         <widget class="QPushButton" name="btnSave">
+         <property name="font">
+          <font>
+           <pointsize>8</pointsize>
+          </font>
+         </property>
          <property name="text">
           <string>Save</string>
          </property>
@@ -74,6 +99,11 @@
        </item>
        <item>
         <widget class="QPushButton" name="btnConfig">
+         <property name="font">
+          <font>
+           <pointsize>8</pointsize>
+          </font>
+         </property>
          <property name="text">
           <string>Config</string>
          </property>

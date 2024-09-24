@@ -28,7 +28,7 @@ class TChartViewForm : public QWidget
 public:
     explicit TChartViewForm(QWidget *parent = nullptr);
     ~TChartViewForm();
-    void plot(QList<QPointF> data);
+    void plot(const QList<QPointF> &data);
     enum AXISTYPE
     {
         SAMPLE = 4000,

@@ -86,7 +86,7 @@ TChartViewForm::~TChartViewForm()
 }
 
 
-void TChartViewForm::plot(QList<QPointF> data)
+void TChartViewForm::plot(const QList<QPointF> &data)
 {
     m_series->replace(data);
 }
@@ -309,8 +309,11 @@ void TChartViewForm::on_btnReset_clicked(bool checked)
     auto currentPosition = m_ruler->points();
     m_ruler->replace(QList<QPointF>{QPointF(currentPosition.at(0).x(), yMin), QPointF(currentPosition.at(0).x(), yMax)});
     updateLabelPosition();
-    emit setRectifyUncheck();
-    _yAxisType = AXISTYPE::FULLY;
+    if(_yAxisType==AXISTYPE::ABSOLUTEY)
+    {
+        emit setRectifyUncheck();
+        _yAxisType = AXISTYPE::FULLY;
+    }
 }
 
 void TChartViewForm::updateXRange(float new_xMax)

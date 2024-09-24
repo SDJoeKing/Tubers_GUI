@@ -25,7 +25,6 @@ private:
     QPointF _start;
     QPointF _end;
 
-
 protected:
 
 

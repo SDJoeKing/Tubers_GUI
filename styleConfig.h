@@ -7,9 +7,7 @@ int g = 240;
 int b = 241;
 int alpha = 255;
 QString styles =
-    QString::asprintf(
-
-    "QWidget\
+    QString("QWidget\
         {\
         background-color:rgba(%1, %2, %3, %4);\
         }\
@@ -100,7 +98,5 @@ QString styles =
         color:black;\
     }"
 ).arg(r).arg(g).arg(b).arg(alpha);
-
-
 
 #endif // STYLECONFIG_H

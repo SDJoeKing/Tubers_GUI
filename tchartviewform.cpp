@@ -309,6 +309,8 @@ void TChartViewForm::on_btnReset_clicked(bool checked)
     auto currentPosition = m_ruler->points();
     m_ruler->replace(QList<QPointF>{QPointF(currentPosition.at(0).x(), yMin), QPointF(currentPosition.at(0).x(), yMax)});
     updateLabelPosition();
+    emit setRectifyUncheck();
+    _yAxisType = AXISTYPE::FULLY;
 }
 
 void TChartViewForm::updateXRange(float new_xMax)

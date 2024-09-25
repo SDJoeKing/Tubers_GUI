@@ -1,4 +1,5 @@
 #include "tchartviewform.h"
+#include "qgraphicslayout.h"
 #include "qlegendmarker.h"
 #include "ui_tchartviewform.h"
 
@@ -74,6 +75,9 @@ TChartViewForm::TChartViewForm(QWidget *parent)
 
     ui->btnBack->setEnabled(false);
 
+    // chart tight layout
+    m_chart->layout()->setContentsMargins(0, 0, 0, 0);
+    m_chart->setBackgroundRoundness(0);
 
     // connect
     connect(m_X, &QValueAxis::rangeChanged, ui->btnBack, &QPushButton::setEnabled);

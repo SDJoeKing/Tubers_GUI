@@ -31,14 +31,27 @@ MainWindow::MainWindow(QWidget *parent)
 
     // A/B-scan dock
     m_Ascan = new TChartViewForm(_splitter);
-    m_Bscan = new QLabel(_splitter);
-    auto pixmap = QPixmap(m_Bscan->size());
-    pixmap.fill(Qt::blue);
-    m_Bscan->setPixmap(pixmap.scaled(m_Bscan->size(), Qt::KeepAspectRatio));
-    m_Bscan->adjustSize();
+    m_Bscan = new QCustomPlot(_splitter);
+
+    // configure B-scan
+    // m_Bscan->addGraph()
+    QCPColorMap *_colorMap = new QCPColorMap(m_Bscan->xAxis, m_Bscan->yAxis);
+    m_Bscan->xAxis->setLabel("Scan Length [mm]");
+    m_Bscan->yAxis->setLabel("Depth [mm]");
+    int nx = 1000;
+    int ny = 1000;
+    _colorMap->data()->setSize(nx, ny); // we want the color map to have nx * ny data points
+    _colorMap->data()->setRange(QCPRange(0, 10), QCPRange(0, 10)); // and span the coordinate range -4..4 in both key (x) and value (y) dimensions
+
+    // add a color scale:
+    QCPColorScale *colorScale = new QCPColorScale(m_Bscan);
+ // scale shall be vertical bar with tick/axis labels right (actually atRight is already the default)
+    _colorMap->setColorScale(colorScale); // associate the color map with the color scale
+    // set the color gradient of the color map to one of the presets:
+    _colorMap->setGradient(QCPColorGradient::gpJet);
     _splitter->addWidget(m_Ascan);
     _splitter->addWidget(m_Bscan);
-
+    _splitter->setSizes(QList<int>(height(), height()));
 
     // setting dock
     QDockWidget *settingDock = new QDockWidget(graphFrame,Qt::CustomizeWindowHint );
@@ -81,6 +94,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(this, &MainWindow::acquisitionRun, m_Ascan, &TChartViewForm::acquisitionStatus);
     connect(m_Ascan, &TChartViewForm::setRectifyUncheck, this, &MainWindow::setRectifyUnchecked);
+
+    connect(this, &MainWindow::dataReceived, this, &MainWindow::updateBScan);
     // final finish
     setConnectionIndicator();
     ui->spinEnvLevel->setValue(0);
@@ -111,7 +126,12 @@ void MainWindow::resetUI()
     ui->spinEnvLevel->setMinimum(0);
     ui->spinEnvLevel->setValue(0);
 
+    // _splitter size
+
+
     m_Ascan->clear();
+    auto _colorMap = static_cast<QCPColorMap *>(m_Bscan->plottable());
+    _colorMap->data()->fill(0);
 
     QList<QPointF> list;
     float j=0;
@@ -316,7 +336,7 @@ void MainWindow::doDataReady()
     }
     resetEnv();
     m_Ascan->plot(calPoint);
-    emit dataReceived();
+    emit dataReceived(calPoint, true);
 
     // !## Need to implement interface with A-scan and B-scan class;
 }
@@ -324,8 +344,7 @@ void MainWindow::doDataReady()
 void MainWindow::on_btnRun_clicked(bool checked)
 {
     if(checked)
-    {
-        emit dataReceived(); // clear client data buffer
+    { // clear client data buffer
         m_client->startAcquisition();
         updateTimer();
         m_timer->start();
@@ -390,22 +409,48 @@ void MainWindow::on_ckRectify_clicked(bool checked)
         emit axisTypeChanged(TChartViewForm::FULLY);
 }
 
+void MainWindow::updateBScan(const QList<QPointF> &data, bool forward)
+{
+    auto _colorMap = static_cast<QCPColorMap *>(m_Bscan->plottable());
+    if(forward)
+    {
+        m_currentLine+=1;
+
+        // configure the colormap
+        for(int i=0; i<1000; i++)
+        {
+            _colorMap->data()->setCell(m_currentLine, i, data[i].y());
+        }
+    }else
+    {
+        m_currentLine <= 0 ? m_currentLine=0 : m_currentLine-=1;
+        for(int i=0; i<1000; i++)
+        {
+            _colorMap->data()->setCell(m_currentLine, i, data[i].y());
+        }
+    }
+    _colorMap->rescaleDataRange();
+    _colorMap->rescaleAxes();
+    m_Bscan->replot(QCustomPlot::rpQueuedRefresh);
+}
+
 
 void MainWindow::on_actionReset_triggered(bool checked)
 {
     if(checked)
     {
 
-        _tempTimer.setInterval(1000);
+        _tempTimer.setInterval(17);
 
         connect(&_tempTimer, &QTimer::timeout, this, [&](){
         QList<QPointF> list;
         float j=0;
         for(int i=0; i<8092; i++)
             list.emplaceBack(i, 500*qSin(j+=0.001)+QRandomGenerator::global()->bounded(0, 30));
-        m_Ascan->plot(list);});
+        m_Ascan->plot(list); emit dataReceived(list, true);});
         _tempTimer.start();
         emit acquisitionRun(true);
+
     }
     else
     {

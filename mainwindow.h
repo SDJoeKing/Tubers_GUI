@@ -23,6 +23,7 @@
 #include "tchartview.h"
 #include "tchartviewform.h"
 #include "tlabel.h"
+#include "qcustomplot.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -61,7 +62,7 @@ private slots:
     void on_ckDepthAxis_clicked(bool checked);
 
     void on_ckRectify_clicked(bool checked);
-
+    void updateBScan(const QList<QPointF> &data, bool forward);
     void on_actionReset_triggered(bool);
     void setRectifyUnchecked();
 private:
@@ -72,7 +73,7 @@ private:
     TSettings *m_settings;
     TChartViewForm *m_Ascan;
 
-    QLabel *m_Bscan;
+    QCustomPlot *m_Bscan;
 
     Tlogging *m_logging;
     QLabel *m_status;
@@ -80,12 +81,13 @@ private:
     int m_minTimerInterval=17; // in ms
     int m_timerInterval=30; // in ms
     float m_vel=0.0;
-
     // envelope coefficients
     qfloat16 m_ga;
     qfloat16 m_gr;
     static qfloat16 _env;
     static void resetEnv();
+    int m_currentLine=-1;
+
 // private functions
 private:
     void resetUI();
@@ -97,7 +99,7 @@ private:
 
 signals:
     void velocitySet(qfloat16);
-    void dataReceived();
+    void dataReceived(const QList<QPointF> &data, bool direction);
     void axisTypeChanged(TChartViewForm::AXISTYPE type);
     void acquisitionRun(bool);
 

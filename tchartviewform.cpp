@@ -355,7 +355,7 @@ void TChartViewForm::on_btnSave_clicked()
     QString path = QFileDialog::getSaveFileName(this, "Save Figure", QApplication::applicationDirPath(), "Image (*.png *.jpg)");
     bool success = false;
     success = pix.save(path);
-    if(!success)
+    if(!success && !path.isEmpty())
         QMessageBox::warning(this, "Warning", "Not able to save the image");
 }
 

@@ -42,6 +42,7 @@ MainWindow::MainWindow(QWidget *parent)
     int ny = 1000;
     _colorMap->data()->setSize(nx, ny); // we want the color map to have nx * ny data points
     _colorMap->data()->setRange(QCPRange(0, 10), QCPRange(0, 10)); // and span the coordinate range -4..4 in both key (x) and value (y) dimensions
+    m_Bscan->setContextMenuPolicy(Qt::CustomContextMenu);
 
     // add a color scale:
     QCPColorScale *colorScale = new QCPColorScale(m_Bscan);
@@ -96,6 +97,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_Ascan, &TChartViewForm::setRectifyUncheck, this, &MainWindow::setRectifyUnchecked);
 
     connect(this, &MainWindow::dataReceived, this, &MainWindow::updateBScan);
+
+    connect(m_Bscan, &QCustomPlot::customContextMenuRequested, this, &MainWindow::bScanCustomContext);
     // final finish
     setConnectionIndicator();
     ui->spinEnvLevel->setValue(0);
@@ -464,6 +467,24 @@ void MainWindow::on_actionReset_triggered(bool checked)
 void MainWindow::setRectifyUnchecked()
 {
     ui->ckRectify->click();
+}
+
+void MainWindow::bScanCustomContext(const QPoint &pos)
+{
+    QMenu _tempMenu(this);
+    QAction _tempAction("Save B-Scan", this);
+    _tempMenu.addAction(&_tempAction);
+    connect(&_tempAction, &QAction::triggered, [this]()\
+    {
+        QPixmap _bscan = m_Bscan->grab();
+        QString path = QFileDialog::getSaveFileName(this, "Save Figure", QApplication::applicationDirPath(), "Image (*.png *.jpg)");
+        bool success = false;
+        success = _bscan.save(path);
+        if(!success && !path.isEmpty())
+            QMessageBox::warning(this, "Warning", "Not able to save the image");
+    });
+
+    _tempMenu.exec(m_Bscan->mapToGlobal(pos));
 }
 
 

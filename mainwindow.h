@@ -65,6 +65,8 @@ private slots:
     void updateBScan(const QList<QPointF> &data, bool forward);
     void on_actionReset_triggered(bool);
     void setRectifyUnchecked();
+
+    void bScanCustomContext(const QPoint &pos);
 private:
     QTimer _tempTimer;
     Ui::MainWindow *ui;

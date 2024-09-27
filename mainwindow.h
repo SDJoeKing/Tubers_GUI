@@ -25,6 +25,8 @@
 #include "tlabel.h"
 #include "qcustomplot.h"
 
+
+
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class MainWindow;
@@ -92,6 +94,13 @@ private:
     static void resetEnv();
     int m_currentLine=-1;
 
+    // filter param
+    int m_order = 3;
+    qfloat16 m_LC = 3.0;
+    qfloat16 m_HC = 10.0;
+    std::vector<double> m_a;
+    std::vector<double> m_b;
+    void updateFilter();
 // private functions
 private:
     void resetUI();

@@ -78,6 +78,9 @@ MainWindow::MainWindow(QWidget *parent)
     updateTimer();
     connect(m_timer, &QTimer::timeout, this, &MainWindow::doRequestData);
 
+    // filter
+    updateFilter();
+
     // connect
     connect(m_settings, &TSettings::settingConfirm, this, &MainWindow::doSettingsConfirmed);
     connect(m_client, &mTcpClient::settingReady, ui->frameTools, &QFrame::setEnabled);
@@ -202,6 +205,10 @@ void MainWindow::doSettingsConfirmed(QString str)
     auto prf = list[2].toInt();
     auto _interval = list[7].toInt();
     m_vel = list[6].toFloat();
+    m_order = list[8].toInt();
+    m_LC = list[9].toFloat();
+    m_HC = list[10].toFloat();
+    updateFilter();
 
     m_minTimerInterval = ((350*(avg-1) + 600) + (1.0/prf*1e6 + 200) *  avg + 350)/1000/0.9; // 10% safety margin
     m_minTimerInterval = qMax(17, m_minTimerInterval);
@@ -317,6 +324,9 @@ void MainWindow::doDataReady()
     quint16 temp1;
     quint16 temp2;
     float dataPoint;
+    int len_b = m_b.size();
+    std::vector<double> zi(len_b);
+    float _newData;
 
     bool _tempDepthFlag = false;
     if(ui->ckDepthAxis->isChecked())
@@ -332,6 +342,16 @@ void MainWindow::doDataReady()
 
         if(_tempDepthFlag)
             xpoint = i/2.0/125e6 * m_vel * 1000;
+
+        if(ui->ckFilter->isChecked())
+        {
+            _newData =  m_b[0] * dataPoint + zi[0];
+            for (int m = 1; m<len_b; m++)
+            {
+                zi[m - 1] = m_b[m] * dataPoint + zi[m] - m_a[m] * _newData;
+            }
+            dataPoint = _newData;
+        }
 
         if(ui->ckRectify->isChecked())
         {
@@ -404,6 +424,12 @@ void MainWindow::on_ckDepthAxis_clicked(bool checked)
 void MainWindow::resetEnv()
 {
     _env=0;
+}
+
+void MainWindow::updateFilter()
+{
+    // m_a = ComputeDenCoeffs(m_order, m_LC/125, m_HC/125);
+    // m_b = ComputeNumCoeffs(m_order, m_LC/125, m_HC/125, m_a);
 }
 
 void MainWindow::on_ckRectify_clicked(bool checked)

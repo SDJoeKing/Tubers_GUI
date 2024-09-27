@@ -264,7 +264,10 @@
           </widget>
          </item>
          <item>
-          <widget class="QPushButton" name="btnFilter">
+          <widget class="QCheckBox" name="ckFilter">
+           <property name="enabled">
+            <bool>true</bool>
+           </property>
            <property name="text">
             <string>Filters</string>
            </property>

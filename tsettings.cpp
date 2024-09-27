@@ -35,7 +35,11 @@ void TSettings::on_btnConfirm_clicked()
     setting+= QString::number(ui->spinGain->value()) + ";";
     setting+= QString::number(ui->spinAvg->value())+ ";";
     setting+= QString::number(ui->spinVel->value()) + ";";
-    setting+= QString::number(ui->spinRefresh->value());
+    setting+= QString::number(ui->spinRefresh->value()) + ";";
+
+    setting+= QString::number(ui->spinOrder->value())+ ";";
+    setting+= QString::number(ui->spinLowCut->value()) + ";";
+    setting+= QString::number(ui->spinHighCut->value());
     emit settingConfirm(setting);
 }
 

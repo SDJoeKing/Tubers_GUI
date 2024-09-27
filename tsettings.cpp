@@ -20,6 +20,11 @@ void TSettings::updateHz(QString arg)
     ui->labelHz->setText(arg);
 }
 
+void TSettings::updateVel(qfloat16 newVel)
+{
+    ui->spinVel->setValue(newVel);
+}
+
 void TSettings::on_btnConfirm_clicked()
 {
     QString setting;

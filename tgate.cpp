@@ -3,7 +3,7 @@
 #include <QGraphicsSceneMouseEvent>
 #include <QGraphicsRectItem>
 #include <QGraphicsScene>
-TGate::TGate()
+TGate::TGate(QGraphicsItem *parent) : QGraphicsItemGroup{parent}
 {
     QRectF f1(-25, -5, 2, 10);
     QRectF f2(25, -5, 2, 10);
@@ -129,6 +129,7 @@ void TGate::mouseReleaseEvent(QGraphicsSceneMouseEvent *event)
     qDebug() << sceneBoundingRect().left() <<sceneBoundingRect().right();
 
     event->accept();
+
     QGraphicsItemGroup::mouseReleaseEvent(event);
 }
 

@@ -79,9 +79,14 @@ TChartViewForm::TChartViewForm(QWidget *parent)
     m_chart->layout()->setContentsMargins(0, 0, 0, 0);
     m_chart->setBackgroundRoundness(0);
 
+    // timer
+    m_timer.setInterval(1000);
+    m_timer.start();
     // connect
     connect(m_X, &QValueAxis::rangeChanged, ui->btnBack, &QPushButton::setEnabled);
-    connect(m_X, &QValueAxis::rangeChanged, this, &TChartViewForm::backButtonEnabled);;
+    connect(m_X, &QValueAxis::rangeChanged, this, &TChartViewForm::backButtonEnabled);
+    connect(&m_timer, &QTimer::timeout, this, &TChartViewForm::doThicknessCal);
+
 }
 
 TChartViewForm::~TChartViewForm()
@@ -124,6 +129,7 @@ void TChartViewForm::changeAxisType(TChartViewForm::AXISTYPE type)
         for(auto &point : m_series->points())
             _tempPoints.emplace_back(depthToPoint(point.x()) , point.y());
         plot(_tempPoints);
+
         updateLabelPosition();
 
     }else if(type == AXISTYPE::ABSOLUTEY)
@@ -318,6 +324,10 @@ void TChartViewForm::on_btnReset_clicked(bool checked)
         emit setRectifyUncheck();
         _yAxisType = AXISTYPE::FULLY;
     }
+    if(_xAxisType == AXISTYPE::DEPTH)
+    {
+        m_X->setRange(pointToDepth(xMin), pointToDepth(xMax));
+    }
 }
 
 void TChartViewForm::updateXRange(float new_xMax)
@@ -333,9 +343,8 @@ QLabel *TChartViewForm::generateLabel(QWidget *parent)
     font.setBold(true);
     font.setPointSize(8);
     _temp->setFont(font);
-    _temp->setStyleSheet("QLabel {color:black;}");
+    _temp->setStyleSheet("QLabel {color:black; backgroud-color: blue}");
     _temp->setVisible(true);
-    _temp->setStyleSheet("background-color: rgba(0,0,0,0%)");
     return _temp;
 }
 
@@ -424,6 +433,55 @@ void TChartViewForm::on_btnBack_clicked()
         ui->btnBack->setEnabled(false);
 }
 
+void TChartViewForm::doThicknessCal()
+{
+    // locate two gate position
+    QRectF gate1_range = m_gate1->posRange();
+    QRectF gate2_range = m_gate2->posRange();
+
+    int indGate1 = maxInd(gate1_range);
+    int indGate2 = maxInd(gate2_range);
+
+    if(indGate1 == -1 || indGate2 == -1)
+    {
+        emit calculatedThickness(0);
+        return;
+    }
+    emit calculatedThickness(pointToDepth(qAbs(indGate2 - indGate1)));
+}
+
+qreal TChartViewForm::maxInd(const QRectF &rect)
+{
+    // convert to series position
+    QPointF value_left = m_chart->mapToValue(rect.topLeft(), m_series);
+    QPointF value_right = m_chart->mapToValue(rect.bottomRight(), m_series);
+    int leftInd = value_left.x();
+    int rightInd = value_right.x();
+    qfloat16 threshold = (value_left.y() + value_right.y()) / 2;
+
+    if(_xAxisType == AXISTYPE::DEPTH)
+    {
+        leftInd = depthToPoint(value_left.x());
+        rightInd = depthToPoint(value_right.x());
+    }
+
+    leftInd < 0 ? leftInd =0 : leftInd;
+    rightInd > mTcpClient::DATA_SIZE ? rightInd = mTcpClient::DATA_SIZE : rightInd;
+
+    int _tempMax = leftInd;
+
+    for(int i = leftInd+1; i< rightInd; i++)
+    {
+        qfloat16 value = m_series->at(i).y();
+        if((value > m_series->at(_tempMax).y()) && value >threshold )
+            _tempMax = i;
+    }
+
+    if(m_series->at(_tempMax).y() < threshold)
+        return -1;
+
+    return _tempMax;
+}
 
 
 

@@ -7,7 +7,7 @@
 class TGate : public QGraphicsItemGroup
 {
 public:
-    TGate();
+    explicit TGate(QGraphicsItem *parent = nullptr);
     QRectF posRange();
     bool groupSelected(QPointF point);
     // QGraphicsItem interface
@@ -27,6 +27,8 @@ public:
     // QGraphicsItem interface
 public:
     virtual QRectF boundingRect() const override;
+
+
 };
 
 #endif // TGATE_H

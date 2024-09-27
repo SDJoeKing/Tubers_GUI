@@ -13,7 +13,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     TLabel label;
     // status bar
-    m_status= new QLabel(QString::asprintf("Ultrasound Velocity: %.2f m/s", 0.0), this);
+    m_status= new QLabel(QString::asprintf("Ultrasound Velocity: %.2f m/s", m_vel), this);
     m_status->setObjectName("m_status");
     ui->statusBar->addPermanentWidget(m_status);
 
@@ -97,8 +97,11 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_Ascan, &TChartViewForm::setRectifyUncheck, this, &MainWindow::setRectifyUnchecked);
 
     connect(this, &MainWindow::dataReceived, this, &MainWindow::updateBScan);
-
+    connect(m_Ascan, &TChartViewForm::calculatedThickness, ui->spinDepth, &QDoubleSpinBox::setValue);
     connect(m_Bscan, &QCustomPlot::customContextMenuRequested, this, &MainWindow::bScanCustomContext);
+
+    connect(this, &MainWindow::velocitySet, m_settings, &TSettings::updateVel);
+
     // final finish
     setConnectionIndicator();
     ui->spinEnvLevel->setValue(0);
@@ -138,6 +141,7 @@ void MainWindow::resetUI()
 
     QList<QPointF> list;
     float j=0;
+
     for(int i=0; i<8092; i++)
         list.emplaceBack(i, 500*qSin(j+=0.001)+QRandomGenerator::global()->bounded(0, 30));
     m_Ascan->plot(list);
@@ -341,7 +345,6 @@ void MainWindow::doDataReady()
     m_Ascan->plot(calPoint);
     emit dataReceived(calPoint, true);
 
-    // !## Need to implement interface with A-scan and B-scan class;
 }
 
 void MainWindow::on_btnRun_clicked(bool checked)
@@ -417,7 +420,7 @@ void MainWindow::updateBScan(const QList<QPointF> &data, bool forward)
     auto _colorMap = static_cast<QCPColorMap *>(m_Bscan->plottable());
     if(forward)
     {
-        m_currentLine+=1;
+        m_currentLine > _colorMap->data()->keySize() ? m_currentLine=0: m_currentLine++;
 
         // configure the colormap
         for(int i=0; i<1000; i++)
@@ -448,8 +451,17 @@ void MainWindow::on_actionReset_triggered(bool checked)
         connect(&_tempTimer, &QTimer::timeout, this, [&](){
         QList<QPointF> list;
         float j=0;
-        for(int i=0; i<8092; i++)
-            list.emplaceBack(i, 500*qSin(j+=0.001)+QRandomGenerator::global()->bounded(0, 30));
+        bool _depthFlag = false;
+        _depthFlag = ui->ckDepthAxis->isChecked();
+        qfloat16 v = 0;
+        for(int i=0; i<mTcpClient::DATA_SIZE/2; i++)
+        {
+            v = i;
+            if(_depthFlag)
+                v = i/2.0/125e6 * m_vel * 1000;
+            list.emplaceBack(v, 500*qSin(j+=0.001)+QRandomGenerator::global()->bounded(0, 30));
+
+        }
         m_Ascan->plot(list); emit dataReceived(list, true);});
         _tempTimer.start();
         emit acquisitionRun(true);
@@ -487,4 +499,22 @@ void MainWindow::bScanCustomContext(const QPoint &pos)
     _tempMenu.exec(m_Bscan->mapToGlobal(pos));
 }
 
+
+
+void MainWindow::on_btnCal_clicked()
+{
+    auto newDepth = QInputDialog::getDouble(this, "Please input true thickness", "Thickness (mm): ", 0, 0, 5000.0);
+    auto oldDepth = ui->spinDepth->value();
+    auto distance = oldDepth * 2 / 1000 * 125e6 / m_vel;
+    m_vel = newDepth * 2/1000 * 125e6 / distance;
+
+    auto _status = ui->statusBar->findChild<QLabel *>("m_status");
+    if(_status)
+    {
+        _status->setText(QString("Ultrasound Velocity: %1 m/s").arg(m_vel));
+    }
+    _status->setText(QString("Ultrasound Velocity: %1 m/s").arg(m_vel));
+
+    emit velocitySet(m_vel);
+}
 

@@ -67,6 +67,8 @@ private slots:
     void setRectifyUnchecked();
 
     void bScanCustomContext(const QPoint &pos);
+    void on_btnCal_clicked();
+
 private:
     QTimer _tempTimer;
     Ui::MainWindow *ui;
@@ -82,7 +84,7 @@ private:
     QByteArray m_serverData;
     int m_minTimerInterval=17; // in ms
     int m_timerInterval=30; // in ms
-    float m_vel=0.0;
+    float m_vel=5890.0;
     // envelope coefficients
     qfloat16 m_ga;
     qfloat16 m_gr;

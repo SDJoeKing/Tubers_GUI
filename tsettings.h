@@ -14,7 +14,9 @@ class TSettings : public QDialog
 public:
     explicit TSettings(QWidget *parent = nullptr);
     ~TSettings();
+public slots:
     void updateHz(QString);
+    void updateVel(qfloat16);
 private slots:
     void on_btnConfirm_clicked();
 

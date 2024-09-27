@@ -53,10 +53,11 @@ private slots:
     void on_btnSave_clicked();
 
     void on_btnBack_clicked();
-
+    void doThicknessCal();
 
 
 private:
+    QTimer m_timer;
     TChartView *m_chartView;
     QChart *m_chart;
     QLineSeries *m_series;
@@ -84,6 +85,7 @@ private:
     bool inRange(QPointF &, QValueAxis *, QValueAxis *);
     bool acquisitionRunning = false;
     QStack<QPair<QRectF, AXISTYPE>> zoomRectTrack;
+    qreal maxInd(const QRectF &rect);
 private:
     Ui::TChartViewForm *ui;
 
@@ -92,6 +94,7 @@ public:
     virtual bool eventFilter(QObject *watched, QEvent *event) override;
 signals:
     void setRectifyUncheck();
+    void calculatedThickness(qfloat16);
 };
 
 #endif // TCHARTVIEWFORM_H

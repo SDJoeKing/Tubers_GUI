@@ -343,7 +343,7 @@ QLabel *TChartViewForm::generateLabel(QWidget *parent)
     font.setBold(true);
     font.setPointSize(8);
     _temp->setFont(font);
-    _temp->setStyleSheet("QLabel {color:black; backgroud-color: blue}");
+    _temp->setStyleSheet("QLabel {color:black; background-color: transparent}");
     _temp->setVisible(true);
     return _temp;
 }

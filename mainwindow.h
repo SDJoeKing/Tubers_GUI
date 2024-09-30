@@ -24,7 +24,7 @@
 #include "tchartviewform.h"
 #include "tlabel.h"
 #include "qcustomplot.h"
-
+#include "DspFilters/Dsp.h"
 
 
 QT_BEGIN_NAMESPACE
@@ -95,11 +95,11 @@ private:
     int m_currentLine=-1;
 
     // filter param
+    Dsp::SimpleFilter<Dsp::Butterworth::BandPass <4> , 1> m_filter;
     int m_order = 3;
-    qfloat16 m_LC = 3.0;
-    qfloat16 m_HC = 10.0;
-    std::vector<double> m_a;
-    std::vector<double> m_b;
+    qfloat16 m_fc = 5;
+    qfloat16 m_fw = 8;
+
     void updateFilter();
 // private functions
 private:

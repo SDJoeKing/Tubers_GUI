@@ -206,8 +206,8 @@ void MainWindow::doSettingsConfirmed(QString str)
     auto _interval = list[7].toInt();
     m_vel = list[6].toFloat();
     m_order = list[8].toInt();
-    m_LC = list[9].toFloat();
-    m_HC = list[10].toFloat();
+    m_fc = (list[9].toFloat() + list[10].toFloat() )/ 2.0;
+    m_fw= list[10].toFloat() - list[9].toFloat();
     updateFilter();
 
     m_minTimerInterval = ((350*(avg-1) + 600) + (1.0/prf*1e6 + 200) *  avg + 350)/1000/0.9; // 10% safety margin
@@ -323,10 +323,9 @@ void MainWindow::doDataReady()
     QList<QPointF> calPoint(mTcpClient::DATA_SIZE/2);
     quint16 temp1;
     quint16 temp2;
-    float dataPoint;
-    int len_b = m_b.size();
-    std::vector<double> zi(len_b);
-    float _newData;
+    float *dataPoint[1];
+    float _temp[mTcpClient::DATA_SIZE/2]{0};
+    dataPoint[0] = _temp;
 
     bool _tempDepthFlag = false;
     if(ui->ckDepthAxis->isChecked())
@@ -336,35 +335,30 @@ void MainWindow::doDataReady()
     {
         temp1 =(m_serverData[j + 1] << 8) & 0xFF00;
         temp2 = (m_serverData[j]) & 0xFF;
-        dataPoint = static_cast<qint16>(temp2 | temp1)/ 32768.0  * 3.18 * 1.0 *1000.0;
-
-        xpoint = i;
-
-        if(_tempDepthFlag)
-            xpoint = i/2.0/125e6 * m_vel * 1000;
-
-        if(ui->ckFilter->isChecked())
-        {
-            _newData =  m_b[0] * dataPoint + zi[0];
-            for (int m = 1; m<len_b; m++)
-            {
-                zi[m - 1] = m_b[m] * dataPoint + zi[m] - m_a[m] * _newData;
-            }
-            dataPoint = _newData;
-        }
-
-        if(ui->ckRectify->isChecked())
-        {
-            dataPoint = envelope(dataPoint);
-        }
-        calPoint[i] = QPointF(xpoint, dataPoint);
+        dataPoint[0][i] = static_cast<qint16>(temp2 | temp1)/ 32768.0  * 3.18 * 1.0 *1000.0;
 
         j += 2;
     }
+
+    if(ui->ckFilter->isChecked())
+        m_filter.process(mTcpClient::DATA_SIZE/2, dataPoint);
+
+    // rectified, envelope, depth?
+    for (int i = 0; i < mTcpClient::DATA_SIZE/2; i++)
+    {
+        xpoint = i;
+        if(_tempDepthFlag)
+            xpoint = i / 2/ 125e6 * m_vel * 1000;
+
+        if(ui->ckRectify->isChecked())
+            dataPoint[0][i] = envelope(dataPoint[0][i]);
+
+        calPoint[i] = QPointF(xpoint, dataPoint[0][i]);
+    }
+
     resetEnv();
     m_Ascan->plot(calPoint);
-    emit dataReceived(calPoint, true);
-
+    emit dataReceived(calPoint, true); // sent for Bscan
 }
 
 void MainWindow::on_btnRun_clicked(bool checked)
@@ -428,8 +422,7 @@ void MainWindow::resetEnv()
 
 void MainWindow::updateFilter()
 {
-    // m_a = ComputeDenCoeffs(m_order, m_LC/125, m_HC/125);
-    // m_b = ComputeNumCoeffs(m_order, m_LC/125, m_HC/125, m_a);
+    m_filter.setup(m_order, 125, m_fc, m_fw);
 }
 
 void MainWindow::on_ckRectify_clicked(bool checked)
@@ -469,12 +462,17 @@ void MainWindow::updateBScan(const QList<QPointF> &data, bool forward)
 
 void MainWindow::on_actionReset_triggered(bool checked)
 {
+    double *data[2];
+    double arr[8192] {0};
+
+    data[0] = arr;
+
     if(checked)
     {
 
         _tempTimer.setInterval(17);
-
-        connect(&_tempTimer, &QTimer::timeout, this, [&](){
+        connect(&_tempTimer, &QTimer::timeout, [&]()
+        {
         QList<QPointF> list;
         float j=0;
         bool _depthFlag = false;
@@ -482,13 +480,25 @@ void MainWindow::on_actionReset_triggered(bool checked)
         qfloat16 v = 0;
         for(int i=0; i<mTcpClient::DATA_SIZE/2; i++)
         {
+            data[0][i] = 500*qSin(j+=0.001)+QRandomGenerator::global()->bounded(0, 30);
+        }
+
+        if(ui->ckFilter->isChecked())
+            m_filter.process(8192, data);
+
+        for(int i=0; i<mTcpClient::DATA_SIZE/2; i++)
+        {
             v = i;
             if(_depthFlag)
                 v = i/2.0/125e6 * m_vel * 1000;
-            list.emplaceBack(v, 500*qSin(j+=0.001)+QRandomGenerator::global()->bounded(0, 30));
-
+            list.emplaceBack(v, data[0][i]);
         }
-        m_Ascan->plot(list); emit dataReceived(list, true);});
+
+
+        m_Ascan->plot(list); emit dataReceived(list, true);
+        }
+        );
+
         _tempTimer.start();
         emit acquisitionRun(true);
 
@@ -498,7 +508,6 @@ void MainWindow::on_actionReset_triggered(bool checked)
         _tempTimer.stop();
         emit acquisitionRun(false);
     }
-
 
 }
 
@@ -512,7 +521,7 @@ void MainWindow::bScanCustomContext(const QPoint &pos)
     QMenu _tempMenu(this);
     QAction _tempAction("Save B-Scan", this);
     _tempMenu.addAction(&_tempAction);
-    connect(&_tempAction, &QAction::triggered, [this]()\
+    connect(&_tempAction, &QAction::triggered, this, [this]()\
     {
         QPixmap _bscan = m_Bscan->grab();
         QString path = QFileDialog::getSaveFileName(this, "Save Figure", QApplication::applicationDirPath(), "Image (*.png *.jpg)");

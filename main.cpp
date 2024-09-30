@@ -1,9 +1,9 @@
 #include "mainwindow.h"
 #include <QApplication>
 #include <QStyleFactory>
-#include "styleConfig.h"
+// #include "styleConfig.h"
 
-extern QString styles;
+// extern QString styles;
 
 int main(int argc, char *argv[])
 {

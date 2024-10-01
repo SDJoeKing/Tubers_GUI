@@ -97,7 +97,7 @@ private:
 
     // filter param
     Dsp::SimpleFilter<Dsp::Butterworth::BandPass <4> , 1> m_filter;
-    int m_order = 3;
+    int m_order = 4;
     qfloat16 m_fc = 5;
     qfloat16 m_fw = 8;
 

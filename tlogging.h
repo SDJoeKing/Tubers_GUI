@@ -4,7 +4,8 @@
 #include <QDialog>
 #include <QFileDialog>
 #include <QMessageBox>
-#include "mtcpclient.h"
+#include "tchartviewform.h"
+
 namespace Ui {
 class Tlogging;
 }
@@ -14,9 +15,11 @@ class Tlogging : public QDialog
     Q_OBJECT
 
 public:
-    explicit Tlogging( mTcpClient *client, QWidget *parent = nullptr);
+    explicit Tlogging(QWidget *parent = nullptr);
     ~Tlogging();
-    bool setDataSource(mTcpClient *);
+
+public slots:
+    void setData(const QByteArray &);
 
 private slots:
     void on_toolButton_clicked();
@@ -28,11 +31,12 @@ private slots:
 
 signals:
     void logFileSelected(QString);
-
+    void dataReceived();
 private:
     Ui::Tlogging *ui;
     QFile m_file;
-    mTcpClient *m_client;
+    QByteArray m_data;
+
 };
 
 #endif // TLOGGING_H

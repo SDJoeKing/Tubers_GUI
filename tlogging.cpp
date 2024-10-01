@@ -1,7 +1,7 @@
 #include "tlogging.h"
 #include "ui_tlogging.h"
 
-Tlogging::Tlogging(mTcpClient *client, QWidget *parent)
+Tlogging::Tlogging(QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::Tlogging)
 {
@@ -10,10 +10,6 @@ Tlogging::Tlogging(mTcpClient *client, QWidget *parent)
     ui->btnContinuous->setEnabled(false);
     connect(this, &Tlogging::logFileSelected, this,  &Tlogging::doFileNameSet);
     m_file.setFileName("");
-    m_client=nullptr;
-    if(!setDataSource(client))
-        QMessageBox::information(this, "Error", "Error initialising the TCP client for Logger");
-
 }
 
 Tlogging::~Tlogging()
@@ -22,23 +18,17 @@ Tlogging::~Tlogging()
     delete ui;
 }
 
-bool Tlogging::setDataSource(mTcpClient *client)
+void Tlogging::setData(const QByteArray &data)
 {
-    try
-    {
-        m_client = client;
-        return 1;
-    }
-    catch (...)
-    {
-        return 0;
-    }
+    m_data = data;
+    emit dataReceived();
 
 }
 
 void Tlogging::on_toolButton_clicked()
 {
-    QString fileName = QFileDialog::getSaveFileName(this, "Select Save Location", QApplication::applicationDirPath(), "Text File(*.txt)");
+
+    QString fileName = QFileDialog::getSaveFileName(this, "Select Save Location", QApplication::applicationDirPath(), "Data File(*.dat)");
     if(fileName.isEmpty())
         return;
 
@@ -71,7 +61,7 @@ void Tlogging::reset()
 void Tlogging::on_btnSingle_clicked()
 {
     // open device
-    if(!m_file.open(QIODevice::Append))
+    if(!m_file.open(QIODevice::WriteOnly|QIODevice::Append))
     {
         QMessageBox::information(this, "Error", "Cannot open specified path");
         return;
@@ -85,18 +75,19 @@ void Tlogging::doWriteData()
 {
     if(m_file.isOpen())
     {
-        m_file.write(m_client->data());
+        m_file.write(m_data);
+
+    }else
         QMessageBox::information(this, "Error", "File not open, cannot write data");
-    }
 }
 
 void Tlogging::on_btnContinuous_clicked(bool checked)
 {
     if(checked)
     {
-        connect(m_client, &mTcpClient::dataReady, this, &Tlogging::doWriteData);
+        connect(this, &Tlogging::dataReceived, this, &Tlogging::doWriteData);
         // open device
-        if(!m_file.open(QIODevice::Append))
+        if(!m_file.open(QIODevice::WriteOnly|QIODevice::Append))
         {
             QMessageBox::information(this, "Error", "Cannot open specified path");
             return;
@@ -105,7 +96,7 @@ void Tlogging::on_btnContinuous_clicked(bool checked)
 
     else
     {
-        disconnect(m_client, &mTcpClient::dataReady, this, &Tlogging::doWriteData);
+        disconnect(this, &Tlogging::dataReceived, this, &Tlogging::doWriteData);
         m_file.close();
     }
 }

@@ -81,6 +81,18 @@ void mTcpClient::flush()
     m_readSize = 0;
 }
 
+void mTcpClient::setData(const QList<qfloat16> &d)
+/*
+ *  Do not use or call, just for debugging
+ */
+
+{
+    QByteArray byteArray;
+    QDataStream stream(&byteArray, QIODevice::WriteOnly);
+    stream << d;
+    m_data = byteArray;
+}
+
 bool mTcpClient::isOpen()
 {
     // qDebug() << m_state;

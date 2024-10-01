@@ -71,6 +71,7 @@ private slots:
     void bScanCustomContext(const QPoint &pos);
     void on_btnCal_clicked();
 
+
 private:
     QTimer _tempTimer;
     Ui::MainWindow *ui;
@@ -110,12 +111,13 @@ private:
     void set_envelope(float, float);
     qfloat16 envelope(qfloat16);
 
+
 signals:
     void velocitySet(qfloat16);
     void dataReceived(const QList<QPointF> &data, bool direction);
     void axisTypeChanged(TChartViewForm::AXISTYPE type);
     void acquisitionRun(bool);
-
+    void dataForLogger(const QByteArray &);
     // QWidget interface
 };
 #endif // MAINWINDOW_H

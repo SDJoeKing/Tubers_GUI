@@ -3,6 +3,7 @@
 
 qfloat16 MainWindow::_env=0;
 
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -61,17 +62,16 @@ MainWindow::MainWindow(QWidget *parent)
     settingDock->setWidget(m_settings);
     graphFrame->addDockWidget(Qt::LeftDockWidgetArea, settingDock);
 
+    // TCP Client
+    m_client = new mTcpClient(this);
 
     // logging dock
     QDockWidget *loggingDock = new QDockWidget(graphFrame,Qt::CustomizeWindowHint);
     loggingDock->setFeatures(QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable);
-    m_logging = new Tlogging(m_client);
+    m_logging = new Tlogging();
     loggingDock->setWidget(m_logging);
     graphFrame->addDockWidget(Qt::LeftDockWidgetArea, loggingDock);
     loggingDock->setVisible(false);
-
-    // TCP Client
-    m_client = new mTcpClient(this);
 
     // QTimer for data request
     m_timer = new QTimer(this);
@@ -104,6 +104,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_Bscan, &QCustomPlot::customContextMenuRequested, this, &MainWindow::bScanCustomContext);
 
     connect(this, &MainWindow::velocitySet, m_settings, &TSettings::updateVel);
+    connect(this, &MainWindow::dataForLogger, m_logging, &Tlogging::setData);
 
     // final finish
     setConnectionIndicator();
@@ -326,7 +327,7 @@ void MainWindow::doDataReady()
     float *dataPoint[1];
     float _temp[mTcpClient::DATA_SIZE/2]{0};
     dataPoint[0] = _temp;
-
+    QByteArray _arr;
     bool _tempDepthFlag = false;
     if(ui->ckDepthAxis->isChecked())
         _tempDepthFlag = true;
@@ -354,11 +355,14 @@ void MainWindow::doDataReady()
             dataPoint[0][i] = envelope(dataPoint[0][i]);
 
         calPoint[i] = QPointF(xpoint, dataPoint[0][i]);
+        _arr.append(reinterpret_cast<const char *>(&dataPoint[0][i]), sizeof(dataPoint[0][i]));
     }
 
     resetEnv();
     m_Ascan->plot(calPoint);
-    emit dataReceived(calPoint, true); // sent for Bscan
+
+    emit dataForLogger(_arr);
+    emit dataReceived(calPoint, true); // sent for Bscan & clear tcp client data buffer
 }
 
 void MainWindow::on_btnRun_clicked(bool checked)
@@ -391,6 +395,8 @@ qfloat16 MainWindow::envelope(qfloat16 sample)
     _env += (s - _env) * (s > _env ? m_ga : m_gr);
     return  _env;
 }
+
+
 
 void MainWindow::on_spinEnvLevel_valueChanged(int arg1)
 {
@@ -474,17 +480,19 @@ void MainWindow::on_actionReset_triggered(bool checked)
         connect(&_tempTimer, &QTimer::timeout, [&]()
         {
         QList<QPointF> list;
+        QByteArray floatList;
         float j=0;
         bool _depthFlag = false;
         _depthFlag = ui->ckDepthAxis->isChecked();
         qfloat16 v = 0;
         for(int i=0; i<mTcpClient::DATA_SIZE/2; i++)
         {
-            data[0][i] = 500*qSin(j+=0.001)+QRandomGenerator::global()->bounded(0, 30);
+            data[0][i] = QRandomGenerator::global()->bounded(0, 50); // +500*qSin(j+=0.001)
         }
 
         if(ui->ckFilter->isChecked())
             m_filter.process(8192, data);
+
 
         for(int i=0; i<mTcpClient::DATA_SIZE/2; i++)
         {
@@ -492,10 +500,15 @@ void MainWindow::on_actionReset_triggered(bool checked)
             if(_depthFlag)
                 v = i/2.0/125e6 * m_vel * 1000;
             list.emplaceBack(v, data[0][i]);
+            floatList.append(reinterpret_cast<const char *>(&data[0][i]), sizeof(data[0][i]));
         }
 
+        m_Ascan->plot(list);
+        // QByteArray btArr(reinterpret_cast<const char *> (data[0]), 4 * mTcpClient::DATA_SIZE );
 
-        m_Ascan->plot(list); emit dataReceived(list, true);
+        emit dataForLogger(floatList);
+
+        emit dataReceived(list, true);
         }
         );
 

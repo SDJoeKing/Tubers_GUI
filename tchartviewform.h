@@ -44,6 +44,7 @@ public slots:
     void clear();
     void doZoomInOut(QRectF);
     void acquisitionStatus(bool);
+
 private slots:
 
     void backButtonEnabled(bool);

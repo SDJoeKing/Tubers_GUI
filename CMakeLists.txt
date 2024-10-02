@@ -26,12 +26,12 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
     qt_add_executable(Tubers_GUI
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
-        filt.cpp filt.h mtcpclient.cpp mtcpclient.h tgate.cpp tgate.h tsettings.cpp tsettings.h tsettings.ui
+        mtcpclient.cpp mtcpclient.h tgate.cpp tgate.h tsettings.cpp tsettings.h tsettings.ui
         tlogging.h tlogging.cpp tlogging.ui
         tchartview.h tchartview.cpp
         tchartviewform.h tchartviewform.cpp tchartviewform.ui
         styleConfig.h
-        tlabel.h tlabel.cpp
+
         qcustomplot.cpp qcustomplot.h
         ${SOURCE_LIB}
     )

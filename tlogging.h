@@ -4,7 +4,6 @@
 #include <QDialog>
 #include <QFileDialog>
 #include <QMessageBox>
-#include "tchartviewform.h"
 
 namespace Ui {
 class Tlogging;

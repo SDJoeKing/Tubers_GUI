@@ -13,7 +13,6 @@ MainWindow::MainWindow(QWidget *parent)
     setWindowFlags(Qt::Window | Qt::CustomizeWindowHint | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint) ;
     ui->log->setEnabled(false);
 
-    TLabel label;
     // status bar
     m_status= new QLabel(QString::asprintf("Ultrasound Velocity: %.2f m/s", m_vel), this);
     m_status->setObjectName("m_status");

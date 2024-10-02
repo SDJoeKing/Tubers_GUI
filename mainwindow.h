@@ -15,14 +15,11 @@
 #include <QWheelEvent>
 #include <QVBoxLayout>
 
-#include "filt.h"
+
 #include "tsettings.h"
 #include "tlogging.h"
-#include "tgate.h"
 #include "mtcpclient.h"
-#include "tchartview.h"
 #include "tchartviewform.h"
-#include "tlabel.h"
 #include "qcustomplot.h"
 #include "DspFilters/Dsp.h"
 

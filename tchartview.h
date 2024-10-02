@@ -8,8 +8,6 @@
 #include <QValueAxis>
 #include <QToolButton>
 
-#include "mtcpclient.h"
-#include "tgate.h"
 
 class TChartView : public QChartView
 {

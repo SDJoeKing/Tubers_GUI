@@ -28,7 +28,7 @@ private slots:
     void reset();
     void doWriteData();
     void on_btnContinuous_clicked(bool checked);
-
+    void updateFileName();
 signals:
     void logFileSelected(QString);
     void dataReceived();
@@ -36,7 +36,7 @@ private:
     Ui::Tlogging *ui;
     QFile m_file;
     QByteArray m_data;
-
+    QFileDialog *m_dialog;
 };
 
 #endif // TLOGGING_H

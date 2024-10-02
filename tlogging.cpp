@@ -10,6 +10,14 @@ Tlogging::Tlogging(QWidget *parent)
     ui->btnContinuous->setEnabled(false);
     connect(this, &Tlogging::logFileSelected, this,  &Tlogging::doFileNameSet);
     m_file.setFileName("");
+
+    m_dialog = new QFileDialog(this, "Select Save File", QApplication::applicationDirPath(), "DAT File(*.dat)");
+    m_dialog->setAcceptMode(QFileDialog::AcceptSave);
+    m_dialog->setModal(false);
+    m_dialog->setFileMode(QFileDialog::AnyFile);
+    m_dialog->setViewMode(QFileDialog::ViewMode::Detail);
+    m_dialog->setOptions(QFileDialog::DontConfirmOverwrite | QFileDialog::DontUseNativeDialog);
+    connect(m_dialog, &QFileDialog::accepted, this, &Tlogging::updateFileName);
 }
 
 Tlogging::~Tlogging()
@@ -27,16 +35,24 @@ void Tlogging::setData(const QByteArray &data)
 
 void Tlogging::on_toolButton_clicked()
 {
+    m_dialog->show();
+}
 
-    QString fileName = QFileDialog::getSaveFileName(this, "Select Save Location", QApplication::applicationDirPath(), "Data File(*.dat)");
+void Tlogging::updateFileName()
+{
+
+    QString fileName = m_dialog->selectedFiles().at(0);
+
     if(fileName.isEmpty())
         return;
 
+    QFileInfo info(fileName);
+    if(info.suffix()!="dat")
+        fileName+=".dat";
+
     emit logFileSelected(fileName);
     ui->lineFileName->setText(fileName);
-
 }
-
 
 void Tlogging::doFileNameSet(QString str)
 {

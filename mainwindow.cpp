@@ -70,7 +70,7 @@ MainWindow::MainWindow(QWidget *parent)
     loggingDock->setFeatures(QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable);
     m_logging = new Tlogging();
     loggingDock->setWidget(m_logging);
-    graphFrame->addDockWidget(Qt::LeftDockWidgetArea, loggingDock);
+    graphFrame->addDockWidget(Qt::RightDockWidgetArea, loggingDock);
     loggingDock->setVisible(false);
 
     // QTimer for data request

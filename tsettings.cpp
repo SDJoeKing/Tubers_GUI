@@ -41,5 +41,12 @@ void TSettings::on_btnConfirm_clicked()
     setting+= QString::number(ui->spinLowCut->value()) + ";";
     setting+= QString::number(ui->spinHighCut->value());
     emit settingConfirm(setting);
+
+    QList<qfloat16> bscanSetting;
+    bscanSetting.emplaceBack(ui->spinThick->value());
+    bscanSetting.emplaceBack(ui->spinScanLength->value());
+    bscanSetting.emplaceBack(ui->spinEncoderStep->value());
+
+    emit bScanSetting(ui->groupBscan->isChecked(), bscanSetting);
 }
 

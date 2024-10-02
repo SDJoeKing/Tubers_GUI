@@ -14,6 +14,12 @@ class TSettings : public QDialog
 public:
     explicit TSettings(QWidget *parent = nullptr);
     ~TSettings();
+
+    enum GOLAY
+    {
+        TWO_BIT, FOUR_BIT, EIGHT_BIT, TEN_BIT
+    };
+
 public slots:
     void updateHz(QString);
     void updateVel(qfloat16);
@@ -21,10 +27,11 @@ private slots:
     void on_btnConfirm_clicked();
 
 signals:
-    void settingConfirm(QString settings);
-
+    void settingConfirm(const QString &settings);
+    void bScanSetting(bool, const QList<qfloat16> &settings);
 private:
     Ui::TSettings *ui;
+
 };
 
 #endif // TSETTINGS_H

@@ -10,6 +10,7 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     setWindowState(Qt::WindowMaximized);
+    setWindowFlags(Qt::Window | Qt::CustomizeWindowHint | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint) ;
     ui->log->setEnabled(false);
 
     TLabel label;
@@ -97,6 +98,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(this, &MainWindow::axisTypeChanged, m_Ascan, &TChartViewForm::changeAxisType);
 
     connect(this, &MainWindow::acquisitionRun, m_Ascan, &TChartViewForm::acquisitionStatus);
+    connect(this, &MainWindow::acquisitionRun, m_Ascan, &TChartViewForm::toogleSave);
+
     connect(m_Ascan, &TChartViewForm::setRectifyUncheck, this, &MainWindow::setRectifyUnchecked);
 
     connect(this, &MainWindow::dataReceived, this, &MainWindow::updateBScan);

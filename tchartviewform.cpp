@@ -74,7 +74,7 @@ TChartViewForm::TChartViewForm(QWidget *parent)
     // m_chartView->viewport()->installEventFilter(this);
 
     ui->btnBack->setEnabled(false);
-
+    ui->btnSave->setEnabled(false);
     // chart tight layout
     m_chart->layout()->setContentsMargins(0, 0, 0, 0);
     m_chart->setBackgroundRoundness(0);
@@ -309,6 +309,11 @@ void TChartViewForm::doZoomInOut(QRectF rubberband)
 void TChartViewForm::acquisitionStatus(bool isRunning)
 {
     acquisitionRunning = isRunning;
+}
+
+void TChartViewForm::toogleSave(bool arg)
+{
+    ui->btnSave->setEnabled(!arg);
 }
 
 

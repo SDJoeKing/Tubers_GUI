@@ -45,6 +45,7 @@ public slots:
     void doZoomInOut(QRectF);
     void acquisitionStatus(bool);
     void toogleSave(bool);
+    void startThickCal(bool);
 private slots:
 
     void backButtonEnabled(bool);

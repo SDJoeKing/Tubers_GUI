@@ -88,23 +88,25 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_client, qOverload<const QString &>(&mTcpClient::tcpMessage), this, &MainWindow::logMsg);
     connect(m_client, &mTcpClient::serverReady, this, &MainWindow::toogleStatus);
 
+    // acquisition related
     connect(m_client, &mTcpClient::acquisitionReady, this, &MainWindow::runAcquisition);
     connect(m_client, &mTcpClient::acquisitionStop, this, &MainWindow::stopAcquisition);
     connect(this, &MainWindow::dataReceived, m_client, &mTcpClient::clearData);
     connect(m_client, &mTcpClient::dataReady, this, &MainWindow::doDataReady);
-
     connect(this, &MainWindow::velocitySet, m_Ascan, &TChartViewForm::setVelocity);
     connect(this, &MainWindow::axisTypeChanged, m_Ascan, &TChartViewForm::changeAxisType);
 
+    // key acquisitionRun or not
     connect(this, &MainWindow::acquisitionRun, m_Ascan, &TChartViewForm::acquisitionStatus);
     connect(this, &MainWindow::acquisitionRun, m_Ascan, &TChartViewForm::toogleSave);
+    connect(this, &MainWindow::acquisitionRun, m_Ascan, &TChartViewForm::startThickCal);
 
     connect(m_Ascan, &TChartViewForm::setRectifyUncheck, this, &MainWindow::setRectifyUnchecked);
-
     connect(this, &MainWindow::dataReceived, this, &MainWindow::updateBScan);
     connect(m_Ascan, &TChartViewForm::calculatedThickness, ui->spinDepth, &QDoubleSpinBox::setValue);
     connect(m_Bscan, &QCustomPlot::customContextMenuRequested, this, &MainWindow::bScanCustomContext);
 
+    // setting/logging related
     connect(this, &MainWindow::velocitySet, m_settings, &TSettings::updateVel);
     connect(this, &MainWindow::dataForLogger, m_logging, &Tlogging::setData);
 
@@ -126,11 +128,8 @@ void MainWindow::resetUI()
     ui->actionTools->setChecked(true);
     ui->actionLogging->setChecked(false);
 
-    // tool bar
-    // ui->frameTools->setEnabled(false);
-
     // UI elements
-    // ui->actionSettings->trigger();
+
     m_Bscan->setVisible(false);
     ui->log->clear();
     ui->btnRun->setChecked(false);
@@ -138,19 +137,8 @@ void MainWindow::resetUI()
     ui->spinEnvLevel->setMinimum(0);
     ui->spinEnvLevel->setValue(0);
 
-    // _splitter size
-
-
     m_Ascan->clear();
-    auto _colorMap = static_cast<QCPColorMap *>(m_Bscan->plottable());
-    _colorMap->data()->fill(0);
 
-    QList<QPointF> list;
-    float j=0;
-
-    for(int i=0; i<8092; i++)
-        list.emplaceBack(i, 500*qSin(j+=0.001)+QRandomGenerator::global()->bounded(0, 30));
-    m_Ascan->plot(list);
 }
 
 void MainWindow::setConnectionIndicator()
@@ -470,60 +458,7 @@ void MainWindow::updateBScan(const QList<QPointF> &data, bool forward)
 
 void MainWindow::on_actionReset_triggered(bool checked)
 {
-    double *data[2];
-    double arr[8192] {0};
-
-    data[0] = arr;
-
-    if(checked)
-    {
-
-        _tempTimer.setInterval(17);
-        connect(&_tempTimer, &QTimer::timeout, [&]()
-        {
-        QList<QPointF> list;
-        QByteArray floatList;
-        float j=0;
-        bool _depthFlag = false;
-        _depthFlag = ui->ckDepthAxis->isChecked();
-        qfloat16 v = 0;
-        for(int i=0; i<mTcpClient::DATA_SIZE/2; i++)
-        {
-            data[0][i] = QRandomGenerator::global()->bounded(0, 50); // +500*qSin(j+=0.001)
-        }
-
-        if(ui->ckFilter->isChecked())
-            m_filter.process(8192, data);
-
-
-        for(int i=0; i<mTcpClient::DATA_SIZE/2; i++)
-        {
-            v = i;
-            if(_depthFlag)
-                v = i/2.0/125e6 * m_vel * 1000;
-            list.emplaceBack(v, data[0][i]);
-            floatList.append(reinterpret_cast<const char *>(&data[0][i]), sizeof(data[0][i]));
-        }
-
-        m_Ascan->plot(list);
-        // QByteArray btArr(reinterpret_cast<const char *> (data[0]), 4 * mTcpClient::DATA_SIZE );
-
-        emit dataForLogger(floatList);
-
-        emit dataReceived(list, true);
-        }
-        );
-
-        _tempTimer.start();
-        emit acquisitionRun(true);
-
-    }
-    else
-    {
-        _tempTimer.stop();
-        emit acquisitionRun(false);
-    }
-
+    resetUI();
 }
 
 void MainWindow::setRectifyUnchecked()

@@ -81,7 +81,7 @@ TChartViewForm::TChartViewForm(QWidget *parent)
 
     // timer
     m_timer.setInterval(1000);
-    m_timer.start();
+
     // connect
     connect(m_X, &QValueAxis::rangeChanged, ui->btnBack, &QPushButton::setEnabled);
     connect(m_X, &QValueAxis::rangeChanged, this, &TChartViewForm::backButtonEnabled);
@@ -316,6 +316,14 @@ void TChartViewForm::toogleSave(bool arg)
     ui->btnSave->setEnabled(!arg);
 }
 
+void TChartViewForm::startThickCal(bool arg)
+{
+    if(arg)
+        m_timer.start();
+    else
+        m_timer.stop();
+}
+
 
 void TChartViewForm::on_btnReset_clicked(bool checked)
 {
@@ -457,6 +465,10 @@ void TChartViewForm::doThicknessCal()
 
 qreal TChartViewForm::maxInd(const QRectF &rect)
 {
+    // if acquisition is not started or the plot is empty;
+    if(m_series->count() <= 0)
+        return -1;
+
     // convert to series position
     QPointF value_left = m_chart->mapToValue(rect.topLeft(), m_series);
     QPointF value_right = m_chart->mapToValue(rect.bottomRight(), m_series);

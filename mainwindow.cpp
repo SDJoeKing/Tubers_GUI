@@ -435,7 +435,7 @@ void MainWindow::updateBScan(const QList<QPointF> &data, bool forward)
     auto _colorMap = static_cast<QCPColorMap *>(m_Bscan->plottable());
     if(forward)
     {
-        m_currentLine > _colorMap->data()->keySize() ? m_currentLine=0: m_currentLine++;
+        m_currentLine >= _colorMap->data()->keySize() ? m_currentLine=0: m_currentLine++;
 
         // configure the colormap
         for(int i=0; i<1000; i++)

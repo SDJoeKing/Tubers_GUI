@@ -13,7 +13,7 @@ MainWindow::MainWindow(QWidget *parent)
     setWindowFlag(Qt::MSWindowsFixedSizeDialogHint);
     // setWindowFlags(Qt::Window | Qt::CustomizeWindowHint | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint) ;
     ui->log->setEnabled(false);
-    ui->actionTools->setEnabled(false);
+    ui->btnRun->setEnabled(false);
 
     // status bar
     m_status= new QLabel(QString::asprintf("Ultrasound Velocity: %.2f m/s", m_vel), this);
@@ -85,7 +85,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // connect
     connect(m_settings, &TSettings::settingConfirm, this, &MainWindow::doSettingsConfirmed);
-    connect(m_client, &mTcpClient::settingReady, ui->frameTools, &QFrame::setEnabled);
+    connect(m_client, &mTcpClient::settingReady, ui->btnRun, &QPushButton::setEnabled);
     connect(m_client, &mTcpClient::clientMessage, this, &MainWindow::logMsg);
     connect(m_client, qOverload<const QString &>(&mTcpClient::tcpMessage), this, &MainWindow::logMsg);
     connect(m_client, &mTcpClient::serverReady, this, &MainWindow::toogleStatus);
@@ -102,6 +102,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(this, &MainWindow::acquisitionRun, m_Ascan, &TChartViewForm::acquisitionStatus);
     connect(this, &MainWindow::acquisitionRun, m_Ascan, &TChartViewForm::toogleSave);
     connect(ui->ckGates, &QCheckBox::checkStateChanged, m_Ascan, &TChartViewForm::startThickCal);
+    connect(ui->ckGates, &QCheckBox::checkStateChanged, ui->btnCal, &QPushButton::setEnabled);
 
     connect(m_Ascan, &TChartViewForm::setRectifyUncheck, this, &MainWindow::setRectifyUnchecked);
     connect(this, &MainWindow::dataReceived, this, &MainWindow::updateBScan);
@@ -124,12 +125,16 @@ void MainWindow::resetUI()
 {
 
     ui->log->setEnabled(false);
+    ui->btnCal->setEnabled(false);
 
     // action status
     ui->actionConnection_Status->setChecked(true);
-    ui->actionSettings->setChecked(true);
-    ui->actionTools->setChecked(false);
-    ui->frameTools->setVisible(false);
+
+    if(!ui->actionSettings->isChecked())
+        ui->actionSettings->trigger();
+
+    ui->actionTools->setChecked(true);
+    ui->frameTools->setVisible(true);
 
     ui->actionLogging->setChecked(false);
 
@@ -191,11 +196,7 @@ void MainWindow::on_actionSettings_triggered(bool checked)
 void MainWindow::doSettingsConfirmed(QString str)
 {
     ui->actionSettings->trigger();
-    if(!ui->frameTools->isVisible())
-    {
-        ui->actionTools->setEnabled(true);
-        ui->actionTools->trigger();
-    }
+
     /*
      cycle // pulseFreq // prf
      power // gain // avg
@@ -465,6 +466,10 @@ void MainWindow::updateBScan(const QList<QPointF> &data, bool forward)
 
     auto _colorMap = static_cast<QCPColorMap *>(m_Bscan->plottable());
     int valueSize = _colorMap->data()->valueSize();
+
+    if(valueSize > data.size())
+        valueSize = data.size();
+
     if(forward)
     {
         m_currentLine >= _colorMap->data()->keySize() ? m_currentLine=0: m_currentLine++;
@@ -520,19 +525,31 @@ void MainWindow::bScanCustomContext(const QPoint &pos)
 
 void MainWindow::on_btnCal_clicked()
 {
-    auto newDepth = QInputDialog::getDouble(this, "Please input true thickness", "Thickness (mm): ", 0, 0, 5000.0);
-    auto oldDepth = ui->spinDepth->value();
-    auto distance = oldDepth * 2 / 1000 * 125e6 / m_vel;
-    m_vel = newDepth * 2/1000 * 125e6 / distance;
+    bool ok = false;
+    auto newDepth = QInputDialog::getDouble(this, "Please input true thickness", "Thickness (mm): ", 0, 0, 5000.0, 2, &ok);
 
-    auto _status = ui->statusBar->findChild<QLabel *>("m_status");
-
-    if(_status)
+    if(ok)
     {
-        _status->setText(QString("Ultrasound Velocity: %1 m/s").arg(m_vel));
-    }
+        auto oldDepth = ui->spinDepth->value();
 
-    emit velocitySet(m_vel);
+        if(oldDepth == 0)
+            return;
+
+        auto distance = oldDepth * 2 / 1000 * 125e6 / m_vel;
+        m_vel = newDepth * 2/1000 * 125e6 / distance;
+
+        if(m_vel<=0)
+            return;
+
+        auto _status = ui->statusBar->findChild<QLabel *>("m_status");
+
+        if(_status)
+        {
+            _status->setText(QString("Ultrasound Velocity: %1 m/s").arg(m_vel));
+        }
+
+        emit velocitySet(m_vel);
+    }
 }
 
 void MainWindow::do_bScanSetting(bool arg, const QList<qfloat16> &settings)
@@ -543,6 +560,10 @@ void MainWindow::do_bScanSetting(bool arg, const QList<qfloat16> &settings)
     if(use_bscan)
     {
         QCPColorMap * _map = static_cast<QCPColorMap *>(m_Bscan->plottable());
+
+        // clear graph for replot;
+        _map->data()->fill(0);
+
         if(_map)
         {
             float thick = settings[0];
@@ -551,12 +572,13 @@ void MainWindow::do_bScanSetting(bool arg, const QList<qfloat16> &settings)
 
             // x/y axis array size
             int nx = length / ((step+1)* 0.01);
-            int ny = thick * 2;
+            int ny = 4 * thick / 1000.0 / m_vel * 125e6;
 
             _map->data()->setSize(nx, ny); // we want the color map to have nx * ny data points
             _map->data()->setRange(QCPRange(0, length), QCPRange(0, 2 * thick));
             _map->rescaleDataRange();
             _map->rescaleAxes();
+            _map->setGradient(QCPColorGradient::gpJet);
             m_Bscan->replot();
         }
     }

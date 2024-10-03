@@ -149,7 +149,16 @@ void TChartViewForm::changeAxisType(TChartViewForm::AXISTYPE type)
 
 void TChartViewForm::setVelocity(qfloat16 vel)
 {
+    int originalPointMax = depthToPoint(m_X->max());
+    int originalPointMin = depthToPoint(m_X->min());
+
     m_vel=vel;
+    if(_xAxisType == AXISTYPE::DEPTH)
+    {
+        float _tempMax = pointToDepth(originalPointMax);
+        m_X->setRange( pointToDepth(originalPointMin), _tempMax);
+        updateLabelPosition();
+    }
 }
 
 void TChartViewForm::clear()
@@ -477,10 +486,8 @@ void TChartViewForm::doThicknessCal()
     int indGate2 = maxInd(gate2_range);
 
     if(indGate1 == -1 || indGate2 == -1)
-    {
-        emit calculatedThickness(0);
         return;
-    }
+
     emit calculatedThickness(pointToDepth(qAbs(indGate2 - indGate1)));
 }
 
@@ -504,6 +511,8 @@ qreal TChartViewForm::maxInd(const QRectF &rect)
     }
 
     leftInd < 0 ? leftInd =0 : leftInd;
+    rightInd < 0 ? rightInd =0 : rightInd;
+    leftInd > mTcpClient::DATA_SIZE ? leftInd = mTcpClient::DATA_SIZE : leftInd;
     rightInd > mTcpClient::DATA_SIZE ? rightInd = mTcpClient::DATA_SIZE : rightInd;
 
     int _tempMax = leftInd;

@@ -336,8 +336,9 @@ void MainWindow::stopAcquisition()
 
 void MainWindow::doDataReady()
 {
-    m_serverData = QByteArray::fromRawData(m_client->data(), mTcpClient::DATA_SIZE);
-
+    m_serverData = QByteArray::fromRawData(m_client->data(), mTcpClient::DATA_SIZE );
+    quint8 _forward = static_cast<quint8>(m_serverData.at(mTcpClient::DATA_SIZE - 1)  & 0xFF);
+    qDebug() << _forward;
     int j=0;
     qfloat16 xpoint=0;
     QList<QPointF> calPoint(mTcpClient::DATA_SIZE/2);
@@ -381,7 +382,7 @@ void MainWindow::doDataReady()
     m_Ascan->plot(calPoint);
 
     emit dataForLogger(_arr);
-    emit dataReceived(calPoint, true); // sent for Bscan & clear tcp client data buffer
+    emit dataReceived(calPoint, _forward == 1 ? true : false); // sent for Bscan & clear tcp client data buffer
 }
 
 void MainWindow::on_btnRun_clicked(bool checked)
@@ -481,9 +482,12 @@ void MainWindow::updateBScan(const QList<QPointF> &data, bool forward)
         }
     }else
     {
+        //  remove current front line
+
         m_currentLine <= 0 ? m_currentLine=0 : m_currentLine-=1;
         for(int i=0; i<valueSize; i++)
         {
+            _colorMap->data()->setCell(m_currentLine+1, i, 0);
             _colorMap->data()->setCell(m_currentLine, i, data[i].y());
         }
     }

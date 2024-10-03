@@ -155,6 +155,7 @@ void mTcpClient::readMessage()
     {
         QMessageBox::warning(nullptr, "Warning!", "Get error reading from server");
         this->stop();
+        notifyServerDown();
     }
     QString msg = QString::fromLatin1(tempData, 20);
 
@@ -198,7 +199,7 @@ void mTcpClient::readMessage()
     m_data.replace(counter_data, counter_data+m_readSize, tempData, m_readSize);
     counter_data+=m_readSize;
     qDebug() <<"ReadSize: "<< m_readSize << " Counter: "<<counter_data;
-    if(counter_data==DATA_SIZE)
+    if(counter_data==DATA_SIZE )
     {
         emit dataReady(true);
         counter_data = 0;

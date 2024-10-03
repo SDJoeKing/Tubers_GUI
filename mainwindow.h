@@ -68,7 +68,7 @@ private slots:
     void bScanCustomContext(const QPoint &pos);
     void on_btnCal_clicked();
 
-
+    void do_bScanSetting(bool, const QList<qfloat16> &);
 private:
     QTimer _tempTimer;
     Ui::MainWindow *ui;
@@ -97,7 +97,7 @@ private:
     int m_order = 4;
     qfloat16 m_fc = 5;
     qfloat16 m_fw = 8;
-
+    bool use_bscan = 0;
     void updateFilter();
 // private functions
 private:

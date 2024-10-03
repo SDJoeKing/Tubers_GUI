@@ -28,13 +28,13 @@ mTcpClient::~mTcpClient()
 
 }
 
-void mTcpClient::start(const QString &address, const quint8 port)
+bool mTcpClient::start(const QString &address, const quint8 port)
 {
     if(isOpen())
         m_socket->disconnectFromHost();
 
     m_socket->connectToHost(address, port);
-    m_socket->waitForConnected(3000);
+    return(m_socket->waitForConnected(3000));
 
 }
 

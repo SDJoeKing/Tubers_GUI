@@ -399,8 +399,8 @@
     <bool>false</bool>
    </attribute>
    <addaction name="actionConnection_Status"/>
-   <addaction name="actionTools"/>
    <addaction name="actionSettings"/>
+   <addaction name="actionTools"/>
    <addaction name="actionLogging"/>
   </widget>
   <widget class="QStatusBar" name="statusBar"/>

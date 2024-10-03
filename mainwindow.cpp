@@ -10,8 +10,10 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     setWindowState(Qt::WindowMaximized);
-    setWindowFlags(Qt::Window | Qt::CustomizeWindowHint | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint) ;
+    setWindowFlag(Qt::MSWindowsFixedSizeDialogHint);
+    // setWindowFlags(Qt::Window | Qt::CustomizeWindowHint | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint) ;
     ui->log->setEnabled(false);
+    ui->actionTools->setEnabled(false);
 
     // status bar
     m_status= new QLabel(QString::asprintf("Ultrasound Velocity: %.2f m/s", m_vel), this);
@@ -99,12 +101,13 @@ MainWindow::MainWindow(QWidget *parent)
     // key acquisitionRun or not
     connect(this, &MainWindow::acquisitionRun, m_Ascan, &TChartViewForm::acquisitionStatus);
     connect(this, &MainWindow::acquisitionRun, m_Ascan, &TChartViewForm::toogleSave);
-    connect(this, &MainWindow::acquisitionRun, m_Ascan, &TChartViewForm::startThickCal);
+    connect(ui->ckGates, &QCheckBox::checkStateChanged, m_Ascan, &TChartViewForm::startThickCal);
 
     connect(m_Ascan, &TChartViewForm::setRectifyUncheck, this, &MainWindow::setRectifyUnchecked);
     connect(this, &MainWindow::dataReceived, this, &MainWindow::updateBScan);
     connect(m_Ascan, &TChartViewForm::calculatedThickness, ui->spinDepth, &QDoubleSpinBox::setValue);
     connect(m_Bscan, &QCustomPlot::customContextMenuRequested, this, &MainWindow::bScanCustomContext);
+    connect(m_settings, &TSettings::bScanSetting, this, &MainWindow::do_bScanSetting);
 
     // setting/logging related
     connect(this, &MainWindow::velocitySet, m_settings, &TSettings::updateVel);
@@ -125,7 +128,9 @@ void MainWindow::resetUI()
     // action status
     ui->actionConnection_Status->setChecked(true);
     ui->actionSettings->setChecked(true);
-    ui->actionTools->setChecked(true);
+    ui->actionTools->setChecked(false);
+    ui->frameTools->setVisible(false);
+
     ui->actionLogging->setChecked(false);
 
     // UI elements
@@ -186,19 +191,30 @@ void MainWindow::on_actionSettings_triggered(bool checked)
 void MainWindow::doSettingsConfirmed(QString str)
 {
     ui->actionSettings->trigger();
-    //TBC sending to client
-    quint8 _indexHz = str.lastIndexOf(";");
-    quint8 _indexVel = str.sliced(0, _indexHz).lastIndexOf(";");
+    if(!ui->frameTools->isVisible())
+    {
+        ui->actionTools->setEnabled(true);
+        ui->actionTools->trigger();
+    }
+    /*
+     cycle // pulseFreq // prf
+     power // gain // avg
+     trigger // skip // vel
+     Hz // ord // l // h
+
+    */
 
     // update internal timer logic
     auto list = str.split(";");
+    qDebug() << list;
     auto avg = list[5].toInt();
     auto prf = list[2].toInt();
-    auto _interval = list[7].toInt();
-    m_vel = list[6].toFloat();
-    m_order = list[8].toInt();
-    m_fc = (list[9].toFloat() + list[10].toFloat() )/ 2.0;
-    m_fw= list[10].toFloat() - list[9].toFloat();
+    auto _interval = list[9].toInt();
+    m_vel = list[8].toFloat();
+    m_order = list[10].toInt();
+    m_fc = (list[12].toFloat() + list[11].toFloat() )/ 2.0;
+    m_fw= list[12].toFloat() - list[11].toFloat();
+
     updateFilter();
 
     m_minTimerInterval = ((350*(avg-1) + 600) + (1.0/prf*1e6 + 200) *  avg + 350)/1000/0.9; // 10% safety margin
@@ -208,7 +224,11 @@ void MainWindow::doSettingsConfirmed(QString str)
     m_timerInterval = 1.0/_interval * 1000;
     updateTimer();
 
-    auto settings = str.sliced(0, _indexVel);
+    int _size = 0;
+    for(int i = 0 ; i< 8; i++)
+        _size+=list[i].size();
+
+    auto settings = str.sliced(0, _size+7);
 
     auto _status = ui->statusBar->findChild<QLabel *>("m_status");
     if(_status)
@@ -227,8 +247,9 @@ void MainWindow::doSettingsConfirmed(QString str)
     {
 
         m_client->sendSetting(settings);
+        qDebug() << settings;
     }
-    emit velocitySet(m_vel);
+
 }
 
 void MainWindow::on_actionLogging_triggered(bool checked)
@@ -250,7 +271,14 @@ void MainWindow::on_btnConnect_clicked(bool checked)
     {
         QString address = ui->ipAddress->text().simplified().replace(" ", "");
         quint8 port = ui->port->text().toInt();
-        m_client->start(address, port);
+        bool success = m_client->start(address, port);
+        if(!success)
+        {
+            ui->btnConnect->setChecked(false);
+            QMessageBox::information(this, "Error", "Unable to make connection to server. Please check connection.");
+            return;
+        }
+
         m_client->flush();
     }
     else
@@ -432,20 +460,24 @@ void MainWindow::on_ckRectify_clicked(bool checked)
 
 void MainWindow::updateBScan(const QList<QPointF> &data, bool forward)
 {
+    if(!use_bscan)
+        return;
+
     auto _colorMap = static_cast<QCPColorMap *>(m_Bscan->plottable());
+    int valueSize = _colorMap->data()->valueSize();
     if(forward)
     {
         m_currentLine >= _colorMap->data()->keySize() ? m_currentLine=0: m_currentLine++;
 
         // configure the colormap
-        for(int i=0; i<1000; i++)
+        for(int i=0; i<valueSize; i++)
         {
             _colorMap->data()->setCell(m_currentLine, i, data[i].y());
         }
     }else
     {
         m_currentLine <= 0 ? m_currentLine=0 : m_currentLine-=1;
-        for(int i=0; i<1000; i++)
+        for(int i=0; i<valueSize; i++)
         {
             _colorMap->data()->setCell(m_currentLine, i, data[i].y());
         }
@@ -494,12 +526,39 @@ void MainWindow::on_btnCal_clicked()
     m_vel = newDepth * 2/1000 * 125e6 / distance;
 
     auto _status = ui->statusBar->findChild<QLabel *>("m_status");
+
     if(_status)
     {
         _status->setText(QString("Ultrasound Velocity: %1 m/s").arg(m_vel));
     }
-    _status->setText(QString("Ultrasound Velocity: %1 m/s").arg(m_vel));
 
     emit velocitySet(m_vel);
+}
+
+void MainWindow::do_bScanSetting(bool arg, const QList<qfloat16> &settings)
+{
+    use_bscan = arg;
+    ui->ckBscan->setEnabled(use_bscan);
+
+    if(use_bscan)
+    {
+        QCPColorMap * _map = static_cast<QCPColorMap *>(m_Bscan->plottable());
+        if(_map)
+        {
+            float thick = settings[0];
+            float length = settings[1];
+            int step = settings[2];
+
+            // x/y axis array size
+            int nx = length / ((step+1)* 0.01);
+            int ny = thick * 2;
+
+            _map->data()->setSize(nx, ny); // we want the color map to have nx * ny data points
+            _map->data()->setRange(QCPRange(0, length), QCPRange(0, 2 * thick));
+            _map->rescaleDataRange();
+            _map->rescaleAxes();
+            m_Bscan->replot();
+        }
+    }
 }
 

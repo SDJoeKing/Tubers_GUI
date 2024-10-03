@@ -69,12 +69,11 @@ private:
     QValueAxis *m_Y;
     TGate *m_gate1;
     TGate *m_gate2;
-    float yMin=-500;
-    float yMax = 500;
-    float xMin=0;
-    float xMax = mTcpClient::DATA_SIZE/2;
+    const float yMin=-500;
+    const float yMax = 500;
+    const float xMin=0;
+    const float xMax = mTcpClient::DATA_SIZE/2;
     qfloat16 m_vel = 5890.0;
-    void updateXRange(float);
     bool _dataTipOn=false;
     bool _zoomOn=false;
     AXISTYPE _xAxisType = AXISTYPE::SAMPLE;
@@ -84,7 +83,7 @@ private:
     int depthToPoint(qfloat16 depth);
     qfloat16 pointToDepth(int point);
     void updateLabelPosition();
-    bool inRange(QPointF &, QValueAxis *, QValueAxis *);
+    bool inRange(const QPointF &, QValueAxis *, QValueAxis *);
     bool acquisitionRunning = false;
     QStack<QPair<QRectF, AXISTYPE>> zoomRectTrack;
     qreal maxInd(const QRectF &rect);

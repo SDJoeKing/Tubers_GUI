@@ -164,11 +164,6 @@
              <string>8 bit</string>
             </property>
            </item>
-           <item>
-            <property name="text">
-             <string>10 bit</string>
-            </property>
-           </item>
           </widget>
          </item>
         </layout>
@@ -267,23 +262,7 @@
          <item row="2" column="0">
           <widget class="QLabel" name="labelHz_5">
            <property name="text">
-            <string>Step Resolution</string>
-           </property>
-          </widget>
-         </item>
-         <item row="2" column="1">
-          <widget class="QDoubleSpinBox" name="spinEncoderStep">
-           <property name="buttonSymbols">
-            <enum>QAbstractSpinBox::NoButtons</enum>
-           </property>
-           <property name="suffix">
-            <string> mm/step</string>
-           </property>
-           <property name="maximum">
-            <double>9999.000000000000000</double>
-           </property>
-           <property name="value">
-            <double>0.500000000000000</double>
+            <string>Step Skip</string>
            </property>
           </widget>
          </item>
@@ -310,6 +289,16 @@
            </property>
            <property name="value">
             <double>100.000000000000000</double>
+           </property>
+          </widget>
+         </item>
+         <item row="2" column="1">
+          <widget class="QSpinBox" name="spinEncoderStep">
+           <property name="buttonSymbols">
+            <enum>QAbstractSpinBox::NoButtons</enum>
+           </property>
+           <property name="maximum">
+            <number>5000</number>
            </property>
           </widget>
          </item>

@@ -71,7 +71,7 @@ TChartViewForm::TChartViewForm(QWidget *parent)
     m_dataTip->setVisible(false);
     m_chartView->setDragMode(QGraphicsView::RubberBandDrag);
 
-    // m_chartView->viewport()->installEventFilter(this);
+    m_chartView->installEventFilter(this);
 
     ui->btnBack->setEnabled(false);
     ui->btnSave->setEnabled(false);
@@ -241,6 +241,31 @@ bool TChartViewForm::eventFilter(QObject *watched, QEvent *event)
         }
     }
 
+    // wheel event
+    if(watched == m_chartView && event->type()==QEvent::Wheel)
+    {
+        float _min = m_Y->min();
+        float _max = m_Y->max();
+
+        QWheelEvent *wheel = static_cast<QWheelEvent *>(event);
+        if(wheel->angleDelta().y()>0)
+        {
+            qDebug() << wheel->angleDelta().y();
+            _min*=1.1;
+            _max*=1.1;
+        }
+        else
+        {
+            qDebug() << wheel->angleDelta().y();
+            _min/=1.1;
+            _max/=1.1;
+        }
+        if(_yAxisType == AXISTYPE::ABSOLUTEY && _min<0)
+            _min = 0;
+
+        m_Y->setRange(_min, _max);
+    }
+
     return QWidget::eventFilter(watched, event);
 }
 
@@ -343,10 +368,6 @@ void TChartViewForm::on_btnReset_clicked(bool checked)
     }
 }
 
-void TChartViewForm::updateXRange(float new_xMax)
-{
-    xMax = new_xMax;
-}
 
 QLabel *TChartViewForm::generateLabel(QWidget *parent)
 {
@@ -407,7 +428,7 @@ void TChartViewForm::updateLabelPosition()
     }
 }
 
-bool TChartViewForm::inRange(QPointF &a, QValueAxis *xaxis, QValueAxis *yaxis)
+bool TChartViewForm::inRange(const QPointF &a, QValueAxis *xaxis, QValueAxis *yaxis)
 {
     return ((a.x() < xaxis->max()) && (a.x() > xaxis->min() )&& (a.y() < yaxis->max()) && (a.y() > yaxis->min()));
 }

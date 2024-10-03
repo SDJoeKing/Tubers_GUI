@@ -27,6 +27,7 @@ void TSettings::updateVel(qfloat16 newVel)
 
 void TSettings::on_btnConfirm_clicked()
 {
+
     QString setting;
     setting+= QString::number(ui->spinCycles->value()) + ";";
     setting+= QString::number(ui->spinFrequency->value()) + ";";
@@ -34,19 +35,35 @@ void TSettings::on_btnConfirm_clicked()
     setting+= QString::number(ui->spinPower->value()) + ";";
     setting+= QString::number(ui->spinGain->value()) + ";";
     setting+= QString::number(ui->spinAvg->value())+ ";";
+
+
+    //encoder / bscan setting
+    int encoderTrigger = ui->groupBscan->isChecked();
+    float thick = ui->spinThick->value();
+    float length = ui->spinScanLength->value();
+    int step = ui->spinEncoderStep->value();
+
+    setting+= QString::number(encoderTrigger)+ ";";
+    setting+= QString::number(ui->spinEncoderStep->value())+ ";";
+
     setting+= QString::number(ui->spinVel->value()) + ";";
     setting+= QString::number(ui->spinRefresh->value()) + ";";
 
+    //filter setting
     setting+= QString::number(ui->spinOrder->value())+ ";";
     setting+= QString::number(ui->spinLowCut->value()) + ";";
-    setting+= QString::number(ui->spinHighCut->value());
+    setting+= QString::number(ui->spinHighCut->value())+ ";";
+
+
     emit settingConfirm(setting);
 
     QList<qfloat16> bscanSetting;
-    bscanSetting.emplaceBack(ui->spinThick->value());
-    bscanSetting.emplaceBack(ui->spinScanLength->value());
-    bscanSetting.emplaceBack(ui->spinEncoderStep->value());
+    bscanSetting.emplaceBack(thick);
+    bscanSetting.emplaceBack(length);
+    bscanSetting.emplaceBack(step);
 
     emit bScanSetting(ui->groupBscan->isChecked(), bscanSetting);
+
+
 }
 

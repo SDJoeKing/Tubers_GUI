@@ -7,7 +7,7 @@ extern QString styles;
 
 int main(int argc, char *argv[])
 {
-    // auto style = QApplication::setStyle("fusion");
+    auto style = QApplication::setStyle("fusion");
 
 
     // // QApplication::setDesktopSettingsAware(false);

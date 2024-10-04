@@ -42,9 +42,10 @@ void TSettings::on_btnConfirm_clicked()
     float thick = ui->spinThick->value();
     float length = ui->spinScanLength->value();
     int step = ui->spinEncoderStep->value();
+    float res = ui->spinEncoderRes->value();
 
     setting+= QString::number(encoderTrigger)+ ";";
-    setting+= QString::number(ui->spinEncoderStep->value())+ ";";
+    setting+= QString::number(ui->spinEncoderRes->value())+ ";";
 
     setting+= QString::number(ui->spinVel->value()) + ";";
     setting+= QString::number(ui->spinRefresh->value()) + ";";
@@ -61,7 +62,7 @@ void TSettings::on_btnConfirm_clicked()
     bscanSetting.emplaceBack(thick);
     bscanSetting.emplaceBack(length);
     bscanSetting.emplaceBack(step);
-
+    bscanSetting.emplaceBack(res);
     emit bScanSetting(ui->groupBscan->isChecked(), bscanSetting);
 
 

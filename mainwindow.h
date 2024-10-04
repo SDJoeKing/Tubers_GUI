@@ -97,6 +97,7 @@ private:
     int m_order = 4;
     qfloat16 m_fc = 5;
     qfloat16 m_fw = 8;
+
     bool use_bscan = 0;
     void updateFilter();
 // private functions

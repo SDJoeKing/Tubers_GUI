@@ -14,6 +14,7 @@ MainWindow::MainWindow(QWidget *parent)
     // setWindowFlags(Qt::Window | Qt::CustomizeWindowHint | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint) ;
     ui->log->setEnabled(false);
     ui->btnRun->setEnabled(false);
+    ui->ckBscan->setEnabled(false);
 
     // status bar
     m_status= new QLabel(QString::asprintf("Ultrasound Velocity: %.2f m/s", m_vel), this);
@@ -44,7 +45,7 @@ MainWindow::MainWindow(QWidget *parent)
     int nx = 1000;
     int ny = 1000;
     _colorMap->data()->setSize(nx, ny); // we want the color map to have nx * ny data points
-    _colorMap->data()->setRange(QCPRange(0, 10), QCPRange(0, 10)); // and span the coordinate range -4..4 in both key (x) and value (y) dimensions
+    _colorMap->data()->setRange(QCPRange(0, 10), QCPRange(10, 0)); // and span the coordinate range -4..4 in both key (x) and value (y) dimensions
     m_Bscan->setContextMenuPolicy(Qt::CustomContextMenu);
 
     // add a color scale:
@@ -417,7 +418,6 @@ qfloat16 MainWindow::envelope(qfloat16 sample)
 }
 
 
-
 void MainWindow::on_spinEnvLevel_valueChanged(int arg1)
 {
     qfloat16 _release = arg1 * 1e-7;
@@ -460,6 +460,22 @@ void MainWindow::on_ckRectify_clicked(bool checked)
         emit axisTypeChanged(TChartViewForm::FULLY);
 }
 
+int findFrontWall(const QList<QPointF> &data)
+{
+    int _max = 200; // in water less than 2mm
+    qfloat16 value = 0;
+    for(int i = _max; i< mTcpClient::DATA_SIZE/2; i++)
+    {
+        auto _v = qAbs(data[i].y());
+        if(_v >= value)
+        {
+            value = _v;
+            _max = i;
+        }
+    }
+    return _max;
+}
+
 void MainWindow::updateBScan(const QList<QPointF> &data, bool forward)
 {
     if(!use_bscan)
@@ -467,16 +483,19 @@ void MainWindow::updateBScan(const QList<QPointF> &data, bool forward)
 
     auto _colorMap = static_cast<QCPColorMap *>(m_Bscan->plottable());
     int valueSize = _colorMap->data()->valueSize();
+    // functions to find the first front wall peaks
+    int _start = findFrontWall(data)-10;
 
-    if(valueSize > data.size())
-        valueSize = data.size();
+    if((valueSize + _start) > data.size())
+        valueSize = data.size() - _start;
+
 
     if(forward)
     {
         m_currentLine >= _colorMap->data()->keySize() ? m_currentLine=0: m_currentLine++;
 
         // configure the colormap
-        for(int i=0; i<valueSize; i++)
+        for(int i=_start; i<valueSize; i++)
         {
             _colorMap->data()->setCell(m_currentLine, i, data[i].y());
         }
@@ -485,7 +504,7 @@ void MainWindow::updateBScan(const QList<QPointF> &data, bool forward)
         //  remove current front line
 
         m_currentLine <= 0 ? m_currentLine=0 : m_currentLine-=1;
-        for(int i=0; i<valueSize; i++)
+        for(int i=_start; i<valueSize; i++)
         {
             _colorMap->data()->setCell(m_currentLine+1, i, 0);
             _colorMap->data()->setCell(m_currentLine, i, data[i].y());
@@ -560,6 +579,15 @@ void MainWindow::do_bScanSetting(bool arg, const QList<qfloat16> &settings)
 {
     use_bscan = arg;
     ui->ckBscan->setEnabled(use_bscan);
+    if(use_bscan)
+    {
+        m_Bscan->setVisible(true);
+        ui->ckBscan->setCheckState(Qt::Checked);
+    }else
+    {
+        m_Bscan->setVisible(false);
+        ui->ckBscan->setCheckState(Qt::Unchecked);
+    }
 
     if(use_bscan)
     {
@@ -573,13 +601,13 @@ void MainWindow::do_bScanSetting(bool arg, const QList<qfloat16> &settings)
             float thick = settings[0];
             float length = settings[1];
             int step = settings[2];
-
+            float encoder_res = settings[3];
             // x/y axis array size
-            int nx = length / ((step+1)* 0.01);
+            int nx = length / ((step+1)* encoder_res)+1;
             int ny = 4 * thick / 1000.0 / m_vel * 125e6;
 
             _map->data()->setSize(nx, ny); // we want the color map to have nx * ny data points
-            _map->data()->setRange(QCPRange(0, length), QCPRange(0, 2 * thick));
+            _map->data()->setRange(QCPRange(0, length), QCPRange(2 * thick, 0));
             _map->rescaleDataRange();
             _map->rescaleAxes();
             _map->setGradient(QCPColorGradient::gpJet);

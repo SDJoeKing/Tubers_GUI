@@ -45,7 +45,7 @@ void TSettings::on_btnConfirm_clicked()
     float res = ui->spinEncoderRes->value();
 
     setting+= QString::number(encoderTrigger)+ ";";
-    setting+= QString::number(ui->spinEncoderRes->value())+ ";";
+    setting+= QString::number(step)+ ";";
 
     setting+= QString::number(ui->spinVel->value()) + ";";
     setting+= QString::number(ui->spinRefresh->value()) + ";";

@@ -10,8 +10,8 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     setWindowState(Qt::WindowMaximized);
-    setWindowFlag(Qt::MSWindowsFixedSizeDialogHint);
-    // setWindowFlags(Qt::Window | Qt::CustomizeWindowHint | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint) ;
+    // setWindowFlag(Qt::MSWindowsFixedSizeDialogHint);
+    setWindowFlags(  Qt::MSWindowsFixedSizeDialogHint| Qt::Window | Qt::CustomizeWindowHint | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint) ;
     ui->log->setEnabled(false);
     ui->btnRun->setEnabled(false);
     ui->ckBscan->setEnabled(false);
@@ -23,9 +23,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     // Graph page & Dock widget
     QMainWindow *graphFrame = new QMainWindow();
-    graphFrame->setWindowFlags(Qt::Tool | Qt::CustomizeWindowHint|Qt::WindowTitleHint );
-    ui->mdiArea->addSubWindow(graphFrame,Qt::Tool | Qt::CustomizeWindowHint|Qt::WindowTitleHint );
-    graphFrame->setWindowState(Qt::WindowMaximized);
+    ui->mdiArea->addSubWindow(graphFrame,Qt::Tool|Qt::CustomizeWindowHint|Qt::FramelessWindowHint);
+    graphFrame->setWindowState(Qt::WindowState::WindowMaximized);
     graphFrame->show();
 
     // A/B scan screen splitter - verticle
@@ -40,27 +39,21 @@ MainWindow::MainWindow(QWidget *parent)
     // configure B-scan
     // m_Bscan->addGraph()
     QCPColorMap *_colorMap = new QCPColorMap(m_Bscan->xAxis, m_Bscan->yAxis);
-    m_Bscan->xAxis->setLabel("Scan Length [mm]");
-    m_Bscan->yAxis->setLabel("Depth [mm]");
-    int nx = 1000;
-    int ny = 1000;
-    _colorMap->data()->setSize(nx, ny); // we want the color map to have nx * ny data points
-    _colorMap->data()->setRange(QCPRange(0, 10), QCPRange(10, 0)); // and span the coordinate range -4..4 in both key (x) and value (y) dimensions
+// and span the coordinate range -4..4 in both key (x) and value (y) dimensions
     m_Bscan->setContextMenuPolicy(Qt::CustomContextMenu);
-
     // add a color scale:
     QCPColorScale *colorScale = new QCPColorScale(m_Bscan);
- // scale shall be vertical bar with tick/axis labels right (actually atRight is already the default)
+    // scale shall be vertical bar with tick/axis labels right (actually atRight is already the default)
     _colorMap->setColorScale(colorScale); // associate the color map with the color scale
-    // set the color gradient of the color map to one of the presets:
-    _colorMap->setGradient(QCPColorGradient::gpJet);
+
+
     _splitter->addWidget(m_Ascan);
     _splitter->addWidget(m_Bscan);
-    _splitter->setSizes(QList<int>(height(), height()));
+    _splitter->setSizes(QList<int>(height()-30, height()));
 
     // setting dock
-    QDockWidget *settingDock = new QDockWidget(graphFrame,Qt::CustomizeWindowHint );
-    settingDock->setFeatures(QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable);
+    QDockWidget *settingDock = new QDockWidget(graphFrame,Qt::CustomizeWindowHint|Qt::FramelessWindowHint );
+    settingDock->setFeatures(QDockWidget::DockWidgetFeature::NoDockWidgetFeatures);
     m_settings = new TSettings();
     settingDock->setWidget(m_settings);
     graphFrame->addDockWidget(Qt::LeftDockWidgetArea, settingDock);
@@ -118,6 +111,7 @@ MainWindow::MainWindow(QWidget *parent)
     // final finish
     setConnectionIndicator();
     ui->spinEnvLevel->setValue(0);
+
     resetUI();
 
 }
@@ -291,6 +285,7 @@ void MainWindow::on_btnConnect_clicked(bool checked)
         QTimer::singleShot(101, m_client, &mTcpClient::stop);
         m_client->flush();
         resetUI();
+        ui->btnRun->setDisabled(true);
     }
 }
 
@@ -495,23 +490,24 @@ void MainWindow::updateBScan(const QList<QPointF> &data, bool forward)
         m_currentLine >= _colorMap->data()->keySize() ? m_currentLine=0: m_currentLine++;
 
         // configure the colormap
-        for(int i=_start; i<valueSize; i++)
+        for(int i=_start; i<valueSize + _start; i++)
         {
-            _colorMap->data()->setCell(m_currentLine, i, data[i].y());
+            _colorMap->data()->setCell(m_currentLine, i - _start, data[i].y());
         }
     }else
     {
         //  remove current front line
 
         m_currentLine <= 0 ? m_currentLine=0 : m_currentLine-=1;
-        for(int i=_start; i<valueSize; i++)
+        for(int i=_start; i<valueSize + _start; i++)
         {
-            _colorMap->data()->setCell(m_currentLine+1, i, 0);
-            _colorMap->data()->setCell(m_currentLine, i, data[i].y());
+            _colorMap->data()->setCell(m_currentLine+1, i - _start, 0);
+            _colorMap->data()->setCell(m_currentLine, i - _start, data[i].y());
         }
     }
     _colorMap->rescaleDataRange();
     _colorMap->rescaleAxes();
+    _colorMap->setGradient(QCPColorGradient::gpJet);
     m_Bscan->replot(QCustomPlot::rpQueuedRefresh);
 }
 
@@ -591,11 +587,18 @@ void MainWindow::do_bScanSetting(bool arg, const QList<qfloat16> &settings)
 
     if(use_bscan)
     {
+
+
+        m_Bscan->xAxis->setLabel("Scan Length [mm]");
+        m_Bscan->yAxis->setLabel("Depth [mm]");
+
         QCPColorMap * _map = static_cast<QCPColorMap *>(m_Bscan->plottable());
 
         // clear graph for replot;
         _map->data()->fill(0);
 
+        // reset front head to -1
+        m_currentLine = -1;
         if(_map)
         {
             float thick = settings[0];
@@ -607,11 +610,12 @@ void MainWindow::do_bScanSetting(bool arg, const QList<qfloat16> &settings)
             int ny = 4 * thick / 1000.0 / m_vel * 125e6;
 
             _map->data()->setSize(nx, ny); // we want the color map to have nx * ny data points
-            _map->data()->setRange(QCPRange(0, length), QCPRange(2 * thick, 0));
+            _map->data()->setRange(QCPRange(0, length), QCPRange(0, 2 * thick));
+            _map->setGradient(QCPColorGradient::gpJet);
+
             _map->rescaleDataRange();
             _map->rescaleAxes();
-            _map->setGradient(QCPColorGradient::gpJet);
-            m_Bscan->replot();
+            m_Bscan->replot(QCustomPlot::rpImmediateRefresh);
         }
     }
 }

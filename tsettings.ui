@@ -260,6 +260,9 @@
            <property name="buttonSymbols">
             <enum>QAbstractSpinBox::NoButtons</enum>
            </property>
+           <property name="suffix">
+            <string> mm</string>
+           </property>
            <property name="maximum">
             <double>9999.000000000000000</double>
            </property>
@@ -279,6 +282,9 @@
           <widget class="QDoubleSpinBox" name="spinScanLength">
            <property name="buttonSymbols">
             <enum>QAbstractSpinBox::NoButtons</enum>
+           </property>
+           <property name="suffix">
+            <string> mm</string>
            </property>
            <property name="maximum">
             <double>9999.000000000000000</double>

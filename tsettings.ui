@@ -22,6 +22,12 @@
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <widget class="QFrame" name="frame">
+     <property name="maximumSize">
+      <size>
+       <width>16777215</width>
+       <height>780</height>
+      </size>
+     </property>
      <property name="frameShape">
       <enum>QFrame::StyledPanel</enum>
      </property>
@@ -38,6 +44,12 @@
       </item>
       <item row="4" column="2">
        <widget class="QSpinBox" name="spinGain">
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>20</height>
+         </size>
+        </property>
         <property name="buttonSymbols">
          <enum>QAbstractSpinBox::NoButtons</enum>
         </property>
@@ -91,6 +103,12 @@
       </item>
       <item row="2" column="2">
        <widget class="QSpinBox" name="prf">
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>20</height>
+         </size>
+        </property>
         <property name="buttonSymbols">
          <enum>QAbstractSpinBox::NoButtons</enum>
         </property>
@@ -120,6 +138,12 @@
       </item>
       <item row="5" column="2">
        <widget class="QSpinBox" name="spinAvg">
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>20</height>
+         </size>
+        </property>
         <property name="buttonSymbols">
          <enum>QAbstractSpinBox::NoButtons</enum>
         </property>
@@ -136,12 +160,24 @@
       </item>
       <item row="9" column="0" colspan="3">
        <widget class="QGroupBox" name="groupBox_3">
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>70</height>
+         </size>
+        </property>
         <property name="title">
          <string>Golay</string>
         </property>
         <layout class="QFormLayout" name="formLayout_3">
          <item row="0" column="0">
           <widget class="QLabel" name="labelHz_8">
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>20</height>
+            </size>
+           </property>
            <property name="text">
             <string>Golay sequence</string>
            </property>
@@ -149,6 +185,12 @@
          </item>
          <item row="0" column="1">
           <widget class="QComboBox" name="golayLength">
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>20</height>
+            </size>
+           </property>
            <item>
             <property name="text">
              <string>2 bit</string>
@@ -171,6 +213,12 @@
       </item>
       <item row="1" column="2">
        <widget class="QDoubleSpinBox" name="spinFrequency">
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>20</height>
+         </size>
+        </property>
         <property name="buttonSymbols">
          <enum>QAbstractSpinBox::NoButtons</enum>
         </property>
@@ -193,6 +241,12 @@
       </item>
       <item row="0" column="2">
        <widget class="QSpinBox" name="spinCycles">
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>20</height>
+         </size>
+        </property>
         <property name="buttonSymbols">
          <enum>QAbstractSpinBox::NoButtons</enum>
         </property>
@@ -219,6 +273,12 @@
       </item>
       <item row="7" column="2">
        <widget class="QSpinBox" name="spinRefresh">
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>20</height>
+         </size>
+        </property>
         <property name="buttonSymbols">
          <enum>QAbstractSpinBox::NoButtons</enum>
         </property>
@@ -343,6 +403,12 @@
       </item>
       <item row="3" column="2">
        <widget class="QSpinBox" name="spinPower">
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>20</height>
+         </size>
+        </property>
         <property name="buttonSymbols">
          <enum>QAbstractSpinBox::NoButtons</enum>
         </property>
@@ -362,6 +428,12 @@
       </item>
       <item row="6" column="2">
        <widget class="QDoubleSpinBox" name="spinVel">
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>20</height>
+         </size>
+        </property>
         <property name="buttonSymbols">
          <enum>QAbstractSpinBox::NoButtons</enum>
         </property>
@@ -385,6 +457,12 @@
       </item>
       <item row="8" column="0" colspan="3">
        <widget class="QGroupBox" name="groupBox">
+        <property name="maximumSize">
+         <size>
+          <width>16777215</width>
+          <height>130</height>
+         </size>
+        </property>
         <property name="title">
          <string>Filter</string>
         </property>

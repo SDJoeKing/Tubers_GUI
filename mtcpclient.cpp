@@ -181,6 +181,7 @@ void mTcpClient::readMessage()
     else if(msg.contains("starting acquisition"))
     {
         m_readSize = 0;
+        counter_data = 0;
         emit acquisitionReady();
         emit tcpMessage(m_server + msg.sliced(0, 20));
     }
@@ -188,8 +189,15 @@ void mTcpClient::readMessage()
     else if(msg.contains("acquisition stopped"))
     {
         m_readSize = 0;
+        counter_data = 0;
         emit acquisitionStop();
         emit tcpMessage(m_server + msg.sliced(0, 19));
+    }
+    // nodata handling
+    else if(msg.contains("nodata"))
+    {
+        m_readSize = 0;
+        counter_data = 0;
     }
     else
     {

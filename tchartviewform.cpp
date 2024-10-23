@@ -28,7 +28,9 @@ TChartViewForm::TChartViewForm(QWidget *parent)
 
     m_chart->addSeries(m_series);
     m_chart->addSeries(m_ruler);
-    m_chart->legend()->markers(m_ruler).at(0)->setVisible(false);
+    // m_chart->legend()->markers(m_ruler).at(0)->setVisible(false);
+    // m_chart->legend()->markers(m_series).at(0)->setVisible(false);
+    m_chart->legend()->hide();
 
 
     m_chart->addAxis(m_X, Qt::AlignBottom);
@@ -49,10 +51,13 @@ TChartViewForm::TChartViewForm(QWidget *parent)
     m_X->setTitleText("A-scan data points");
     m_Y->setTitleText("Amplitude [mV]");
     m_X->setLabelFormat("%.2f");
+    m_X->setMinorTickCount(2);
+    m_X->applyNiceNumbers();
 
     m_X->setRange(xMin, xMax);
     m_Y->setRange(yMin, yMax);
 
+    m_chartView->setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
     // gate
     m_gate1 = new TGate();
     m_gate2 = new TGate();

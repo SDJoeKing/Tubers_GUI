@@ -20,12 +20,6 @@ mTcpClient::~mTcpClient()
     qDebug() << "TCP client destroyed";
     qDebug() << "client is open ? " << isOpen();
 
-    // if(isOpen())
-    // {
-    //     this->stop();
-    // }
-
-
 }
 
 bool mTcpClient::start(const QString &address, const quint8 port)
@@ -61,10 +55,6 @@ void mTcpClient::updateState(QTcpSocket::SocketState state)
     m_state = state;
 }
 
-// void mTcpClient::lockRelease()
-// {
-//     m_lock = false;
-// }
 
 void mTcpClient::clearData()
 {
@@ -159,11 +149,7 @@ void mTcpClient::readMessage()
     }
     QString msg = QString::fromLatin1(tempData, 20);
 
-    // for(int i=0; i<m_readSize; i++)
-    //     qDebug() << tempData[i];
 
-    // different cases for commands
-    // connect
 
     if(msg.contains("ematserver"))
     {

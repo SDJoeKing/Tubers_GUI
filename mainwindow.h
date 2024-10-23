@@ -68,7 +68,7 @@ private slots:
     void bScanCustomContext(const QPoint &pos);
     void on_btnCal_clicked();
 
-    void do_bScanSetting(bool, const QList<qfloat16> &);
+    void do_bScanSetting(bool, const QList<double> &);
 private:
     QTimer _tempTimer;
     Ui::MainWindow *ui;
@@ -86,17 +86,17 @@ private:
     int m_timerInterval=30; // in ms
     float m_vel=5890.0;
     // envelope coefficients
-    qfloat16 m_ga;
-    qfloat16 m_gr;
-    static qfloat16 _env;
+    double m_ga;
+    double m_gr;
+    static double _env;
     static void resetEnv();
     int m_currentLine=-1;
 
     // filter param
     Dsp::SimpleFilter<Dsp::Butterworth::BandPass <4> , 1> m_filter;
     int m_order = 4;
-    qfloat16 m_fc = 5;
-    qfloat16 m_fw = 8;
+    double m_fc = 5;
+    double m_fw = 8;
 
     bool use_bscan = 0;
     void updateFilter();
@@ -107,15 +107,20 @@ private:
     void doRequestData();
     void updateTimer();
     void set_envelope(float, float);
-    qfloat16 envelope(qfloat16);
+    double envelope(double);
 
 
 signals:
-    void velocitySet(qfloat16);
+    void velocitySet(double);
+
     void dataReceived(const QList<QPointF> &data, bool direction);
     void axisTypeChanged(TChartViewForm::AXISTYPE type);
     void acquisitionRun(bool);
     void dataForLogger(const QByteArray &);
     // QWidget interface
+
+    // QWidget interface
+protected:
+    virtual void resizeEvent(QResizeEvent *event) override;
 };
 #endif // MAINWINDOW_H

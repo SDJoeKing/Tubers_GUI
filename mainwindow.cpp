@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "./ui_mainwindow.h"
 
-qfloat16 MainWindow::_env=0;
+double MainWindow::_env=0;
 
 
 MainWindow::MainWindow(QWidget *parent)
@@ -100,6 +100,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(m_Ascan, &TChartViewForm::setRectifyUncheck, this, &MainWindow::setRectifyUnchecked);
     connect(this, &MainWindow::dataReceived, this, &MainWindow::updateBScan);
+    connect(this, &MainWindow::dataReceived, m_Ascan, &TChartViewForm::plot);
+
     connect(m_Ascan, &TChartViewForm::calculatedThickness, ui->spinDepth, &QDoubleSpinBox::setValue);
     connect(m_Bscan, &QCustomPlot::customContextMenuRequested, this, &MainWindow::bScanCustomContext);
     connect(m_settings, &TSettings::bScanSetting, this, &MainWindow::do_bScanSetting);
@@ -206,10 +208,10 @@ void MainWindow::doSettingsConfirmed(QString str)
     auto avg = list[5].toInt();
     auto prf = list[2].toInt();
     auto _interval = list[9].toInt();
-    m_vel = list[8].toFloat();
+    m_vel = list[8].toDouble();
     m_order = list[10].toInt();
-    m_fc = (list[12].toFloat() + list[11].toFloat() )/ 2.0;
-    m_fw= list[12].toFloat() - list[11].toFloat();
+    m_fc = (list[12].toDouble() + list[11].toDouble() )/ 2.0;
+    m_fw= list[12].toDouble() - list[11].toDouble();
 
     updateFilter();
 
@@ -336,7 +338,7 @@ void MainWindow::doDataReady()
     quint8 _forward = static_cast<quint8>(m_serverData.at(mTcpClient::DATA_SIZE - 1)  & 0xFF);
     qDebug() << _forward;
     int j=0;
-    qfloat16 xpoint=0;
+    double xpoint=0;
     QList<QPointF> calPoint(mTcpClient::DATA_SIZE/2);
     quint16 temp1;
     quint16 temp2;
@@ -375,7 +377,8 @@ void MainWindow::doDataReady()
     }
 
     resetEnv();
-    m_Ascan->plot(calPoint);
+
+
 
     emit dataForLogger(_arr);
     emit dataReceived(calPoint, _forward == 1 ? true : false); // sent for Bscan & clear tcp client data buffer
@@ -405,7 +408,7 @@ void MainWindow::set_envelope(float attack, float release)
     m_gr = attack < 1e-20 ? 0 :1 - qExp(-1.0 / (release * 125e6));
 }
 
-qfloat16 MainWindow::envelope(qfloat16 sample)
+double MainWindow::envelope(double sample)
 {
     auto s = qAbs(sample);
     _env += (s - _env) * (s > _env ? m_ga : m_gr);
@@ -415,7 +418,7 @@ qfloat16 MainWindow::envelope(qfloat16 sample)
 
 void MainWindow::on_spinEnvLevel_valueChanged(int arg1)
 {
-    qfloat16 _release = arg1 * 1e-7;
+    double _release = arg1 * 1e-7;
     set_envelope(1e-7, _release );
 }
 
@@ -458,7 +461,7 @@ void MainWindow::on_ckRectify_clicked(bool checked)
 int findFrontWall(const QList<QPointF> &data)
 {
     int _max = 200; // in water less than 2mm
-    qfloat16 value = 0;
+    double value = 0;
     for(int i = _max; i< mTcpClient::DATA_SIZE/2; i++)
     {
         auto _v = qAbs(data[i].y());
@@ -571,7 +574,7 @@ void MainWindow::on_btnCal_clicked()
     }
 }
 
-void MainWindow::do_bScanSetting(bool arg, const QList<qfloat16> &settings)
+void MainWindow::do_bScanSetting(bool arg, const QList<double> &settings)
 {
     use_bscan = arg;
     ui->ckBscan->setEnabled(use_bscan);
@@ -620,3 +623,23 @@ void MainWindow::do_bScanSetting(bool arg, const QList<qfloat16> &settings)
     }
 }
 
+
+
+void MainWindow::resizeEvent(QResizeEvent *event)
+{
+    resizing = true;
+    disconnect(this, &MainWindow::dataReceived, m_Ascan, &TChartViewForm::plot);
+    QMainWindow::resizeEvent(event);
+}
+
+
+void MainWindow::mouseReleaseEvent(QMouseEvent *event)
+{
+    if(resizing)
+    {
+        resizing = false;
+        connect(this, &MainWindow::dataReceived, m_Ascan, &TChartViewForm::plot);
+    }
+
+    QMainWindow::mouseReleaseEvent(event);
+}

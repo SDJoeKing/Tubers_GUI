@@ -71,7 +71,7 @@ void mTcpClient::flush()
     m_readSize = 0;
 }
 
-void mTcpClient::setData(const QList<qfloat16> &d)
+void mTcpClient::setData(const QList<double> &d)
 /*
  *  Do not use or call, just for debugging
  */

@@ -28,7 +28,7 @@ class TChartViewForm : public QWidget
 public:
     explicit TChartViewForm(QWidget *parent = nullptr);
     ~TChartViewForm();
-    void plot(const QList<QPointF> &data);
+
     enum AXISTYPE
     {
         SAMPLE = 4000,
@@ -38,9 +38,10 @@ public:
     };
 
 public slots:
+    void plot(const QList<QPointF> &data, bool plot = true);
     void toogleGates(bool);
     void changeAxisType(TChartViewForm::AXISTYPE);
-    void setVelocity(qfloat16);
+    void setVelocity(double);
     void clear();
     void doZoomInOut(QRectF);
     void acquisitionStatus(bool);
@@ -73,15 +74,15 @@ private:
     const float yMax = 500;
     const float xMin=0;
     const float xMax = mTcpClient::DATA_SIZE/2;
-    qfloat16 m_vel = 5890.0;
+    double m_vel = 5890.0;
     bool _dataTipOn=false;
     bool _zoomOn=false;
     AXISTYPE _xAxisType = AXISTYPE::SAMPLE;
     AXISTYPE _yAxisType = AXISTYPE::FULLY;
     QList<QLabel *>_dataTipList;
     QLabel *generateLabel(QWidget *parent);
-    int depthToPoint(qfloat16 depth);
-    qfloat16 pointToDepth(int point);
+    int depthToPoint(double depth);
+    double pointToDepth(int point);
     void updateLabelPosition();
     bool inRange(const QPointF &, QValueAxis *, QValueAxis *);
     bool acquisitionRunning = false;
@@ -95,7 +96,7 @@ public:
     virtual bool eventFilter(QObject *watched, QEvent *event) override;
 signals:
     void setRectifyUncheck();
-    void calculatedThickness(qfloat16);
+    void calculatedThickness(double);
 };
 
 #endif // TCHARTVIEWFORM_H

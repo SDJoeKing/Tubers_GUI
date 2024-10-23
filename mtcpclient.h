@@ -29,7 +29,7 @@ public slots:
     void sendSetting(const QString &);
     void clearData();
     void flush();
-    void setData(const QList<qfloat16> &d);
+    void setData(const QList<double> &d);
 private:
 
     QTcpSocket *m_socket;

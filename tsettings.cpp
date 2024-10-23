@@ -20,7 +20,7 @@ void TSettings::updateHz(QString arg)
     ui->labelHz->setText(arg);
 }
 
-void TSettings::updateVel(qfloat16 newVel)
+void TSettings::updateVel(double newVel)
 {
     ui->spinVel->setValue(newVel);
 }
@@ -58,7 +58,7 @@ void TSettings::on_btnConfirm_clicked()
 
     emit settingConfirm(setting);
 
-    QList<qfloat16> bscanSetting;
+    QList<double> bscanSetting;
     bscanSetting.emplaceBack(thick);
     bscanSetting.emplaceBack(length);
     bscanSetting.emplaceBack(step);

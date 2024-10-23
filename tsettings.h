@@ -22,13 +22,13 @@ public:
 
 public slots:
     void updateHz(QString);
-    void updateVel(qfloat16);
+    void updateVel(double);
 private slots:
     void on_btnConfirm_clicked();
 
 signals:
     void settingConfirm(const QString &settings);
-    void bScanSetting(bool, const QList<qfloat16> &settings);
+    void bScanSetting(bool, const QList<double> &settings);
 private:
     Ui::TSettings *ui;
 

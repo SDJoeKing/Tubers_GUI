@@ -100,7 +100,7 @@ TChartViewForm::~TChartViewForm()
 }
 
 
-void TChartViewForm::plot(const QList<QPointF> &data)
+void TChartViewForm::plot(const QList<QPointF> &data, bool _plot)
 {
     m_series->replace(data);
 }
@@ -152,7 +152,7 @@ void TChartViewForm::changeAxisType(TChartViewForm::AXISTYPE type)
 
 }
 
-void TChartViewForm::setVelocity(qfloat16 vel)
+void TChartViewForm::setVelocity(double vel)
 {
     int originalPointMax = depthToPoint(m_X->max());
     int originalPointMin = depthToPoint(m_X->min());
@@ -396,12 +396,12 @@ QLabel *TChartViewForm::generateLabel(QWidget *parent)
     return _temp;
 }
 
-int TChartViewForm::depthToPoint(qfloat16 depth)
+int TChartViewForm::depthToPoint(double depth)
 {
     return depth* 2 * 125e6 / m_vel / 1000;
 }
 
-qfloat16 TChartViewForm::pointToDepth(int point)
+double TChartViewForm::pointToDepth(int point)
 {
     return point / 2/ 125e6 * m_vel * 1000;
 }
@@ -507,7 +507,7 @@ qreal TChartViewForm::maxInd(const QRectF &rect)
     QPointF value_right = m_chart->mapToValue(rect.bottomRight(), m_series);
     int leftInd = value_left.x();
     int rightInd = value_right.x();
-    qfloat16 threshold = (value_left.y() + value_right.y()) / 2;
+    double threshold = (value_left.y() + value_right.y()) / 2;
 
     if(_xAxisType == AXISTYPE::DEPTH)
     {
@@ -524,7 +524,7 @@ qreal TChartViewForm::maxInd(const QRectF &rect)
 
     for(int i = leftInd+1; i< rightInd; i++)
     {
-        qfloat16 value = m_series->at(i).y();
+        double value = m_series->at(i).y();
         if((value > m_series->at(_tempMax).y()) && value >threshold )
             _tempMax = i;
     }

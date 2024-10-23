@@ -11,7 +11,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->setupUi(this);
     setWindowState(Qt::WindowMaximized);
     // setWindowFlag(Qt::MSWindowsFixedSizeDialogHint);
-    setWindowFlags(  Qt::MSWindowsFixedSizeDialogHint| Qt::Window | Qt::CustomizeWindowHint | Qt::WindowMinimizeButtonHint | Qt::WindowCloseButtonHint) ;
+    setWindowFlags(  Qt::Window | Qt::CustomizeWindowHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint) ;
     ui->log->setEnabled(false);
     ui->btnRun->setEnabled(false);
     ui->ckBscan->setEnabled(false);
@@ -25,6 +25,7 @@ MainWindow::MainWindow(QWidget *parent)
     QMainWindow *graphFrame = new QMainWindow();
     ui->mdiArea->addSubWindow(graphFrame,Qt::Tool|Qt::CustomizeWindowHint|Qt::FramelessWindowHint);
     graphFrame->setWindowState(Qt::WindowState::WindowMaximized);
+    graphFrame->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
     graphFrame->show();
 
     // A/B scan screen splitter - verticle
@@ -56,7 +57,11 @@ MainWindow::MainWindow(QWidget *parent)
     settingDock->setFeatures(QDockWidget::DockWidgetFeature::NoDockWidgetFeatures);
     m_settings = new TSettings();
     settingDock->setWidget(m_settings);
+
+
+
     graphFrame->addDockWidget(Qt::LeftDockWidgetArea, settingDock);
+
 
     // TCP Client
     m_client = new mTcpClient(this);
@@ -146,6 +151,7 @@ void MainWindow::resetUI()
 
     m_Ascan->clear();
 
+
 }
 
 void MainWindow::setConnectionIndicator()
@@ -187,6 +193,7 @@ void MainWindow::on_actionSettings_triggered(bool checked)
 {
     auto dock = static_cast<QDockWidget *>(m_settings->parent());
     dock->setVisible(checked);
+    dock->resize(800, 800);
 
 }
 
@@ -194,24 +201,16 @@ void MainWindow::doSettingsConfirmed(QString str)
 {
     ui->actionSettings->trigger();
 
-    /*
-     cycle // pulseFreq // prf
-     power // gain // avg
-     trigger // skip // vel
-     Hz // ord // l // h
-
-    */
-
     // update internal timer logic
     auto list = str.split(";");
     qDebug() << list;
-    auto avg = list[5].toInt();
-    auto prf = list[2].toInt();
-    auto _interval = list[9].toInt();
-    m_vel = list[8].toDouble();
-    m_order = list[10].toInt();
-    m_fc = (list[12].toDouble() + list[11].toDouble() )/ 2.0;
-    m_fw= list[12].toDouble() - list[11].toDouble();
+    auto avg = list[TSettings::requestedAverages].toInt();
+    auto prf = list[TSettings::prf].toInt();
+    auto _interval = list[TSettings::refreshRate].toInt(); // Hz
+    m_vel = list[TSettings::velocity].toDouble();
+    m_order = list[TSettings::order].toInt();
+    m_fc = (list[TSettings::lowCut].toDouble() + list[TSettings::highCut].toDouble() )/ 2.0;
+    m_fw= qAbs(list[TSettings::highCut].toDouble() - list[TSettings::lowCut].toDouble());
 
     updateFilter();
 
@@ -223,11 +222,11 @@ void MainWindow::doSettingsConfirmed(QString str)
     updateTimer();
 
     int _size = 0;
-    for(int i = 0 ; i< 8; i++)
-        _size+=list[i].size();
+    for(int i = TSettings::txChannel ; i< TSettings::motorAngle + 1; i++)
+        _size+=list[i].size()+1; // including the separator size
 
-    auto settings = str.sliced(0, _size+7);
-
+    auto settings = str.sliced(0, _size );
+    qDebug() << settings;
     auto _status = ui->statusBar->findChild<QLabel *>("m_status");
     if(_status)
     {
@@ -243,9 +242,7 @@ void MainWindow::doSettingsConfirmed(QString str)
     }
     else
     {
-
         m_client->sendSetting(settings);
-        qDebug() << settings;
     }
 
 }

@@ -14,7 +14,7 @@
 #include <QEvent>
 #include <QWheelEvent>
 #include <QVBoxLayout>
-
+#include <QSizePolicy>
 
 #include "tsettings.h"
 #include "tlogging.h"
@@ -100,6 +100,10 @@ private:
 
     bool use_bscan = 0;
     void updateFilter();
+
+    // resizing
+    bool resizing = false;
+
 // private functions
 private:
     void resetUI();
@@ -122,5 +126,9 @@ signals:
     // QWidget interface
 protected:
     virtual void resizeEvent(QResizeEvent *event) override;
+
+    // QWidget interface
+protected:
+    virtual void mouseReleaseEvent(QMouseEvent *event) override;
 };
 #endif // MAINWINDOW_H

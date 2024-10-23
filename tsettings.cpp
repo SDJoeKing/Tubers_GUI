@@ -8,6 +8,10 @@ TSettings::TSettings(QWidget *parent)
     ui->setupUi(this);
     setWindowFlags(Qt::Popup| Qt::CustomizeWindowHint);
     setWindowTitle("S");
+    setMouseTracking(false);
+
+    installFilter(ui->scrollAreaWidgetContents_2);
+
 }
 
 TSettings::~TSettings()
@@ -29,12 +33,32 @@ void TSettings::on_btnConfirm_clicked()
 {
 
     QString setting;
-    setting+= QString::number(ui->spinCycles->value()) + ";";
-    setting+= QString::number(ui->spinFrequency->value()) + ";";
-    setting+= QString::number(ui->prf->value()) + ";";
-    setting+= QString::number(ui->spinPower->value()) + ";";
-    setting+= QString::number(ui->spinGain->value()) + ";";
-    setting+= QString::number(ui->spinAvg->value())+ ";";
+    setting+= QString::number(ui->spinTx->value()) + ";"; // txchan
+    setting+= QString::number(ui->spinRx->value()) + ";"; // rx
+    setting+= QString::number(ui->spinPulseDelay->value()) + ";"; // pulse delay
+    setting+= QString(ui->pulseSequence->text()) + ";"; // pulseSequence
+    setting+= QString::number(ui->spinFrequency->value()) + ";"; // pulse freq
+    setting+= QString::number(ui->prf->value()) + ";"; // prf
+
+    int power = 0;
+    switch(ui->powerOutput->currentIndex())
+    {
+        case 0:
+            power = 25;
+            break;
+        case 1:
+            power = 50;
+            break;
+        case 2:
+            power = 100;
+            break;
+        default:
+            power = 50;
+    }
+
+    setting+= QString::number(power) + ";"; // power output
+    setting+= QString::number(ui->spinGain->value()) + ";"; // gain
+    setting+= QString::number(ui->spinAvg->value())+ ";"; // avg
 
 
     //encoder / bscan setting
@@ -44,9 +68,14 @@ void TSettings::on_btnConfirm_clicked()
     int step = ui->spinEncoderStep->value();
     float res = ui->spinEncoderRes->value();
 
-    setting+= QString::number(encoderTrigger)+ ";";
-    setting+= QString::number(step)+ ";";
+    setting+= QString::number(encoderTrigger)+ ";"; // encoder triggering
+    setting+= QString::number(step)+ ";"; // encoder skips
 
+    // motor speed
+    setting+= QString::number(ui->motorSpeed->value()) + ";"; // motor speed
+    setting+= QString::number(ui->motorAngle->value()) + ";"; // motor angle
+
+    // velocity refreshrate
     setting+= QString::number(ui->spinVel->value()) + ";";
     setting+= QString::number(ui->spinRefresh->value()) + ";";
 
@@ -68,3 +97,32 @@ void TSettings::on_btnConfirm_clicked()
 
 }
 
+void TSettings::installFilter(QObject *obj)
+{
+    for(QObject* child : obj->children())
+    {
+        installFilter(child);
+
+        if(qobject_cast<QAbstractSpinBox *>(child) || qobject_cast<QComboBox *>(child))
+            child->installEventFilter(this);
+    }
+}
+
+
+
+bool TSettings::eventFilter(QObject *watched, QEvent *event)
+{
+
+
+    if(event->type() == QEvent::Wheel)
+    {
+        if (!static_cast<QWidget *>(watched)->hasFocus())
+        {
+            event->ignore();
+            return 1;
+        }
+    }
+
+
+    return QDialog::eventFilter(watched, event);
+}

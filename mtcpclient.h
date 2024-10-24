@@ -12,6 +12,8 @@ class mTcpClient : public QObject
 {
     Q_OBJECT
 
+
+
 public:
     explicit mTcpClient(QObject *parent=nullptr);
     ~mTcpClient();

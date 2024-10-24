@@ -193,7 +193,6 @@ void MainWindow::on_actionSettings_triggered(bool checked)
 {
     auto dock = static_cast<QDockWidget *>(m_settings->parent());
     dock->setVisible(checked);
-    dock->resize(800, 800);
 
 }
 
@@ -297,6 +296,8 @@ void MainWindow::updateTimer()
 {
     m_timerInterval = qMax(m_timerInterval, m_minTimerInterval);
     m_timer->setInterval( m_timerInterval);
+    if(use_bscan)
+        m_timer->setInterval(20);
 }
 
 void MainWindow::logMsg(QString str)
@@ -625,18 +626,20 @@ void MainWindow::do_bScanSetting(bool arg, const QList<double> &settings)
 void MainWindow::resizeEvent(QResizeEvent *event)
 {
     resizing = true;
-    disconnect(this, &MainWindow::dataReceived, m_Ascan, &TChartViewForm::plot);
+    // disconnect(this, &MainWindow::dataReceived, m_Ascan, &TChartViewForm::plot);
+    const QSignalBlocker blocker(m_timer);
     QMainWindow::resizeEvent(event);
 }
 
 
 void MainWindow::mouseReleaseEvent(QMouseEvent *event)
 {
-    if(resizing)
-    {
-        resizing = false;
-        connect(this, &MainWindow::dataReceived, m_Ascan, &TChartViewForm::plot);
-    }
+    // if(resizing)
+    // {
+    //     resizing = false;
+    //     // connect(this, &MainWindow::dataReceived, m_Ascan, &TChartViewForm::plot);
+    //     m_timer->start();
+    // }
 
-    QMainWindow::mouseReleaseEvent(event);
+    // QMainWindow::mouseReleaseEvent(event);
 }

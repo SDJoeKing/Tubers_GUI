@@ -1,6 +1,6 @@
 #include "mtcpclient.h"
 
-
+static int counter = 0;
 
 mTcpClient::mTcpClient(QObject *parent)
     :QObject{parent}
@@ -184,6 +184,8 @@ void mTcpClient::readMessage()
     {
         m_readSize = 0;
         counter_data = 0;
+        // m_data.clear();
+        // qDebug() << "nodata";
     }
     else
     {
@@ -192,13 +194,15 @@ void mTcpClient::readMessage()
 
     m_data.replace(counter_data, counter_data+m_readSize, tempData, m_readSize);
     counter_data+=m_readSize;
-    qDebug() <<"ReadSize: "<< m_readSize << " Counter: "<<counter_data;
+    // qDebug() <<"ReadSize: "<< m_readSize << " Counter: "<<counter_data;
+
     if(counter_data==DATA_SIZE )
     {
         emit dataReady(true);
         counter_data = 0;
         m_readSize = 0;
-        qDebug() << "Datasize " << m_data.size();
+        counter++;
+        qDebug() << counter;
 
         // emit canStop();    // open the lock for possible stop commands
 

@@ -103,6 +103,7 @@ TChartViewForm::~TChartViewForm()
 void TChartViewForm::plot(const QList<QPointF> &data, bool _plot)
 {
     m_series->replace(data);
+
 }
 
 void TChartViewForm::changeAxisType(TChartViewForm::AXISTYPE type)

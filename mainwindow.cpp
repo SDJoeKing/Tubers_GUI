@@ -297,7 +297,7 @@ void MainWindow::updateTimer()
     m_timerInterval = qMax(m_timerInterval, m_minTimerInterval);
     m_timer->setInterval( m_timerInterval);
     if(use_bscan)
-        m_timer->setInterval(20);
+        m_timer->setInterval(2);
 }
 
 void MainWindow::logMsg(QString str)
@@ -375,11 +375,8 @@ void MainWindow::doDataReady()
     }
 
     resetEnv();
-
-
-
     emit dataForLogger(_arr);
-    emit dataReceived(calPoint, _forward == 1 ? true : false); // sent for Bscan & clear tcp client data buffer
+    emit dataReceived(calPoint, _forward == 2 ? false : true); // sent for Bscan & clear tcp client data buffer
 }
 
 void MainWindow::on_btnRun_clicked(bool checked)
@@ -503,7 +500,7 @@ void MainWindow::updateBScan(const QList<QPointF> &data, bool forward)
         for(int i=_start; i<valueSize + _start; i++)
         {
             _colorMap->data()->setCell(m_currentLine+1, i - _start, 0);
-            _colorMap->data()->setCell(m_currentLine, i - _start, data[i].y());
+            _colorMap->data()->setCell(m_currentLine, i - _start, qAbs(data[i].y()) > 100 ? 100 : data[i].y());
         }
     }
     _colorMap->rescaleDataRange();

@@ -69,6 +69,9 @@ private slots:
     void on_btnCal_clicked();
 
     void do_bScanSetting(bool, const QList<double> &);
+
+    // debugging fps
+    void do_fps(float);
 private:
     QTimer _tempTimer;
     Ui::MainWindow *ui;

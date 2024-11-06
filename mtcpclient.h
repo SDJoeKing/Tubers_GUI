@@ -7,17 +7,19 @@
 #include <QMetaEnum>
 #include <QEventLoop>
 #include <QMessageBox>
+#include <QMutex>
+#include <QMutexLocker>
+
+
 
 class mTcpClient : public QObject
 {
     Q_OBJECT
 
-
-
 public:
     explicit mTcpClient(QObject *parent=nullptr);
     ~mTcpClient();
-    static const quint16 DATA_SIZE = 16384 * 2;
+    static const quint16 DATA_SIZE = 16384*2 ;
     bool start(const QString &address, const quint8 port);
     void stop();
     void writeData(QByteArray arr);
@@ -33,7 +35,7 @@ public slots:
     void flush();
     void setData(const QList<double> &d);
 private:
-
+    QMutex mu;
     QTcpSocket *m_socket;
     QString m_name="TcpClient:  ";
     QString m_server = "TcpServer:  ";
@@ -41,11 +43,12 @@ private:
     QString errorToType(int);
     QTcpSocket::SocketState m_state;
     QByteArray m_data;
+    QByteArray m_readyData;
     bool m_lock;
     bool getLock(){return m_lock;};
     quint16 counter_data=0;
     quint16 m_readSize = 0;
-
+    bool m_commence = 0;
 private slots:
     void readMessage(); //  signal readyRead, slot readMessage
     void errorOccurred(QAbstractSocket::SocketError socketError);
@@ -64,7 +67,7 @@ signals:
     void acquisitionReady();
     void acquisitionStop();
     void dataReady(bool);
-    // void canStop();
+    void fps(float rate);
 
 };
 

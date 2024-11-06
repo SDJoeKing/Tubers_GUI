@@ -20,6 +20,9 @@ MainWindow::MainWindow(QWidget *parent)
     m_status= new QLabel(QString::asprintf("Ultrasound Velocity: %.2f m/s", m_vel), this);
     m_status->setObjectName("m_status");
     ui->statusBar->addPermanentWidget(m_status);
+    QLabel *fpsBar = new QLabel(this);
+    fpsBar->setObjectName("fpsBar");
+    ui->statusBar->addWidget(fpsBar);
 
     // Graph page & Dock widget
     QMainWindow *graphFrame = new QMainWindow();
@@ -115,6 +118,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(this, &MainWindow::velocitySet, m_settings, &TSettings::updateVel);
     connect(this, &MainWindow::dataForLogger, m_logging, &Tlogging::setData);
 
+    // connect fps
+    connect(m_client, &mTcpClient::fps, this, &MainWindow::do_fps);
+
     // final finish
     setConnectionIndicator();
     ui->spinEnvLevel->setValue(0);
@@ -200,7 +206,7 @@ void MainWindow::doSettingsConfirmed(QString str)
 {
     ui->actionSettings->trigger();
 
-    // update internal timer logic
+    // update internal ->s logic
     auto list = str.split(";");
     qDebug() << list;
     auto avg = list[TSettings::requestedAverages].toInt();
@@ -214,7 +220,7 @@ void MainWindow::doSettingsConfirmed(QString str)
     updateFilter();
 
     m_minTimerInterval = ((350*(avg-1) + 600) + (1.0/prf*1e6 + 200) *  avg + 350)/1000/0.9; // 10% safety margin
-    m_minTimerInterval = qMax(17, m_minTimerInterval);
+    m_minTimerInterval = qMax(3, m_minTimerInterval);
     m_settings->updateHz(QString("Refresh rate (max %1 Hz)").arg(1.0/m_minTimerInterval*1000, 0, 'f', 1));
 
     m_timerInterval = 1.0/_interval * 1000;
@@ -294,10 +300,13 @@ void MainWindow::doRequestData()
 
 void MainWindow::updateTimer()
 {
-    m_timerInterval = qMax(m_timerInterval, m_minTimerInterval);
+    // m_timerInterval = qMax(m_timerInterval, m_minTimerInterval);
     m_timer->setInterval( m_timerInterval);
     if(use_bscan)
-        m_timer->setInterval(2);
+    {
+        qDebug() << "set Timer fast";
+        m_timer->setInterval(1);
+    }
 }
 
 void MainWindow::logMsg(QString str)
@@ -333,8 +342,7 @@ void MainWindow::stopAcquisition()
 void MainWindow::doDataReady()
 {
     m_serverData = QByteArray::fromRawData(m_client->data(), mTcpClient::DATA_SIZE );
-    quint8 _forward = static_cast<quint8>(m_serverData.at(mTcpClient::DATA_SIZE - 1)  & 0xFF);
-    qDebug() << _forward;
+    quint8 _forward = static_cast<quint8>(m_serverData.at(3));
     int j=0;
     double xpoint=0;
     QList<QPointF> calPoint(mTcpClient::DATA_SIZE/2);
@@ -350,8 +358,8 @@ void MainWindow::doDataReady()
 
     for (int i = 0; i < mTcpClient::DATA_SIZE/2; i++)
     {
-        temp1 =(m_serverData[j + 1] << 8) & 0xFF00;
-        temp2 = (m_serverData[j]) & 0xFF;
+        temp1 =(m_serverData.at(j + 1) << 8) & 0xFF00;
+        temp2 = (m_serverData.at(j)) & 0xFF;
         dataPoint[0][i] = static_cast<qint16>(temp2 | temp1)/ 32768.0  * 3.18 * 1.0 *1000.0;
 
         j += 2;
@@ -385,7 +393,8 @@ void MainWindow::on_btnRun_clicked(bool checked)
     { // clear client data buffer
         m_client->startAcquisition();
         updateTimer();
-        m_timer->start();
+        // m_timer->setSingleShot(true);
+        // m_timer->start();
         emit acquisitionRun(true);
     }else
     {
@@ -615,6 +624,15 @@ void MainWindow::do_bScanSetting(bool arg, const QList<double> &settings)
             _map->rescaleAxes();
             m_Bscan->replot(QCustomPlot::rpImmediateRefresh);
         }
+    }
+}
+
+void MainWindow::do_fps(float fps)
+{
+    auto fpsBar = ui->statusBar->findChild<QLabel *>("fpsBar");
+    if(fpsBar)
+    {
+        fpsBar->setText(QString::asprintf("FPS: %.1f", fps));
     }
 }
 

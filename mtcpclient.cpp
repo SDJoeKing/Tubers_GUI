@@ -1,6 +1,8 @@
 #include "mtcpclient.h"
 
 static int counter = 0;
+static int old_counter = 0;
+QElapsedTimer elapTimer;
 
 mTcpClient::mTcpClient(QObject *parent)
     :QObject{parent}
@@ -13,6 +15,7 @@ mTcpClient::mTcpClient(QObject *parent)
     connect(m_socket, &QTcpSocket::stateChanged, this, &mTcpClient::updateState);
     // connect(this, &mTcpClient::canStop, this, &mTcpClient::lockRelease);
     m_data = QByteArray(16384, Qt::Uninitialized);
+    elapTimer.start();
 }
 
 mTcpClient::~mTcpClient()
@@ -131,7 +134,12 @@ QString mTcpClient::errorToType(int i)
 
 QByteArray mTcpClient::data() const
 {
-    return m_data;
+    return m_readyData;
+}
+
+static bool headerFound(const QByteArray arr)
+{
+    return ( (arr.at(0) == 0) && (static_cast<quint8>(arr.at(1)) == 0xFF) && (arr.at(2) == 0) );
 }
 
 void mTcpClient::readMessage()
@@ -184,29 +192,48 @@ void mTcpClient::readMessage()
     {
         m_readSize = 0;
         counter_data = 0;
-        // m_data.clear();
-        // qDebug() << "nodata";
+        m_data.clear();
+        qDebug() << "nodata";
     }
     else
     {
+        // m_commence = 1;
+
+        if(headerFound(tempData) && !m_commence)
+        {
+            m_commence = 1;
+        }
      // read all data routine
 
+        // qDebug() << "read size: " << m_readSize;
 
-    m_data.replace(counter_data, counter_data+m_readSize, tempData, m_readSize);
-    counter_data+=m_readSize;
-    // qDebug() <<"ReadSize: "<< m_readSize << " Counter: "<<counter_data;
+        if(m_commence)
+        {
+            QMutexLocker lk(&mu);
+            m_data.replace(counter_data, counter_data+m_readSize, tempData);
+            counter_data+=m_readSize;
+        // qDebug() <<"ReadSize: "<< m_readSize << " Counter: "<<counter_data;
 
-    if(counter_data==DATA_SIZE )
-    {
-        emit dataReady(true);
-        counter_data = 0;
-        m_readSize = 0;
-        counter++;
-        qDebug() << counter;
+            if(counter_data==DATA_SIZE )
+            {
+                m_commence = 0;
+                m_readyData.assign(m_data.sliced(0));
 
-        // emit canStop();    // open the lock for possible stop commands
+                emit dataReady(true);
+                // requestData();
+                counter_data = 0;
+                m_readSize = 0;
+                counter++;
+                if(elapTimer.hasExpired(1000))
+                {
+                    emit fps(static_cast<float>(counter-old_counter) / elapTimer.elapsed() * 1000.0);
+                    old_counter = counter;
+                    elapTimer.restart();
+                }
 
-    }
+                // elapTimer.restart();
+            }
+        }
 
     }
 

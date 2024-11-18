@@ -76,17 +76,13 @@ private:
     QTimer _tempTimer;
     Ui::MainWindow *ui;
     mTcpClient *m_client;
-    QTimer *m_timer;
     TSettings *m_settings;
     TChartViewForm *m_Ascan;
 
     QCustomPlot *m_Bscan;
-
     Tlogging *m_logging;
     QLabel *m_status;
     QByteArray m_serverData;
-    int m_minTimerInterval=17; // in ms
-    int m_timerInterval=30; // in ms
     float m_vel=5890.0;
     // envelope coefficients
     double m_ga;
@@ -111,8 +107,6 @@ private:
 private:
     void resetUI();
     void setConnectionIndicator();
-    void doRequestData();
-    void updateTimer();
     void set_envelope(float, float);
     double envelope(double);
 
@@ -130,8 +124,5 @@ signals:
 protected:
     virtual void resizeEvent(QResizeEvent *event) override;
 
-    // QWidget interface
-protected:
-    virtual void mouseReleaseEvent(QMouseEvent *event) override;
 };
 #endif // MAINWINDOW_H

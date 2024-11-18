@@ -3,11 +3,14 @@
 static int counter = 0;
 static int old_counter = 0;
 QElapsedTimer elapTimer;
+QByteArray ack = QString("data acknowledged").toUtf8();
 
 mTcpClient::mTcpClient(QObject *parent)
     :QObject{parent}
 {
     m_socket = new QTcpSocket(this);
+    m_socket->setSocketOption(QAbstractSocket::LowDelayOption, 1);
+
     connect(m_socket, &QTcpSocket::connected, this, &mTcpClient::connected);
     connect(m_socket, &QTcpSocket::disconnected, this, &mTcpClient::notifyServerDown);
     connect(m_socket, &QTcpSocket::readyRead, this, &mTcpClient::readMessage);
@@ -111,13 +114,12 @@ void mTcpClient::startAcquisition()
 
 void mTcpClient::stopAcquisition()
 {
-
     /*while(getLock()){};*/ // lock the process until no byte data is comming in
+    // m_stopAcq = 1;
+        m_command = "stop";
+        writeData(m_command.toUtf8());
+        qDebug() << "Stopcommand " << m_command;
 
-    m_command = "stop";
-    writeData(m_command.toUtf8());
-
-    qDebug() << "Stopcommand " << m_command;
 }
 
 void mTcpClient::sendSetting(const QString & param)
@@ -135,106 +137,117 @@ QString mTcpClient::errorToType(int i)
 QByteArray mTcpClient::data() const
 {
     return m_readyData;
+
 }
 
 static bool headerFound(const QByteArray arr)
 {
-    return ( (arr.at(0) == 0) && (static_cast<quint8>(arr.at(1)) == 0xFF) && (arr.at(2) == 0) );
+    return ( (arr.at(0) == 0) && (static_cast<quint8>(arr.at(1)) == 0xFF) && (arr.at(2) == 0) && (static_cast<quint8>(arr.at(3)) == 0xFF) );
+}
+
+
+bool mTcpClient::parseServerMsg(QByteArray &arr)
+{
+    auto size = arr.size();
+
+    if(size<1)
+    {
+        QMessageBox::warning(nullptr, "Warning!", "Get error reading from server");
+        this->stop();
+        notifyServerDown();
+        return 1;
+    }
+
+    QString msg = QString::fromUtf8(arr, 20);
+
+    if(msg.contains("ematserver"))
+    {
+        emit serverReady(true);
+        emit tcpMessage(m_server + msg.sliced(0, 10));
+        arr.slice(10);
+        return -1;
+    }
+    // Settings
+    else if(msg.contains("settings ok"))
+    {
+        emit settingReady(true);
+        emit tcpMessage(m_server + msg.sliced(0, 11));
+        arr.slice(11);
+        return -1;
+    }
+    // acquisition
+    else if(msg.contains("starting acquisition"))
+    {
+        emit acquisitionReady();
+        emit tcpMessage(m_server + msg.sliced(0, 20));
+        arr.slice(20);
+        return -1;
+    }
+    // stop acquisition
+    else if(msg.contains("acquisition stopped"))
+    {
+        emit acquisitionStop();
+        emit tcpMessage(m_server + msg.sliced(0, 19));
+        arr.slice(19);
+        return -1;
+    }
+    else if(msg.contains("data acknowledged"))
+    {
+        arr.slice(17);
+        return -1;
+    }
+    else
+    {
+        return 1;
+    }
 }
 
 void mTcpClient::readMessage()
 {
 
-    int remainSize = DATA_SIZE - counter_data;
-    QByteArray tempData = m_socket->read(remainSize);
+    // int remainSize = DATA_SIZE - counter_data;
+    QByteArray tempData = m_socket->readAll();
     m_readSize = tempData.size();
 
-    if(m_readSize<1)
-    {
-        QMessageBox::warning(nullptr, "Warning!", "Get error reading from server");
-        this->stop();
-        notifyServerDown();
-    }
-    QString msg = QString::fromLatin1(tempData, 20);
+    if(!parseServerMsg(tempData))
+        return;
 
-
-
-    if(msg.contains("ematserver"))
+    if(headerFound(tempData) && !m_commence)
     {
-        m_readSize = 0;
-        emit serverReady(true);
-        emit tcpMessage(m_server + msg.sliced(0, 10));
-    }
-        // Settings
-    else if(msg.contains("settings ok"))
-    {
-        m_readSize = 0;
-        emit settingReady(true);
-        emit tcpMessage(m_server + msg.sliced(0, 11));}
-    // acquisition
-    else if(msg.contains("starting acquisition"))
-    {
-        m_readSize = 0;
+        m_commence = 1;
         counter_data = 0;
-        emit acquisitionReady();
-        emit tcpMessage(m_server + msg.sliced(0, 20));
+        m_readSize = tempData.size();
+        qDebug() << "H: " << m_readSize;
     }
-    // stop acquisition
-    else if(msg.contains("acquisition stopped"))
+    qDebug() << "S: " << m_readSize << tempData.at(0)<<tempData.at(1)<<tempData.at(2)<<tempData.at(3);
+    if(m_commence)
     {
-        m_readSize = 0;
-        counter_data = 0;
-        emit acquisitionStop();
-        emit tcpMessage(m_server + msg.sliced(0, 19));
-    }
-    // nodata handling
-    else if(msg.contains("nodata"))
-    {
-        m_readSize = 0;
-        counter_data = 0;
-        m_data.clear();
-        qDebug() << "nodata";
-    }
-    else
-    {
-        // m_commence = 1;
+        QMutexLocker lk(&mu);
+        int size = (counter_data+m_readSize > DATA_SIZE ? DATA_SIZE : counter_data+m_readSize);
+        m_data.replace(counter_data, size, tempData);
+        counter_data+=m_readSize;
 
-        if(headerFound(tempData) && !m_commence)
+
+        if(counter_data>=DATA_SIZE )
         {
-            m_commence = 1;
-        }
-     // read all data routine
+            m_commence = 0;
+            m_readyData.assign(m_data.sliced(0));
 
-        // qDebug() << "read size: " << m_readSize;
+            // send data acknowledgement
+            writeData(ack);
+            emit dataReady(true);
+            qDebug() << "ACK";
 
-        if(m_commence)
-        {
-            QMutexLocker lk(&mu);
-            m_data.replace(counter_data, counter_data+m_readSize, tempData);
-            counter_data+=m_readSize;
-        // qDebug() <<"ReadSize: "<< m_readSize << " Counter: "<<counter_data;
-
-            if(counter_data==DATA_SIZE )
+            counter++;
+            if(elapTimer.hasExpired(3000))
             {
-                m_commence = 0;
-                m_readyData.assign(m_data.sliced(0));
-
-                emit dataReady(true);
-                // requestData();
-                counter_data = 0;
-                m_readSize = 0;
-                counter++;
-                if(elapTimer.hasExpired(1000))
-                {
-                    emit fps(static_cast<float>(counter-old_counter) / elapTimer.elapsed() * 1000.0);
-                    old_counter = counter;
-                    elapTimer.restart();
-                }
-
-                // elapTimer.restart();
+                emit fps(static_cast<float>(counter-old_counter) / elapTimer.elapsed() * 1000.0);
+                old_counter = counter;
+                elapTimer.restart();
             }
+            counter_data = 0;
+            m_readSize = 0;
         }
-
     }
 
 }

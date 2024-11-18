@@ -77,11 +77,6 @@ MainWindow::MainWindow(QWidget *parent)
     graphFrame->addDockWidget(Qt::RightDockWidgetArea, loggingDock);
     loggingDock->setVisible(false);
 
-    // QTimer for data request
-    m_timer = new QTimer(this);
-    updateTimer();
-    connect(m_timer, &QTimer::timeout, this, &MainWindow::doRequestData);
-
     // filter
     updateFilter();
 
@@ -219,18 +214,12 @@ void MainWindow::doSettingsConfirmed(QString str)
 
     updateFilter();
 
-    m_minTimerInterval = ((350*(avg-1) + 600) + (1.0/prf*1e6 + 200) *  avg + 350)/1000/0.9; // 10% safety margin
-    m_minTimerInterval = qMax(3, m_minTimerInterval);
-    m_settings->updateHz(QString("Refresh rate (max %1 Hz)").arg(1.0/m_minTimerInterval*1000, 0, 'f', 1));
-
-    m_timerInterval = 1.0/_interval * 1000;
-    updateTimer();
-
     int _size = 0;
     for(int i = TSettings::txChannel ; i< TSettings::motorAngle + 1; i++)
         _size+=list[i].size()+1; // including the separator size
 
     auto settings = str.sliced(0, _size );
+    settings += QString::number(m_Ascan->getAscanLength());
     qDebug() << settings;
     auto _status = ui->statusBar->findChild<QLabel *>("m_status");
     if(_status)
@@ -284,28 +273,12 @@ void MainWindow::on_btnConnect_clicked(bool checked)
     else
     {
         // disconnect
-        m_timer->stop(); //stop timer immediately to avoid further commands
+
         QTimer::singleShot(100, m_client, &mTcpClient::stopAcquisition);
         QTimer::singleShot(101, m_client, &mTcpClient::stop);
         m_client->flush();
         resetUI();
         ui->btnRun->setDisabled(true);
-    }
-}
-
-void MainWindow::doRequestData()
-{
-    m_client->requestData();
-}
-
-void MainWindow::updateTimer()
-{
-    // m_timerInterval = qMax(m_timerInterval, m_minTimerInterval);
-    m_timer->setInterval( m_timerInterval);
-    if(use_bscan)
-    {
-        qDebug() << "set Timer fast";
-        m_timer->setInterval(1);
     }
 }
 
@@ -392,14 +365,10 @@ void MainWindow::on_btnRun_clicked(bool checked)
     if(checked)
     { // clear client data buffer
         m_client->startAcquisition();
-        updateTimer();
-        // m_timer->setSingleShot(true);
-        // m_timer->start();
         emit acquisitionRun(true);
     }else
     {
-        m_timer->stop(); //stop timer immediately to avoid further commands
-        QTimer::singleShot(100, m_client, &mTcpClient::stopAcquisition);
+        m_client->stopAcquisition();
         m_client->flush();
         emit acquisitionRun(false);
     }
@@ -642,19 +611,6 @@ void MainWindow::resizeEvent(QResizeEvent *event)
 {
     resizing = true;
     // disconnect(this, &MainWindow::dataReceived, m_Ascan, &TChartViewForm::plot);
-    const QSignalBlocker blocker(m_timer);
     QMainWindow::resizeEvent(event);
 }
 
-
-void MainWindow::mouseReleaseEvent(QMouseEvent *event)
-{
-    // if(resizing)
-    // {
-    //     resizing = false;
-    //     // connect(this, &MainWindow::dataReceived, m_Ascan, &TChartViewForm::plot);
-    //     m_timer->start();
-    // }
-
-    // QMainWindow::mouseReleaseEvent(event);
-}

@@ -49,6 +49,7 @@ private:
     quint16 counter_data=0;
     quint16 m_readSize = 0;
     bool m_commence = 0;
+    bool m_stopAcq = 0;
 private slots:
     void readMessage(); //  signal readyRead, slot readMessage
     void errorOccurred(QAbstractSocket::SocketError socketError);
@@ -56,7 +57,7 @@ private slots:
     void disconnected();
     void notifyServerDown();
     void updateState(QTcpSocket::SocketState);
-    // void lockRelease();
+    bool parseServerMsg(QByteArray &);
 
 signals:
     void clientMessage(const QString &msg);

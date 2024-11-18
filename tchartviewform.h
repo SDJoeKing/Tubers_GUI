@@ -37,6 +37,8 @@ public:
         FULLY=4003
     };
 
+    int getAscanLength();
+
 public slots:
     void plot(const QList<QPointF> &data, bool plot = true);
     void toogleGates(bool);
@@ -58,6 +60,8 @@ private slots:
     void on_btnBack_clicked();
     void doThicknessCal();
 
+
+    void on_comboLength_currentIndexChanged(int index);
 
 private:
     QTimer m_timer;

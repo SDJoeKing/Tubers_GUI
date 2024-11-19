@@ -3,6 +3,7 @@
 
 double MainWindow::_env=0;
 
+QElapsedTimer timer;
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -88,6 +89,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_client, &mTcpClient::serverReady, this, &MainWindow::toogleStatus);
 
     // acquisition related
+
+    connect(this, &MainWindow::stopAcqSig, m_client, &mTcpClient::setStopAcq);
+
     connect(m_client, &mTcpClient::acquisitionReady, this, &MainWindow::runAcquisition);
     connect(m_client, &mTcpClient::acquisitionStop, this, &MainWindow::stopAcquisition);
     connect(this, &MainWindow::dataReceived, m_client, &mTcpClient::clearData);
@@ -314,11 +318,12 @@ void MainWindow::stopAcquisition()
 
 void MainWindow::doDataReady()
 {
+    timer.restart();
     m_serverData = QByteArray::fromRawData(m_client->data(), mTcpClient::DATA_SIZE );
     quint8 _forward = static_cast<quint8>(m_serverData.at(3));
     int j=0;
     double xpoint=0;
-    QList<QPointF> calPoint(mTcpClient::DATA_SIZE/2);
+    QVector<QPointF> calPoint(mTcpClient::DATA_SIZE/2);
     quint16 temp1;
     quint16 temp2;
     float *dataPoint[1];
@@ -357,7 +362,11 @@ void MainWindow::doDataReady()
 
     resetEnv();
     emit dataForLogger(_arr);
+    qDebug() << "Proc: " << timer.durationElapsed();
+
     emit dataReceived(calPoint, _forward == 2 ? false : true); // sent for Bscan & clear tcp client data buffer
+
+
 }
 
 void MainWindow::on_btnRun_clicked(bool checked)
@@ -368,7 +377,8 @@ void MainWindow::on_btnRun_clicked(bool checked)
         emit acquisitionRun(true);
     }else
     {
-        m_client->stopAcquisition();
+        emit stopAcqSig();
+        // QTimer::singleShot(100, m_client, &mTcpClient::stopAcquisition);
         m_client->flush();
         emit acquisitionRun(false);
     }

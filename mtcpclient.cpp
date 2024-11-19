@@ -4,12 +4,13 @@ static int counter = 0;
 static int old_counter = 0;
 QElapsedTimer elapTimer;
 QByteArray ack = QString("data acknowledged").toUtf8();
+QByteArray stopAcq = QString("stop").toUtf8();
 
 mTcpClient::mTcpClient(QObject *parent)
     :QObject{parent}
 {
     m_socket = new QTcpSocket(this);
-    m_socket->setSocketOption(QAbstractSocket::LowDelayOption, 1);
+    m_socket->setSocketOption(QAbstractSocket::LowDelayOption, 0);
 
     connect(m_socket, &QTcpSocket::connected, this, &mTcpClient::connected);
     connect(m_socket, &QTcpSocket::disconnected, this, &mTcpClient::notifyServerDown);
@@ -87,6 +88,11 @@ void mTcpClient::setData(const QList<double> &d)
     QDataStream stream(&byteArray, QIODevice::WriteOnly);
     stream << d;
     m_data = byteArray;
+}
+
+void mTcpClient::setStopAcq()
+{
+    m_stopAcq = 1;
 }
 
 bool mTcpClient::isOpen()
@@ -209,7 +215,7 @@ void mTcpClient::readMessage()
     QByteArray tempData = m_socket->readAll();
     m_readSize = tempData.size();
 
-    if(!parseServerMsg(tempData))
+    if(!parseServerMsg(tempData) || m_readSize == 17)
         return;
 
     if(headerFound(tempData) && !m_commence)
@@ -220,12 +226,15 @@ void mTcpClient::readMessage()
         qDebug() << "H: " << m_readSize;
     }
     qDebug() << "S: " << m_readSize << tempData.at(0)<<tempData.at(1)<<tempData.at(2)<<tempData.at(3);
+
     if(m_commence)
     {
-        QMutexLocker lk(&mu);
-        int size = (counter_data+m_readSize > DATA_SIZE ? DATA_SIZE : counter_data+m_readSize);
-        m_data.replace(counter_data, size, tempData);
-        counter_data+=m_readSize;
+        {
+            QMutexLocker lk(&mu);
+            int size = (counter_data+m_readSize > DATA_SIZE ? DATA_SIZE : counter_data+m_readSize);
+            m_data.replace(counter_data, size, tempData);
+            counter_data+=m_readSize;
+        }
 
 
         if(counter_data>=DATA_SIZE )
@@ -233,13 +242,21 @@ void mTcpClient::readMessage()
             m_commence = 0;
             m_readyData.assign(m_data.sliced(0));
 
-            // send data acknowledgement
-            writeData(ack);
+            if(m_stopAcq)
+            {
+                writeData(stopAcq);
+                m_stopAcq = 0;
+            }else
+            {
+                // send data acknowledgement
+                writeData(ack);
+            }
+
             emit dataReady(true);
             qDebug() << "ACK";
 
             counter++;
-            if(elapTimer.hasExpired(3000))
+            if(elapTimer.hasExpired(1000))
             {
                 emit fps(static_cast<float>(counter-old_counter) / elapTimer.elapsed() * 1000.0);
                 old_counter = counter;

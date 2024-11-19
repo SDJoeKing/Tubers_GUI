@@ -40,7 +40,7 @@ public:
     int getAscanLength();
 
 public slots:
-    void plot(const QList<QPointF> &data, bool plot = true);
+    void plot(const QVector<QPointF> &data, bool plot = true);
     void toogleGates(bool);
     void changeAxisType(TChartViewForm::AXISTYPE);
     void setVelocity(double);

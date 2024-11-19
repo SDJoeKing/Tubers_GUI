@@ -2,6 +2,7 @@
 #include "qgraphicslayout.h"
 #include "qlegendmarker.h"
 #include "ui_tchartviewform.h"
+QElapsedTimer timerV;
 
 TChartViewForm::TChartViewForm(QWidget *parent)
     : QWidget(parent)
@@ -9,14 +10,19 @@ TChartViewForm::TChartViewForm(QWidget *parent)
 {
     ui->setupUi(this);
 
+
+
     m_chartView = ui->graphicsView;
     m_chart = new QChart();
     m_series = new QLineSeries();
     m_ruler = new QLineSeries();
 
+    // m_series->setUseOpenGL(true);
+    // m_ruler->setUseOpenGL(true);
+
     // config m_ruler
     QBrush brush(Qt::red, Qt::SolidPattern);
-    QPen pen(brush, 2, Qt::DashDotLine);
+    QPen pen(brush, 1, Qt::DashDotLine);
     m_ruler->setPen(pen);
     m_ruler->setVisible(false);
     m_ruler->append(QPointF(0, yMin));
@@ -76,6 +82,7 @@ TChartViewForm::TChartViewForm(QWidget *parent)
     m_dataTip->setVisible(false);
     m_chartView->setDragMode(QGraphicsView::RubberBandDrag);
 
+    //wheel zoom in n out
     m_chartView->installEventFilter(this);
 
     ui->btnBack->setEnabled(false);
@@ -105,10 +112,24 @@ int TChartViewForm::getAscanLength()
 }
 
 
-void TChartViewForm::plot(const QList<QPointF> &data, bool _plot)
+void TChartViewForm::plot(const QVector<QPointF> &data, bool _plot)
 {
-    m_series->replace(data);
 
+
+
+        Q_UNUSED(_plot);
+
+        timerV.restart();
+
+        {
+            const QSignalBlocker blocker(m_chart);
+            m_series->replace(data);
+        }
+
+        QApplication::processEvents();
+        qDebug() << "paint " << timerV.durationElapsed();
+
+        m_chartView->update();
 }
 
 void TChartViewForm::changeAxisType(TChartViewForm::AXISTYPE type)
@@ -119,7 +140,7 @@ void TChartViewForm::changeAxisType(TChartViewForm::AXISTYPE type)
         float _tempMax = pointToDepth(m_X->max());
         m_X->setRange( pointToDepth(m_X->min()), _tempMax);
         _xAxisType = AXISTYPE::DEPTH;
-        // updateXRange(_tempMax);
+
 
         QList<QPointF> _tempPoints;
         for(auto &point : m_series->points())
@@ -133,7 +154,7 @@ void TChartViewForm::changeAxisType(TChartViewForm::AXISTYPE type)
         auto _tempMax =depthToPoint(m_X->max() );
         m_X->setTitleText("A-scan data points");
         m_X->setRange(depthToPoint(m_X->min()), _tempMax);
-        // updateXRange(_tempMax);
+
         _xAxisType = AXISTYPE::SAMPLE;
 
         QList<QPointF> _tempPoints;

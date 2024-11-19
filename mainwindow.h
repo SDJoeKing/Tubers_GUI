@@ -61,7 +61,7 @@ private slots:
     void on_ckDepthAxis_clicked(bool checked);
 
     void on_ckRectify_clicked(bool checked);
-    void updateBScan(const QList<QPointF> &data, bool forward);
+    void updateBScan(const QVector<QPointF> &data, bool forward);
     void on_actionReset_triggered(bool);
     void setRectifyUnchecked();
 
@@ -114,10 +114,11 @@ private:
 signals:
     void velocitySet(double);
 
-    void dataReceived(const QList<QPointF> &data, bool direction);
+    void dataReceived(const QVector<QPointF> &data, bool direction);
     void axisTypeChanged(TChartViewForm::AXISTYPE type);
     void acquisitionRun(bool);
     void dataForLogger(const QByteArray &);
+    void stopAcqSig();
     // QWidget interface
 
     // QWidget interface

@@ -34,6 +34,7 @@ public slots:
     void clearData();
     void flush();
     void setData(const QList<double> &d);
+    void setStopAcq();
 private:
     QMutex mu;
     QTcpSocket *m_socket;
@@ -62,7 +63,7 @@ private slots:
 signals:
     void clientMessage(const QString &msg);
     void tcpMessage(const QString &msg);
-    void tcpMessage(QByteArray arr); // overload for ascan data
+    void tcpMessage(const QByteArray &arr); // overload for ascan data
     void serverReady(bool);
     void settingReady(bool);
     void acquisitionReady();

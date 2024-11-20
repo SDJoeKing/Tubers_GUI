@@ -115,19 +115,20 @@ int TChartViewForm::getAscanLength()
 void TChartViewForm::plot(const QVector<QPointF> &data, bool _plot)
 {
 
-        Q_UNUSED(_plot);
+    Q_UNUSED(_plot);
+    {
+        const QSignalBlocker blocker(this);
 
         timerV.restart();
 
-        {
-            const QSignalBlocker blocker(m_series);
-            m_series->replace(data);
-        }
+        m_series->replace(data);
+
 
         QApplication::processEvents();
         qDebug() << "paint " << timerV.durationElapsed();
 
         m_chartView->update();
+    }
 }
 
 void TChartViewForm::changeAxisType(TChartViewForm::AXISTYPE type)

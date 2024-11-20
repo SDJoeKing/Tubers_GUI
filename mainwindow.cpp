@@ -44,7 +44,7 @@ MainWindow::MainWindow(QWidget *parent)
     // configure B-scan
     // m_Bscan->addGraph()
     QCPColorMap *_colorMap = new QCPColorMap(m_Bscan->xAxis, m_Bscan->yAxis);
-// and span the coordinate range -4..4 in both key (x) and value (y) dimensions
+
     m_Bscan->setContextMenuPolicy(Qt::CustomContextMenu);
     // add a color scale:
     QCPColorScale *colorScale = new QCPColorScale(m_Bscan);
@@ -169,9 +169,12 @@ MainWindow::~MainWindow()
 
     if(ui->btnConnect->isChecked())
     {
-        ui->btnConnect->click();
+        ui->btnConnect->click(); //  manual disconnect
     }
 
+    std::chrono::nanoseconds waitForClearing(200000000);
+
+    this->thread()->sleep(waitForClearing);
     socketThread.quit();
 
     delete ui;
@@ -328,10 +331,11 @@ void MainWindow::stopAcquisition()
     ui->btnRun->setText("Run");
 }
 
-void MainWindow::doDataReady()
+void MainWindow::doDataReady(const char* data)
 {
+    const QSignalBlocker blocker(m_client);
     timer.restart();
-    m_serverData = QByteArray::fromRawData(m_client->data(), mTcpClient::DATA_SIZE );
+    m_serverData = QByteArray::fromRawData(data, mTcpClient::DATA_SIZE );
     quint8 _forward = static_cast<quint8>(m_serverData.at(3));
     int j=0;
     double xpoint=0;

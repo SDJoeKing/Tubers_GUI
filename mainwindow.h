@@ -55,7 +55,7 @@ private slots:
     void toogleStatus(bool arg);
     void runAcquisition();
     void stopAcquisition();
-    void doDataReady();
+    void doDataReady(const char*);
     void on_btnRun_clicked(bool checked);
     void on_spinEnvLevel_valueChanged(int arg1);
     void on_ckGates_clicked(bool checked);

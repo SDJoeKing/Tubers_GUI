@@ -68,7 +68,7 @@ signals:
     void settingReady(bool);
     void acquisitionReady();
     void acquisitionStop();
-    void dataReady(bool);
+    void dataReady(const char*);
     void fps(float rate);
     void connectFail();
 

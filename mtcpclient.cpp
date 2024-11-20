@@ -121,9 +121,16 @@ void mTcpClient::setHostPort(const QString& addr, const quint8& port)
     m_port = port;
 }
 
-static bool headerFound(const QByteArray arr)
+static bool headerFound(const QByteArray &arr)
 {
-    return ( (arr.at(0) == 0) && (static_cast<quint8>(arr.at(1)) == 0xFF) && (arr.at(2) == 0) && (static_cast<quint8>(arr.at(3)) == 0xFF) );
+
+
+    if(arr.size() > 3)
+        return ( (arr.at(0) == 0) && (static_cast<quint8>(arr.at(1)) == 0xFF) && (arr.at(2) == 0) && (static_cast<quint8>(arr.at(3)) == 0xFF) );
+    else
+    {
+        return false;
+    }
 }
 
 
@@ -217,7 +224,7 @@ void mTcpClient::run()
 void mTcpClient::readMessage()
 {
 
-    // int remainSize = DATA_SIZE - counter_data;
+
     QByteArray tempData = m_socket->readAll();
     m_readSize = tempData.size();
 
@@ -231,7 +238,8 @@ void mTcpClient::readMessage()
         m_readSize = tempData.size();
         qDebug() << "H: " << m_readSize;
     }
-    qDebug() << "S: " << m_readSize << tempData.at(0)<<tempData.at(1)<<tempData.at(2)<<tempData.at(3);
+    if(tempData.size() > 3)
+        qDebug() << "S: " << m_readSize << tempData.at(0)<<tempData.at(1)<<tempData.at(2)<<tempData.at(3);
 
     if(m_commence)
     {
@@ -246,7 +254,11 @@ void mTcpClient::readMessage()
         if(counter_data>=DATA_SIZE )
         {
             m_commence = 0;
-            m_readyData.assign(m_data.sliced(0));
+
+            {
+                QMutexLocker lk(&mu);
+                m_readyData.assign(m_data.sliced(0));
+            }
 
             if(m_stopAcq)
             {
@@ -258,7 +270,7 @@ void mTcpClient::readMessage()
                 writeData(ack);
             }
 
-            emit dataReady(true);
+            emit dataReady(m_readyData.constData());
             qDebug() << "ACK";
 
             counter++;

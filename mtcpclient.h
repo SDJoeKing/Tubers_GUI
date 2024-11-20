@@ -24,16 +24,15 @@ public:
     void stop();
     void writeData(QByteArray arr);
     bool isOpen();
-    QByteArray data() const;
+    const QByteArray& data();
+    void setHostPort(const QString&, const quint8&);
 
 public slots:
-    void requestData(); // to work with timer of refresh rate
     void startAcquisition();
     void stopAcquisition();
     void sendSetting(const QString &);
     void clearData();
     void flush();
-    void setData(const QList<double> &d);
     void setStopAcq();
 private:
     QMutex mu;
@@ -45,12 +44,13 @@ private:
     QTcpSocket::SocketState m_state;
     QByteArray m_data;
     QByteArray m_readyData;
-    bool m_lock;
-    bool getLock(){return m_lock;};
     quint16 counter_data=0;
     quint16 m_readSize = 0;
     bool m_commence = 0;
     bool m_stopAcq = 0;
+    QEventLoop *m_loop;
+    QString m_address;
+    quint8 m_port;
 private slots:
     void readMessage(); //  signal readyRead, slot readMessage
     void errorOccurred(QAbstractSocket::SocketError socketError);
@@ -70,7 +70,11 @@ signals:
     void acquisitionStop();
     void dataReady(bool);
     void fps(float rate);
+    void connectFail();
 
+    // QRunnable interface
+public:
+    void run();
 };
 
 #endif // MTCPCLIENT_H

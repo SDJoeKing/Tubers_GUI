@@ -16,6 +16,7 @@
 #include <QVBoxLayout>
 #include <QSizePolicy>
 
+
 #include "tsettings.h"
 #include "tlogging.h"
 #include "mtcpclient.h"
@@ -70,9 +71,11 @@ private slots:
 
     void do_bScanSetting(bool, const QList<double> &);
 
+
     // debugging fps
     void do_fps(float);
 private:
+    QThread socketThread;
     QTimer _tempTimer;
     Ui::MainWindow *ui;
     mTcpClient *m_client;
@@ -113,7 +116,7 @@ private:
 
 signals:
     void velocitySet(double);
-
+    void mainSendSetting(const QString &);
     void dataReceived(const QVector<QPointF> &data, bool direction);
     void axisTypeChanged(TChartViewForm::AXISTYPE type);
     void acquisitionRun(bool);

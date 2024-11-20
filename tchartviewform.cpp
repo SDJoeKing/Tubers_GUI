@@ -115,14 +115,12 @@ int TChartViewForm::getAscanLength()
 void TChartViewForm::plot(const QVector<QPointF> &data, bool _plot)
 {
 
-
-
         Q_UNUSED(_plot);
 
         timerV.restart();
 
         {
-            const QSignalBlocker blocker(m_chart);
+            const QSignalBlocker blocker(m_series);
             m_series->replace(data);
         }
 

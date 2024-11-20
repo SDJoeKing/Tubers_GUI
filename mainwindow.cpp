@@ -67,9 +67,6 @@ MainWindow::MainWindow(QWidget *parent)
     graphFrame->addDockWidget(Qt::LeftDockWidgetArea, settingDock);
 
 
-    // TCP Client
-    m_client = new mTcpClient(this);
-
     // logging dock
     QDockWidget *loggingDock = new QDockWidget(graphFrame,Qt::CustomizeWindowHint);
     loggingDock->setFeatures(QDockWidget::DockWidgetFloatable|QDockWidget::DockWidgetMovable);
@@ -83,19 +80,9 @@ MainWindow::MainWindow(QWidget *parent)
 
     // connect
     connect(m_settings, &TSettings::settingConfirm, this, &MainWindow::doSettingsConfirmed);
-    connect(m_client, &mTcpClient::settingReady, ui->btnRun, &QPushButton::setEnabled);
-    connect(m_client, &mTcpClient::clientMessage, this, &MainWindow::logMsg);
-    connect(m_client, qOverload<const QString &>(&mTcpClient::tcpMessage), this, &MainWindow::logMsg);
-    connect(m_client, &mTcpClient::serverReady, this, &MainWindow::toogleStatus);
 
     // acquisition related
 
-    connect(this, &MainWindow::stopAcqSig, m_client, &mTcpClient::setStopAcq);
-
-    connect(m_client, &mTcpClient::acquisitionReady, this, &MainWindow::runAcquisition);
-    connect(m_client, &mTcpClient::acquisitionStop, this, &MainWindow::stopAcquisition);
-    connect(this, &MainWindow::dataReceived, m_client, &mTcpClient::clearData);
-    connect(m_client, &mTcpClient::dataReady, this, &MainWindow::doDataReady);
     connect(this, &MainWindow::velocitySet, m_Ascan, &TChartViewForm::setVelocity);
     connect(this, &MainWindow::axisTypeChanged, m_Ascan, &TChartViewForm::changeAxisType);
 
@@ -117,8 +104,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(this, &MainWindow::velocitySet, m_settings, &TSettings::updateVel);
     connect(this, &MainWindow::dataForLogger, m_logging, &Tlogging::setData);
 
-    // connect fps
-    connect(m_client, &mTcpClient::fps, this, &MainWindow::do_fps);
+
 
     // final finish
     setConnectionIndicator();
@@ -180,7 +166,14 @@ void MainWindow::setConnectionIndicator()
 
 MainWindow::~MainWindow()
 {
-    m_client->stop();
+
+    if(ui->btnConnect->isChecked())
+    {
+        ui->btnConnect->click();
+    }
+
+    socketThread.quit();
+
     delete ui;
 }
 
@@ -234,13 +227,13 @@ void MainWindow::doSettingsConfirmed(QString str)
     if(ui->btnRun->isChecked())
     {
         ui->btnRun->click();
-        connect(m_client, &mTcpClient::settingReady, ui->btnRun, &QPushButton::click);
-        QTimer::singleShot(120, this, [this, settings](){qDebug() << settings; m_client->sendSetting(settings); });
+        connect(m_client, &mTcpClient::settingReady, ui->btnRun, &QPushButton::click, Qt::QueuedConnection);
+        QTimer::singleShot(120, this, [this, settings](){emit mainSendSetting(settings); });
         QTimer::singleShot(130, this, [this](){ disconnect(m_client, &mTcpClient::settingReady, ui->btnRun, &QPushButton::click);});
     }
     else
     {
-        m_client->sendSetting(settings);
+        emit mainSendSetting(settings);
     }
 
 }
@@ -262,27 +255,46 @@ void MainWindow::on_btnConnect_clicked(bool checked)
     if(checked)
     // attemp to make connections to the server
     {
+
+        // TCP Client
+        m_client = new mTcpClient();
+
+        connect(m_client, &mTcpClient::settingReady, ui->btnRun, &QPushButton::setEnabled, Qt::QueuedConnection);
+        connect(m_client, &mTcpClient::clientMessage, this, &MainWindow::logMsg, Qt::QueuedConnection);
+        connect(m_client, qOverload<const QString &>(&mTcpClient::tcpMessage), this, &MainWindow::logMsg, Qt::QueuedConnection);
+        connect(m_client, &mTcpClient::serverReady, this, &MainWindow::toogleStatus, Qt::QueuedConnection);
+        connect(this, &MainWindow::stopAcqSig, m_client, &mTcpClient::setStopAcq, Qt::QueuedConnection);
+        connect(m_client, &mTcpClient::acquisitionReady, this, &MainWindow::runAcquisition, Qt::QueuedConnection);
+        connect(m_client, &mTcpClient::acquisitionStop, this, &MainWindow::stopAcquisition, Qt::QueuedConnection);
+        connect(this, &MainWindow::dataReceived, m_client, &mTcpClient::clearData, Qt::QueuedConnection);
+        connect(m_client, &mTcpClient::dataReady, this, &MainWindow::doDataReady, Qt::QueuedConnection);
+        connect(m_client, &mTcpClient::connectFail, this, [this](){ui->btnConnect->setChecked(false);
+                QMessageBox::information(this, "Error", "Unable to make connection to server. Please check connection.");}, Qt::QueuedConnection);
+        connect(this, &MainWindow::mainSendSetting, m_client, &mTcpClient::sendSetting, Qt::QueuedConnection);
+        // connect fps
+        connect(m_client, &mTcpClient::fps, this, &MainWindow::do_fps, Qt::QueuedConnection);
+
+
         QString address = ui->ipAddress->text().simplified().replace(" ", "");
         quint8 port = ui->port->text().toInt();
-        bool success = m_client->start(address, port);
-        if(!success)
-        {
-            ui->btnConnect->setChecked(false);
-            QMessageBox::information(this, "Error", "Unable to make connection to server. Please check connection.");
-            return;
-        }
+        m_client->setHostPort(address, port);
 
-        m_client->flush();
+
+        m_client->moveToThread(&socketThread);
+        qDebug() << "m_client thread: "<< m_client->thread();
+        connect(&socketThread, &QThread::started, m_client, &mTcpClient::run);
+        socketThread.start();
     }
     else
     {
         // disconnect
 
-        QTimer::singleShot(100, m_client, &mTcpClient::stopAcquisition);
-        QTimer::singleShot(101, m_client, &mTcpClient::stop);
-        m_client->flush();
+        QTimer::singleShot(0, m_client, &mTcpClient::stopAcquisition);
+        QTimer::singleShot(100, m_client, &mTcpClient::stop);
+
         resetUI();
         ui->btnRun->setDisabled(true);
+        QTimer::singleShot(110, this, [this](){socketThread.quit();});
     }
 }
 
@@ -373,13 +385,13 @@ void MainWindow::on_btnRun_clicked(bool checked)
 {
     if(checked)
     { // clear client data buffer
-        m_client->startAcquisition();
+        QTimer::singleShot(0, m_client, [&](){m_client->startAcquisition();});
         emit acquisitionRun(true);
     }else
     {
         emit stopAcqSig();
-        // QTimer::singleShot(100, m_client, &mTcpClient::stopAcquisition);
-        m_client->flush();
+
+        QTimer::singleShot(0, m_client, [&](){m_client->flush();});
         emit acquisitionRun(false);
     }
 

@@ -9,24 +9,14 @@ QByteArray stopAcq = QString("stop").toUtf8();
 mTcpClient::mTcpClient(QObject *parent)
     :QObject{parent}
 {
-    m_socket = new QTcpSocket(this);
-    m_socket->setSocketOption(QAbstractSocket::LowDelayOption, 0);
 
-    connect(m_socket, &QTcpSocket::connected, this, &mTcpClient::connected);
-    connect(m_socket, &QTcpSocket::disconnected, this, &mTcpClient::notifyServerDown);
-    connect(m_socket, &QTcpSocket::readyRead, this, &mTcpClient::readMessage);
-    connect(m_socket, &QTcpSocket::errorOccurred, this, &mTcpClient::errorOccurred);
-    connect(m_socket, &QTcpSocket::stateChanged, this, &mTcpClient::updateState);
-    // connect(this, &mTcpClient::canStop, this, &mTcpClient::lockRelease);
-    m_data = QByteArray(16384, Qt::Uninitialized);
-    elapTimer.start();
 }
 
 mTcpClient::~mTcpClient()
 {
     qDebug() << "TCP client destroyed";
     qDebug() << "client is open ? " << isOpen();
-
+    delete m_socket;
 }
 
 bool mTcpClient::start(const QString &address, const quint8 port)
@@ -49,6 +39,8 @@ void mTcpClient::stop()
     }
     this->m_socket->readAll();
     emit acquisitionStop();
+
+    m_loop->quit();
 
 }
 
@@ -78,17 +70,6 @@ void mTcpClient::flush()
     m_readSize = 0;
 }
 
-void mTcpClient::setData(const QList<double> &d)
-/*
- *  Do not use or call, just for debugging
- */
-
-{
-    QByteArray byteArray;
-    QDataStream stream(&byteArray, QIODevice::WriteOnly);
-    stream << d;
-    m_data = byteArray;
-}
 
 void mTcpClient::setStopAcq()
 {
@@ -97,19 +78,11 @@ void mTcpClient::setStopAcq()
 
 bool mTcpClient::isOpen()
 {
-    // qDebug() << m_state;
+
     return m_state == QTcpSocket::ConnectedState;
 
 }
 
-void mTcpClient::requestData()
-{
-
-    m_command = "data request";
-    writeData(m_command.toUtf8());
-    // emit clientMessage(m_name + m_command); // too much info
-
-}
 
 void mTcpClient::startAcquisition()
 {
@@ -120,12 +93,9 @@ void mTcpClient::startAcquisition()
 
 void mTcpClient::stopAcquisition()
 {
-    /*while(getLock()){};*/ // lock the process until no byte data is comming in
-    // m_stopAcq = 1;
-        m_command = "stop";
-        writeData(m_command.toUtf8());
-        qDebug() << "Stopcommand " << m_command;
-
+    m_command = "stop";
+    writeData(m_command.toUtf8());
+    qDebug() << "Stopcommand " << m_command;
 }
 
 void mTcpClient::sendSetting(const QString & param)
@@ -140,10 +110,15 @@ QString mTcpClient::errorToType(int i)
     return key.valueToKey(i);
 }
 
-QByteArray mTcpClient::data() const
+const QByteArray & mTcpClient::data()
 {
     return m_readyData;
+}
 
+void mTcpClient::setHostPort(const QString& addr, const quint8& port)
+{
+    m_address = addr;
+    m_port = port;
 }
 
 static bool headerFound(const QByteArray arr)
@@ -206,6 +181,37 @@ bool mTcpClient::parseServerMsg(QByteArray &arr)
     {
         return 1;
     }
+}
+
+void mTcpClient::run()
+{
+    m_loop = new QEventLoop(this);
+
+    m_socket = new QTcpSocket(this);
+
+    m_socket->setSocketOption(QAbstractSocket::LowDelayOption, 0);
+    qDebug() << "socket thread: "<< this->thread();
+    connect(m_socket, &QTcpSocket::connected, this, &mTcpClient::connected );
+    connect(m_socket, &QTcpSocket::disconnected, this, &mTcpClient::notifyServerDown );
+    connect(m_socket, &QTcpSocket::readyRead, this, &mTcpClient::readMessage );
+    connect(m_socket, &QTcpSocket::errorOccurred, this, &mTcpClient::errorOccurred );
+    connect(m_socket, &QTcpSocket::stateChanged, this, &mTcpClient::updateState);
+    m_data = QByteArray(DATA_SIZE, Qt::Uninitialized);
+
+    bool success = start(m_address, m_port);
+    qDebug() << "Connect success? " << success;
+    if(success)
+    {
+        flush();
+        m_loop->exec();
+
+    }else
+    {
+        emit connectFail();
+    }
+
+    delete m_loop;
+    deleteLater();
 }
 
 void mTcpClient::readMessage()

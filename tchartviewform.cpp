@@ -17,8 +17,8 @@ TChartViewForm::TChartViewForm(QWidget *parent)
     m_series = new QLineSeries();
     m_ruler = new QLineSeries();
 
-    // m_series->setUseOpenGL(true);
-    // m_ruler->setUseOpenGL(true);
+    m_series->setUseOpenGL(true);
+    m_ruler->setUseOpenGL(true);
 
     // config m_ruler
     QBrush brush(Qt::red, Qt::SolidPattern);
@@ -116,19 +116,16 @@ void TChartViewForm::plot(const QVector<QPointF> &data, bool _plot)
 {
 
     Q_UNUSED(_plot);
+
+    // const QSignalBlocker blocker(m_chartView);
     {
-        const QSignalBlocker blocker(this);
-
         timerV.restart();
-
         m_series->replace(data);
-
-
-        QApplication::processEvents();
-        qDebug() << "paint " << timerV.durationElapsed();
-
-        m_chartView->update();
     }
+    qDebug() << "paint " << timerV.durationElapsed();
+
+    m_chartView->update();
+
 }
 
 void TChartViewForm::changeAxisType(TChartViewForm::AXISTYPE type)

@@ -68,7 +68,8 @@ void TSettings::on_btnConfirm_clicked()
     int step = ui->spinEncoderStep->value();
     float res = ui->spinEncoderRes->value();
 
-    setting+= QString::number(encoderTrigger)+ ";"; // encoder triggering
+    // setting+= QString::number(encoderTrigger)+ ";"; // encoder triggering
+    setting+=QString::number(0) + ";";
     setting+= QString::number(step)+ ";"; // encoder skips
 
     // motor speed

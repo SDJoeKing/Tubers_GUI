@@ -459,7 +459,7 @@ void MainWindow::on_ckRectify_clicked(bool checked)
 
 int findFrontWall(const QList<QPointF> &data)
 {
-    int _max = 200; // in water less than 2mm
+    int _max = 3000; // in water less than 2mm
     double value = 0;
     for(int i = _max; i< mTcpClient::DATA_SIZE/2; i++)
     {
@@ -486,7 +486,7 @@ void MainWindow::updateBScan(const QList<QPointF> &data, bool forward)
     if((valueSize + _start) > data.size())
         valueSize = data.size() - _start;
 
-
+    forward = true;
     if(forward)
     {
         m_currentLine >= _colorMap->data()->keySize() ? m_currentLine=0: m_currentLine++;

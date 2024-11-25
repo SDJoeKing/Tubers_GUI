@@ -427,6 +427,7 @@ int findFrontWall(const QList<QPointF> &data)
     return _max;
 }
 
+
 void MainWindow::updateBScan(const QList<QPointF> &data, bool forward)
 {
     if(!use_bscan)
@@ -435,7 +436,7 @@ void MainWindow::updateBScan(const QList<QPointF> &data, bool forward)
     auto _colorMap = static_cast<QCPColorMap *>(m_Bscan->plottable());
     int valueSize = _colorMap->data()->valueSize();
     // functions to find the first front wall peaks
-    int _start = findFrontWall(data)-10;
+    int _start = findFrontWall(data)-50;
 
     if((valueSize + _start) > data.size())
         valueSize = data.size() - _start;
@@ -448,7 +449,7 @@ void MainWindow::updateBScan(const QList<QPointF> &data, bool forward)
         // configure the colormap
         for(int i=_start; i<valueSize + _start; i++)
         {
-            _colorMap->data()->setCell(m_currentLine, i - _start, data[i].y());
+            _colorMap->data()->setCell(m_currentLine, i - _start, data[i].y() / data[_start].y());
         }
     }else
     {
@@ -458,7 +459,7 @@ void MainWindow::updateBScan(const QList<QPointF> &data, bool forward)
         for(int i=_start; i<valueSize + _start; i++)
         {
             _colorMap->data()->setCell(m_currentLine+1, i - _start, 0);
-            _colorMap->data()->setCell(m_currentLine, i - _start, qAbs(data[i].y()) > 100 ? 100 : data[i].y());
+            _colorMap->data()->setCell(m_currentLine, i - _start, data[i].y() / data[_start].y());
         }
     }
     _colorMap->rescaleDataRange();

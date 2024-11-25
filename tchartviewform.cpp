@@ -116,8 +116,10 @@ void TChartViewForm::plot(const QList<QPointF> &dataptr, bool p)
 {
     Q_UNUSED(p);
     // const QSignalBlocker blocker(m_chartView);
+
     {
         timerV.restart();
+        qDebug() << "datasize: "<< dataptr.size();
         m_series->replace(dataptr);
     }
     qDebug() << "paint " << timerV.durationElapsed();

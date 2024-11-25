@@ -217,7 +217,7 @@ void mTcpClient::run()
         emit connectFail();
     }
 
-    delete m_loop;
+    // delete m_loop;
     deleteLater();
 }
 

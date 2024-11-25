@@ -15,7 +15,6 @@ Processor::Processor(QObject *parent)
 Processor::~Processor()
 {
     qDebug() << "Processor shutdown";
-    delete m_loop;
 }
 
 void Processor::setParam(const float &vel, const bool &depth, const bool &rect, const bool &filt)
@@ -33,7 +32,7 @@ void Processor::updateFilter(const quint8 &order, const quint8 &fs, const float 
 
 void Processor::run()
 {
-    m_loop = new QEventLoop();
+    m_loop = new QEventLoop(this);
 
     m_loop->exec();
     deleteLater();
@@ -51,7 +50,7 @@ void Processor::process(const char *dataptr)
     quint8 _forward = static_cast<quint8>(serverData.at(4));
     int j=0;
     double xpoint=0;
-    QVector<QPointF> calPoint(mTcpClient::DATA_SIZE/2 + 1);
+    QVector<QPointF> calPoint(mTcpClient::DATA_SIZE/2);
     quint16 temp1;
     quint16 temp2;
     float *dataPoint[1];

@@ -60,14 +60,13 @@ private slots:
     void toogleStatus(bool arg);
     void runAcquisition();
     void stopAcquisition();
-    void doDataReady(const char*);
     void on_btnRun_clicked(bool checked);
     void on_spinEnvLevel_valueChanged(int arg1);
     void on_ckGates_clicked(bool checked);
     void on_ckDepthAxis_clicked(bool checked);
 
     void on_ckRectify_clicked(bool checked);
-    void updateBScan(const QVector<QPointF> &data, bool);
+    void updateBScan(const QList<QPointF> &data, bool);
     void on_actionReset_triggered(bool);
     void setRectifyUnchecked();
 

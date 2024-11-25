@@ -76,10 +76,20 @@ MainWindow::MainWindow(QWidget *parent)
     graphFrame->addDockWidget(Qt::RightDockWidgetArea, loggingDock);
     loggingDock->setVisible(false);
 
-    // filter
+    // processor
     m_processor = new Processor();
     m_processor->updateFilter(m_order, m_fs, m_fc, m_fw);
     m_processor->moveToThread(&processorThread);
+    connect(&processorThread, &QThread::started, m_processor, &Processor::run);
+    // processor class
+    connect(ui->ckDepthAxis, &QCheckBox::clicked, m_processor, &Processor::setDepth, Qt::QueuedConnection);
+    connect(ui->ckRectify, &QCheckBox::clicked, m_processor, &Processor::setRectified, Qt::QueuedConnection);
+    connect(ui->ckFilter, &QCheckBox::clicked, m_processor, &Processor::setFiltering, Qt::QueuedConnection);
+    connect(m_processor, &Processor::dataLogger, m_logging, &Tlogging::setData, Qt::QueuedConnection);
+    connect(this, &MainWindow::filterParam, m_processor, &Processor::updateFilter, Qt::QueuedConnection);
+    connect(m_processor, &Processor::dataProcessed, this, &MainWindow::updateBScan, Qt::QueuedConnection);
+    connect(m_processor, &Processor::dataProcessed, m_Ascan, &TChartViewForm::plot, Qt::QueuedConnection);
+
     processorThread.start();
 
     // connect
@@ -108,16 +118,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     // future watcher results
     connect(&m_watcher, &QFutureWatcher<QList<QPointF>>::finished, this, &MainWindow::procDone);
-
-    // processor class
-    connect(ui->ckDepthAxis, &QCheckBox::clicked, m_processor, &Processor::setDepth, Qt::QueuedConnection);
-    connect(ui->ckRectify, &QCheckBox::clicked, m_processor, &Processor::setRectified, Qt::QueuedConnection);
-    connect(ui->ckFilter, &QCheckBox::clicked, m_processor, &Processor::setFiltering, Qt::QueuedConnection);
-    connect(m_processor, &Processor::dataLogger, m_logging, &Tlogging::setData, Qt::QueuedConnection);
-    connect(this, &MainWindow::filterParam, m_processor, &Processor::updateFilter, Qt::QueuedConnection);
-
-    connect(m_processor, &Processor::dataProcessed, this, &MainWindow::updateBScan, Qt::QueuedConnection);
-    connect(m_processor, &Processor::dataProcessed, m_Ascan, &TChartViewForm::plot, Qt::QueuedConnection);
 
     // final finish
     setConnectionIndicator();
@@ -180,20 +180,21 @@ void MainWindow::setConnectionIndicator()
 MainWindow::~MainWindow()
 {
 
-    QTimer::singleShot(0, m_processor, [&](){m_processor->close();});
+    QTimer::singleShot(0, m_processor, &Processor::close);
+    processorThread.quit();
 
     if(ui->btnConnect->isChecked())
     {
         ui->btnConnect->click(); //  manual disconnect
+        socketThread.quit();
     }
 
-    std::chrono::nanoseconds waitForClearing(200000000);
+    std::chrono::nanoseconds waitForClearing(1000000000);
 
     this->thread()->sleep(waitForClearing);
-    socketThread.quit();
-    processorThread.quit();
     delete ui;
 }
+
 
 void MainWindow::on_actionConnection_Status_triggered(bool checked)
 {
@@ -311,6 +312,7 @@ void MainWindow::on_btnConnect_clicked(bool checked)
         resetUI();
         ui->btnRun->setDisabled(true);
         QTimer::singleShot(110, this, [this](){socketThread.quit();});
+
     }
 }
 
@@ -349,12 +351,6 @@ double MainWindow::envelope(double sample, double &value, double ga, double gr)
     auto s = qAbs(sample);
     value += (s - value) * (s > value ?  ga :  gr);
     return value;
-}
-
-void MainWindow::doDataReady(const char* dataptr)
-{ // sent for Bscan & clear tcp client data buffer
-
-
 }
 
 void MainWindow::on_btnRun_clicked(bool checked)

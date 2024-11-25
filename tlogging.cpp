@@ -26,9 +26,9 @@ Tlogging::~Tlogging()
     delete ui;
 }
 
-void Tlogging::setData(const QByteArray &data)
+void Tlogging::setData(const char* dataptr)
 {
-    m_data = data;
+    m_data = QByteArray::fromRawData(dataptr, mTcpClient::DATA_SIZE/2);
     emit dataReceived();
 
 }

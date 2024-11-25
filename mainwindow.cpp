@@ -2,6 +2,8 @@
 #include "./ui_mainwindow.h"
 
 double MainWindow::_env=0;
+double MainWindow::m_ga = 0;
+double MainWindow::m_gr = 0;
 
 QElapsedTimer timer;
 
@@ -40,6 +42,8 @@ MainWindow::MainWindow(QWidget *parent)
     // A/B-scan dock
     m_Ascan = new TChartViewForm(_splitter);
     m_Bscan = new QCustomPlot(_splitter);
+    // B-scan uses openGL support
+    m_Bscan->setOpenGl(true);
 
     // configure B-scan
     // m_Bscan->addGraph()
@@ -61,9 +65,6 @@ MainWindow::MainWindow(QWidget *parent)
     settingDock->setFeatures(QDockWidget::DockWidgetFeature::NoDockWidgetFeatures);
     m_settings = new TSettings();
     settingDock->setWidget(m_settings);
-
-
-
     graphFrame->addDockWidget(Qt::LeftDockWidgetArea, settingDock);
 
 
@@ -76,7 +77,10 @@ MainWindow::MainWindow(QWidget *parent)
     loggingDock->setVisible(false);
 
     // filter
-    updateFilter();
+    m_processor = new Processor();
+    m_processor->updateFilter(m_order, m_fs, m_fc, m_fw);
+    m_processor->moveToThread(&processorThread);
+    processorThread.start();
 
     // connect
     connect(m_settings, &TSettings::settingConfirm, this, &MainWindow::doSettingsConfirmed);
@@ -87,24 +91,33 @@ MainWindow::MainWindow(QWidget *parent)
     connect(this, &MainWindow::axisTypeChanged, m_Ascan, &TChartViewForm::changeAxisType);
 
     // key acquisitionRun or not
+    connect(m_Ascan, &TChartViewForm::fsChanged, this, &MainWindow::updateFs);
     connect(this, &MainWindow::acquisitionRun, m_Ascan, &TChartViewForm::acquisitionStatus);
     connect(this, &MainWindow::acquisitionRun, m_Ascan, &TChartViewForm::toogleSave);
     connect(ui->ckGates, &QCheckBox::checkStateChanged, m_Ascan, &TChartViewForm::startThickCal);
     connect(ui->ckGates, &QCheckBox::checkStateChanged, ui->btnCal, &QPushButton::setEnabled);
 
     connect(m_Ascan, &TChartViewForm::setRectifyUncheck, this, &MainWindow::setRectifyUnchecked);
-    connect(this, &MainWindow::dataReceived, this, &MainWindow::updateBScan);
-    connect(this, &MainWindow::dataReceived, m_Ascan, &TChartViewForm::plot);
-
     connect(m_Ascan, &TChartViewForm::calculatedThickness, ui->spinDepth, &QDoubleSpinBox::setValue);
     connect(m_Bscan, &QCustomPlot::customContextMenuRequested, this, &MainWindow::bScanCustomContext);
     connect(m_settings, &TSettings::bScanSetting, this, &MainWindow::do_bScanSetting);
 
     // setting/logging related
     connect(this, &MainWindow::velocitySet, m_settings, &TSettings::updateVel);
-    connect(this, &MainWindow::dataForLogger, m_logging, &Tlogging::setData);
 
 
+    // future watcher results
+    connect(&m_watcher, &QFutureWatcher<QList<QPointF>>::finished, this, &MainWindow::procDone);
+
+    // processor class
+    connect(ui->ckDepthAxis, &QCheckBox::clicked, m_processor, &Processor::setDepth, Qt::QueuedConnection);
+    connect(ui->ckRectify, &QCheckBox::clicked, m_processor, &Processor::setRectified, Qt::QueuedConnection);
+    connect(ui->ckFilter, &QCheckBox::clicked, m_processor, &Processor::setFiltering, Qt::QueuedConnection);
+    connect(m_processor, &Processor::dataLogger, m_logging, &Tlogging::setData, Qt::QueuedConnection);
+    connect(this, &MainWindow::filterParam, m_processor, &Processor::updateFilter, Qt::QueuedConnection);
+
+    connect(m_processor, &Processor::dataProcessed, this, &MainWindow::updateBScan, Qt::QueuedConnection);
+    connect(m_processor, &Processor::dataProcessed, m_Ascan, &TChartViewForm::plot, Qt::QueuedConnection);
 
     // final finish
     setConnectionIndicator();
@@ -167,6 +180,8 @@ void MainWindow::setConnectionIndicator()
 MainWindow::~MainWindow()
 {
 
+    QTimer::singleShot(0, m_processor, [&](){m_processor->close();});
+
     if(ui->btnConnect->isChecked())
     {
         ui->btnConnect->click(); //  manual disconnect
@@ -176,7 +191,7 @@ MainWindow::~MainWindow()
 
     this->thread()->sleep(waitForClearing);
     socketThread.quit();
-
+    processorThread.quit();
     delete ui;
 }
 
@@ -204,15 +219,13 @@ void MainWindow::doSettingsConfirmed(QString str)
     // update internal ->s logic
     auto list = str.split(";");
     qDebug() << list;
-    auto avg = list[TSettings::requestedAverages].toInt();
-    auto prf = list[TSettings::prf].toInt();
-    auto _interval = list[TSettings::refreshRate].toInt(); // Hz
+
     m_vel = list[TSettings::velocity].toDouble();
     m_order = list[TSettings::order].toInt();
     m_fc = (list[TSettings::lowCut].toDouble() + list[TSettings::highCut].toDouble() )/ 2.0;
     m_fw= qAbs(list[TSettings::highCut].toDouble() - list[TSettings::lowCut].toDouble());
 
-    updateFilter();
+    emit filterParam(m_order, m_fs, m_fc, m_fw);
 
     int _size = 0;
     for(int i = TSettings::txChannel ; i< TSettings::motorAngle + 1; i++)
@@ -270,7 +283,7 @@ void MainWindow::on_btnConnect_clicked(bool checked)
         connect(m_client, &mTcpClient::acquisitionReady, this, &MainWindow::runAcquisition, Qt::QueuedConnection);
         connect(m_client, &mTcpClient::acquisitionStop, this, &MainWindow::stopAcquisition, Qt::QueuedConnection);
         connect(this, &MainWindow::dataReceived, m_client, &mTcpClient::clearData, Qt::QueuedConnection);
-        connect(m_client, &mTcpClient::dataReady, this, &MainWindow::doDataReady, Qt::QueuedConnection);
+        connect(m_client, &mTcpClient::dataReady, m_processor, &Processor::process, Qt::QueuedConnection);
         connect(m_client, &mTcpClient::connectFail, this, [this](){ui->btnConnect->setChecked(false);
                 QMessageBox::information(this, "Error", "Unable to make connection to server. Please check connection.");}, Qt::QueuedConnection);
         connect(this, &MainWindow::mainSendSetting, m_client, &mTcpClient::sendSetting, Qt::QueuedConnection);
@@ -331,56 +344,15 @@ void MainWindow::stopAcquisition()
     ui->btnRun->setText("Run");
 }
 
-void MainWindow::doDataReady(const char* data)
+double MainWindow::envelope(double sample, double &value, double ga, double gr)
 {
-    const QSignalBlocker blocker(m_client);
-    timer.restart();
-    m_serverData = QByteArray::fromRawData(data, mTcpClient::DATA_SIZE );
-    quint8 _forward = static_cast<quint8>(m_serverData.at(3));
-    int j=0;
-    double xpoint=0;
-    QVector<QPointF> calPoint(mTcpClient::DATA_SIZE/2);
-    quint16 temp1;
-    quint16 temp2;
-    float *dataPoint[1];
-    float _temp[mTcpClient::DATA_SIZE/2]{0};
-    dataPoint[0] = _temp;
-    QByteArray _arr;
-    bool _tempDepthFlag = false;
-    if(ui->ckDepthAxis->isChecked())
-        _tempDepthFlag = true;
+    auto s = qAbs(sample);
+    value += (s - value) * (s > value ?  ga :  gr);
+    return value;
+}
 
-    for (int i = 0; i < mTcpClient::DATA_SIZE/2; i++)
-    {
-        temp1 =(m_serverData.at(j + 1) << 8) & 0xFF00;
-        temp2 = (m_serverData.at(j)) & 0xFF;
-        dataPoint[0][i] = static_cast<qint16>(temp2 | temp1)/ 32768.0  * 3.18 * 1.0 *1000.0;
-
-        j += 2;
-    }
-
-    if(ui->ckFilter->isChecked())
-        m_filter.process(mTcpClient::DATA_SIZE/2, dataPoint);
-
-    // rectified, envelope, depth?
-    for (int i = 0; i < mTcpClient::DATA_SIZE/2; i++)
-    {
-        xpoint = i;
-        if(_tempDepthFlag)
-            xpoint = i / 2/ 125e6 * m_vel * 1000;
-
-        if(ui->ckRectify->isChecked())
-            dataPoint[0][i] = envelope(dataPoint[0][i]);
-
-        calPoint[i] = QPointF(xpoint, dataPoint[0][i]);
-        _arr.append(reinterpret_cast<const char *>(&dataPoint[0][i]), sizeof(dataPoint[0][i]));
-    }
-
-    resetEnv();
-    emit dataForLogger(_arr);
-    qDebug() << "Proc: " << timer.durationElapsed();
-
-    emit dataReceived(calPoint, _forward == 2 ? false : true); // sent for Bscan & clear tcp client data buffer
+void MainWindow::doDataReady(const char* dataptr)
+{ // sent for Bscan & clear tcp client data buffer
 
 
 }
@@ -406,14 +378,6 @@ void MainWindow::set_envelope(float attack, float release)
     m_ga = attack < 1e-20 ? 0 :1 - qExp(-1.0 / (attack * 125e6));
     m_gr = attack < 1e-20 ? 0 :1 - qExp(-1.0 / (release * 125e6));
 }
-
-double MainWindow::envelope(double sample)
-{
-    auto s = qAbs(sample);
-    _env += (s - _env) * (s > _env ? m_ga : m_gr);
-    return  _env;
-}
-
 
 void MainWindow::on_spinEnvLevel_valueChanged(int arg1)
 {
@@ -443,11 +407,6 @@ void MainWindow::resetEnv()
     _env=0;
 }
 
-void MainWindow::updateFilter()
-{
-    m_filter.setup(m_order, 125, m_fc, m_fw);
-}
-
 void MainWindow::on_ckRectify_clicked(bool checked)
 {
 
@@ -455,6 +414,7 @@ void MainWindow::on_ckRectify_clicked(bool checked)
         emit axisTypeChanged(TChartViewForm::ABSOLUTEY);
     else
         emit axisTypeChanged(TChartViewForm::FULLY);
+
 }
 
 int findFrontWall(const QList<QPointF> &data)
@@ -622,6 +582,12 @@ void MainWindow::do_bScanSetting(bool arg, const QList<double> &settings)
     }
 }
 
+void MainWindow::updateFs(double newFs)
+{
+    m_fs = newFs;
+    emit filterParam(m_order, m_fs, m_fc, m_fw);
+}
+
 void MainWindow::do_fps(float fps)
 {
     auto fpsBar = ui->statusBar->findChild<QLabel *>("fpsBar");
@@ -631,12 +597,9 @@ void MainWindow::do_fps(float fps)
     }
 }
 
-
-
-void MainWindow::resizeEvent(QResizeEvent *event)
+void MainWindow::procDone()
 {
-    resizing = true;
-    // disconnect(this, &MainWindow::dataReceived, m_Ascan, &TChartViewForm::plot);
-    QMainWindow::resizeEvent(event);
+    auto data = m_future.result();
+    emit dataReceived(data);
 }
 

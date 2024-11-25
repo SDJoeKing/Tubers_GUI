@@ -112,15 +112,13 @@ int TChartViewForm::getAscanLength()
 }
 
 
-void TChartViewForm::plot(const QVector<QPointF> &data, bool _plot)
+void TChartViewForm::plot(const QList<QPointF> &dataptr, bool p)
 {
-
-    Q_UNUSED(_plot);
-
+    Q_UNUSED(p);
     // const QSignalBlocker blocker(m_chartView);
     {
         timerV.restart();
-        m_series->replace(data);
+        m_series->replace(dataptr);
     }
     qDebug() << "paint " << timerV.durationElapsed();
 
@@ -141,7 +139,7 @@ void TChartViewForm::changeAxisType(TChartViewForm::AXISTYPE type)
         QList<QPointF> _tempPoints;
         for(auto &point : m_series->points())
             _tempPoints.emplace_back(pointToDepth(point.x()) , point.y());
-        plot(_tempPoints);
+        plot(_tempPoints, true);
 
         updateLabelPosition();
 
@@ -156,7 +154,7 @@ void TChartViewForm::changeAxisType(TChartViewForm::AXISTYPE type)
         QList<QPointF> _tempPoints;
         for(auto &point : m_series->points())
             _tempPoints.emplace_back(depthToPoint(point.x()) , point.y());
-        plot(_tempPoints);
+        plot(_tempPoints, true);
 
         updateLabelPosition();
 
@@ -560,6 +558,8 @@ qreal TChartViewForm::maxInd(const QRectF &rect)
 
 void TChartViewForm::on_comboLength_currentIndexChanged(int index)
 {
-    ui->labelRate->setText(QString::asprintf("@%.2fMHz Sampling Rate", 125.0 / (ui->comboLength->currentIndex()+1)));
+    float fs = 125.0 / (ui->comboLength->currentIndex() + 1);
+    emit fsChanged(fs);
+    ui->labelRate->setText(QString::asprintf("@%.2fMHz Sampling Rate",fs));
 }
 

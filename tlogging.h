@@ -4,6 +4,7 @@
 #include <QDialog>
 #include <QFileDialog>
 #include <QMessageBox>
+#include "mtcpclient.h"
 
 namespace Ui {
 class Tlogging;
@@ -18,7 +19,7 @@ public:
     ~Tlogging();
 
 public slots:
-    void setData(const QByteArray &);
+    void setData(const char *);
 
 private slots:
     void on_toolButton_clicked();

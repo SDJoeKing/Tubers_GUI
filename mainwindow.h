@@ -15,7 +15,8 @@
 #include <QWheelEvent>
 #include <QVBoxLayout>
 #include <QSizePolicy>
-
+#include <QFutureWatcher>
+#include <QtConcurrent>
 
 #include "tsettings.h"
 #include "tlogging.h"
@@ -23,7 +24,7 @@
 #include "tchartviewform.h"
 #include "qcustomplot.h"
 #include "DspFilters/Dsp.h"
-
+#include "processor.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -38,6 +39,10 @@ class MainWindow : public QMainWindow
 public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
+    static double _env ;
+    static double m_ga ;
+    static double m_gr ;
+    static double envelope(double sample, double &value, double ga, double gr);
 
 private slots:
 
@@ -62,7 +67,7 @@ private slots:
     void on_ckDepthAxis_clicked(bool checked);
 
     void on_ckRectify_clicked(bool checked);
-    void updateBScan(const QVector<QPointF> &data, bool forward);
+    void updateBScan(const QVector<QPointF> &data, bool);
     void on_actionReset_triggered(bool);
     void setRectifyUnchecked();
 
@@ -71,11 +76,15 @@ private slots:
 
     void do_bScanSetting(bool, const QList<double> &);
 
-
+    void updateFs(double);
     // debugging fps
     void do_fps(float);
+
+    // processing
+    void procDone();
 private:
     QThread socketThread;
+    QThread processorThread;
     QTimer _tempTimer;
     Ui::MainWindow *ui;
     mTcpClient *m_client;
@@ -87,46 +96,40 @@ private:
     QLabel *m_status;
     QByteArray m_serverData;
     float m_vel=5890.0;
-    // envelope coefficients
-    double m_ga;
-    double m_gr;
-    static double _env;
+
     static void resetEnv();
     int m_currentLine=-1;
 
     // filter param
-    Dsp::SimpleFilter<Dsp::Butterworth::BandPass <4> , 1> m_filter;
+
     int m_order = 4;
     double m_fc = 5;
     double m_fw = 8;
+    int m_fs = 125;
 
     bool use_bscan = 0;
-    void updateFilter();
 
-    // resizing
-    bool resizing = false;
+    // processor
+    Processor *m_processor;
+
+    // qfuturewatcher
+    QFutureWatcher<QList<QPointF>> m_watcher;
+    QFuture<QList<QPointF>> m_future;
 
 // private functions
 private:
     void resetUI();
     void setConnectionIndicator();
     void set_envelope(float, float);
-    double envelope(double);
-
 
 signals:
     void velocitySet(double);
     void mainSendSetting(const QString &);
-    void dataReceived(const QVector<QPointF> &data, bool direction);
+    void dataReceived(const QList<QPointF> &data);
     void axisTypeChanged(TChartViewForm::AXISTYPE type);
     void acquisitionRun(bool);
     void dataForLogger(const QByteArray &);
     void stopAcqSig();
-    // QWidget interface
-
-    // QWidget interface
-protected:
-    virtual void resizeEvent(QResizeEvent *event) override;
-
+    void filterParam(const quint8 & order, const quint8 &fs, const float &fc, const float &fw);
 };
 #endif // MAINWINDOW_H

@@ -28,7 +28,7 @@ Tlogging::~Tlogging()
 
 void Tlogging::setData(const char* dataptr)
 {
-    m_data = QByteArray::fromRawData(dataptr, mTcpClient::DATA_SIZE/2);
+    m_data = QByteArray::fromRawData(dataptr, sizeof(float) * mTcpClient::DATA_SIZE/2);
     emit dataReceived();
 
 }

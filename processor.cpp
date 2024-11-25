@@ -50,7 +50,7 @@ void Processor::process(const char *dataptr)
     quint8 _forward = static_cast<quint8>(serverData.at(4));
     int j=0;
     double xpoint=0;
-    QVector<QPointF> calPoint(mTcpClient::DATA_SIZE/2);
+    QList<QPointF> calPoint(mTcpClient::DATA_SIZE/2);
     quint16 temp1;
     quint16 temp2;
     float *dataPoint[1];
@@ -86,7 +86,7 @@ void Processor::process(const char *dataptr)
             dataPoint[0][i] = MainWindow::envelope(dataPoint[0][i], MainWindow::_env, MainWindow::m_ga, MainWindow::m_gr);
 
         calPoint[i] = QPointF(xpoint, dataPoint[0][i]);
-        _arr[i] = dataPoint[0][i];
+        _temp[i] = dataPoint[0][i];
     }
 
     //reset envelope;
@@ -94,7 +94,7 @@ void Processor::process(const char *dataptr)
 
     qDebug() << "Proc: " << processTimer.durationElapsed();
 
-    emit dataLogger(_arr.data());
+    emit dataLogger(reinterpret_cast<const char *>(&_temp));
     emit dataProcessed(calPoint, _forward == 2 ? false : true);
 }
 

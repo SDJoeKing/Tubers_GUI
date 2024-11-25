@@ -89,7 +89,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(this, &MainWindow::filterParam, m_processor, &Processor::updateFilter, Qt::QueuedConnection);
     connect(m_processor, &Processor::dataProcessed, this, &MainWindow::updateBScan, Qt::QueuedConnection);
     connect(m_processor, &Processor::dataProcessed, m_Ascan, &TChartViewForm::plot, Qt::QueuedConnection);
-
+    connect(&processorThread, &QThread::finished, this, &MainWindow::threadFinished);
     processorThread.start();
 
     // connect
@@ -115,9 +115,6 @@ MainWindow::MainWindow(QWidget *parent)
     // setting/logging related
     connect(this, &MainWindow::velocitySet, m_settings, &TSettings::updateVel);
 
-
-    // future watcher results
-    connect(&m_watcher, &QFutureWatcher<QList<QPointF>>::finished, this, &MainWindow::procDone);
 
     // final finish
     setConnectionIndicator();
@@ -180,18 +177,19 @@ void MainWindow::setConnectionIndicator()
 MainWindow::~MainWindow()
 {
 
-    QTimer::singleShot(0, m_processor, &Processor::close);
-    processorThread.quit();
-
     if(ui->btnConnect->isChecked())
     {
         ui->btnConnect->click(); //  manual disconnect
         socketThread.quit();
     }
 
-    std::chrono::nanoseconds waitForClearing(1000000000);
+    QTimer::singleShot(0, m_processor, &Processor::close);
+    processorThread.quit();
 
-    this->thread()->sleep(waitForClearing);
+    m_quitEvent.exec();
+    // std::chrono::nanoseconds waitForClearing(1000000);
+
+    // this->thread()->sleep(waitForClearing);
     delete ui;
 }
 
@@ -593,9 +591,9 @@ void MainWindow::do_fps(float fps)
     }
 }
 
-void MainWindow::procDone()
+void MainWindow::threadFinished()
 {
-    auto data = m_future.result();
-    emit dataReceived(data);
+    m_quitEvent.quit();
 }
+
 

@@ -80,7 +80,9 @@ private slots:
     void do_fps(float);
 
     // processing
-    void procDone();
+    void threadFinished();
+
+
 private:
     QThread socketThread;
     QThread processorThread;
@@ -110,10 +112,7 @@ private:
 
     // processor
     Processor *m_processor;
-
-    // qfuturewatcher
-    QFutureWatcher<QList<QPointF>> m_watcher;
-    QFuture<QList<QPointF>> m_future;
+    QEventLoop m_quitEvent;
 
 // private functions
 private:

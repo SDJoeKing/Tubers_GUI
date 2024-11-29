@@ -81,7 +81,7 @@ private slots:
 
     // processing
     void threadFinished();
-
+    void setThreshold(double);
 
 private:
     QThread socketThread;
@@ -109,7 +109,7 @@ private:
     int m_fs = 125;
 
     bool use_bscan = 0;
-
+    double m_thres = 0.0;
     // processor
     Processor *m_processor;
     QEventLoop m_quitEvent;

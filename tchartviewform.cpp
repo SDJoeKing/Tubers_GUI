@@ -510,8 +510,8 @@ void TChartViewForm::doThicknessCal()
     QRectF gate1_range = m_gate1->posRange();
     QRectF gate2_range = m_gate2->posRange();
 
-    int indGate1 = maxInd(gate1_range);
-    int indGate2 = maxInd(gate2_range);
+    int indGate1 = maxInd(gate1_range, true);
+    int indGate2 = maxInd(gate2_range, false);
 
     if(indGate1 == -1 || indGate2 == -1)
         return;
@@ -519,7 +519,7 @@ void TChartViewForm::doThicknessCal()
     emit calculatedThickness(pointToDepth(qAbs(indGate2 - indGate1)));
 }
 
-qreal TChartViewForm::maxInd(const QRectF &rect)
+qreal TChartViewForm::maxInd(const QRectF &rect, bool thres)
 {
     // if acquisition is not started or the plot is empty;
     if(m_series->count() <= 0)
@@ -531,6 +531,9 @@ qreal TChartViewForm::maxInd(const QRectF &rect)
     int leftInd = value_left.x();
     int rightInd = value_right.x();
     double threshold = (value_left.y() + value_right.y()) / 2;
+
+    if(thres)
+        emit sendThreshold(threshold);
 
     if(_xAxisType == AXISTYPE::DEPTH)
     {

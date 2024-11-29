@@ -215,6 +215,8 @@ void mTcpClient::run()
     }else
     {
         emit connectFail();
+        auto parent = static_cast<QThread *>(sender());
+        parent->quit();
     }
 
     // delete m_loop;
@@ -251,13 +253,13 @@ void mTcpClient::readMessage()
         }
 
 
-        if(counter_data>=DATA_SIZE )
+        if(counter_data>=DATA_SIZE + HEADER_SIZE )
         {
             m_commence = 0;
 
             {
                 QMutexLocker lk(&mu);
-                m_readyData.assign(m_data.sliced(0));
+                m_readyData.assign(m_data.sliced(HEADER_SIZE));
             }
 
             if(m_stopAcq)

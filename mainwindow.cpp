@@ -112,6 +112,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_Bscan, &QCustomPlot::customContextMenuRequested, this, &MainWindow::bScanCustomContext);
     connect(m_settings, &TSettings::bScanSetting, this, &MainWindow::do_bScanSetting);
 
+    connect(m_Ascan, &TChartViewForm::sendThreshold, this, &MainWindow::setThreshold);
+
     // setting/logging related
     connect(this, &MainWindow::velocitySet, m_settings, &TSettings::updateVel);
 
@@ -180,16 +182,14 @@ MainWindow::~MainWindow()
     if(ui->btnConnect->isChecked())
     {
         ui->btnConnect->click(); //  manual disconnect
-        socketThread.quit();
+        // socketThread.quit();
     }
 
     QTimer::singleShot(0, m_processor, &Processor::close);
     processorThread.quit();
 
     m_quitEvent.exec();
-    // std::chrono::nanoseconds waitForClearing(1000000);
 
-    // this->thread()->sleep(waitForClearing);
     delete ui;
 }
 
@@ -231,7 +231,7 @@ void MainWindow::doSettingsConfirmed(QString str)
         _size+=list[i].size()+1; // including the separator size
 
     auto settings = str.sliced(0, _size );
-    settings += QString::number(m_Ascan->getAscanLength());
+    settings += QString::number(m_Ascan->getAscanLength()) + ";";
     qDebug() << settings;
     auto _status = ui->statusBar->findChild<QLabel *>("m_status");
     if(_status)
@@ -405,7 +405,10 @@ void MainWindow::on_ckRectify_clicked(bool checked)
 {
 
     if(checked)
+    {
         emit axisTypeChanged(TChartViewForm::ABSOLUTEY);
+        ui->spinEnvLevel->setValue(1);
+    }
     else
         emit axisTypeChanged(TChartViewForm::FULLY);
 
@@ -449,7 +452,9 @@ void MainWindow::updateBScan(const QList<QPointF> &data, bool forward)
         // configure the colormap
         for(int i=_start; i<valueSize + _start; i++)
         {
-            _colorMap->data()->setCell(m_currentLine, i - _start, data[i].y() / data[_start].y());
+            auto value = data[i].y() > m_thres ? data[i].y() : 0;
+            auto plotValue = value > 0 ? value / data[_start+50].y() : 0;
+            _colorMap->data()->setCell(m_currentLine, i - _start, plotValue);
         }
     }else
     {
@@ -458,8 +463,10 @@ void MainWindow::updateBScan(const QList<QPointF> &data, bool forward)
         m_currentLine <= 0 ? m_currentLine=0 : m_currentLine-=1;
         for(int i=_start; i<valueSize + _start; i++)
         {
+            auto value = data[i].y() > m_thres ? data[i].y() : 0;
+            auto plotValue = value > 0 ? value / data[_start+50].y() : 0;
             _colorMap->data()->setCell(m_currentLine+1, i - _start, 0);
-            _colorMap->data()->setCell(m_currentLine, i - _start, data[i].y() / data[_start].y());
+            _colorMap->data()->setCell(m_currentLine, i - _start, plotValue);
         }
     }
     _colorMap->rescaleDataRange();
@@ -576,6 +583,12 @@ void MainWindow::do_bScanSetting(bool arg, const QList<double> &settings)
         }
     }
 }
+
+void MainWindow::setThreshold(double thres)
+{
+    m_thres = thres;
+}
+
 
 void MainWindow::updateFs(double newFs)
 {

@@ -19,7 +19,10 @@ class mTcpClient : public QObject
 public:
     explicit mTcpClient(QObject *parent=nullptr);
     ~mTcpClient();
+
     static const quint16 DATA_SIZE = 16384*2 ;
+    static const quint8 HEADER_SIZE = 8;
+
     bool start(const QString &address, const quint8 port);
     void stop();
     void writeData(QByteArray arr);

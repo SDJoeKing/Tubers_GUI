@@ -91,7 +91,8 @@ private:
     bool inRange(const QPointF &, QValueAxis *, QValueAxis *);
     bool acquisitionRunning = false;
     QStack<QPair<QRectF, AXISTYPE>> zoomRectTrack;
-    qreal maxInd(const QRectF &rect);
+    qreal maxInd(const QRectF &rect, bool);
+
 private:
     Ui::TChartViewForm *ui;
 
@@ -102,6 +103,7 @@ signals:
     void setRectifyUncheck();
     void calculatedThickness(double);
     void fsChanged(double);
+    void sendThreshold(double);
 };
 
 #endif // TCHARTVIEWFORM_H

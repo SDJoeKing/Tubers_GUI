@@ -106,11 +106,6 @@ TChartViewForm::~TChartViewForm()
     delete ui;
 }
 
-int TChartViewForm::getAscanLength()
-{
-    return ui->comboLength->currentIndex() + 1;
-}
-
 
 void TChartViewForm::plot(const QList<QPointF> &dataptr, bool p)
 {
@@ -561,10 +556,5 @@ qreal TChartViewForm::maxInd(const QRectF &rect, bool thres)
     return _tempMax;
 }
 
-void TChartViewForm::on_comboLength_currentIndexChanged(int index)
-{
-    float fs = 125.0 / (ui->comboLength->currentIndex() + 1);
-    emit fsChanged(fs);
-    ui->labelRate->setText(QString::asprintf("@%.2fMHz Sampling Rate",fs));
-}
+
 

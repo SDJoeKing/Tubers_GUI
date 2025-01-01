@@ -48,12 +48,19 @@ public:
 public slots:
     void updateHz(QString);
     void updateVel(double);
+    int getAscanIndex();
 private slots:
     void on_btnConfirm_clicked();
+
+    void on_btnHide_clicked();
+
+    void on_comboLength_currentIndexChanged(int index);
 
 signals:
     void settingConfirm(const QString &settings);
     void bScanSetting(bool, const QList<double> &settings);
+    void settingHide();
+    void fsChanged(const float);
 private:
     Ui::TSettings *ui;
     void installFilter(QObject *);

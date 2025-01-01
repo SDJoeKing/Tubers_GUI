@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>854</width>
+    <width>919</width>
     <height>453</height>
    </rect>
   </property>
@@ -29,70 +29,9 @@
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
-      <widget class="QLabel" name="label">
-       <property name="text">
-        <string>Ascan Length</string>
-       </property>
-      </widget>
-     </item>
-     <item>
-      <widget class="QComboBox" name="comboLength">
-       <property name="placeholderText">
-        <string/>
-       </property>
-       <item>
-        <property name="text">
-         <string>0.262 ms</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>0.524 ms</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>0.786 ms</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>1.048 ms</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>1.311 ms</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>1.573 ms</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>1.835 ms</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>2.097 ms</string>
-        </property>
-       </item>
-      </widget>
-     </item>
-     <item>
-      <widget class="QLabel" name="labelRate">
-       <property name="text">
-        <string>@125.00 MHz Sampling Rate</string>
-       </property>
-      </widget>
-     </item>
-     <item>
       <spacer name="horizontalSpacer_2">
        <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+        <enum>Qt::Orientation::Horizontal</enum>
        </property>
        <property name="sizeHint" stdset="0">
         <size>

@@ -54,6 +54,7 @@ private slots:
     void on_actionLogging_triggered(bool checked);
     void on_ckBscan_clicked(bool checked);
     void on_btnConnect_clicked(bool checked);
+    void hideSetting();
 
     // connected actions
     void logMsg(QString);

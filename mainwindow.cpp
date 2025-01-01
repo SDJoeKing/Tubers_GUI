@@ -94,14 +94,14 @@ MainWindow::MainWindow(QWidget *parent)
 
     // connect
     connect(m_settings, &TSettings::settingConfirm, this, &MainWindow::doSettingsConfirmed);
-
+    connect(m_settings, &TSettings::settingHide, this, &MainWindow::hideSetting);
     // acquisition related
 
     connect(this, &MainWindow::velocitySet, m_Ascan, &TChartViewForm::setVelocity);
     connect(this, &MainWindow::axisTypeChanged, m_Ascan, &TChartViewForm::changeAxisType);
 
     // key acquisitionRun or not
-    connect(m_Ascan, &TChartViewForm::fsChanged, this, &MainWindow::updateFs);
+    connect(m_settings, &TSettings::fsChanged, this, &MainWindow::updateFs);
     connect(this, &MainWindow::acquisitionRun, m_Ascan, &TChartViewForm::acquisitionStatus);
     connect(this, &MainWindow::acquisitionRun, m_Ascan, &TChartViewForm::toogleSave);
     connect(ui->ckGates, &QCheckBox::checkStateChanged, m_Ascan, &TChartViewForm::startThickCal);
@@ -211,9 +211,13 @@ void MainWindow::on_actionSettings_triggered(bool checked)
 
 }
 
-void MainWindow::doSettingsConfirmed(QString str)
+void MainWindow::hideSetting()
 {
     ui->actionSettings->trigger();
+}
+
+void MainWindow::doSettingsConfirmed(QString str)
+{
 
     // update internal ->s logic
     auto list = str.split(";");
@@ -231,7 +235,7 @@ void MainWindow::doSettingsConfirmed(QString str)
         _size+=list[i].size()+1; // including the separator size
 
     auto settings = str.sliced(0, _size );
-    settings += QString::number(m_Ascan->getAscanLength()) + ";";
+    settings += QString::number(m_settings->getAscanIndex()) + ";";
     qDebug() << settings;
     auto _status = ui->statusBar->findChild<QLabel *>("m_status");
     if(_status)

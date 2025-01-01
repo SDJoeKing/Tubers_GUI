@@ -37,7 +37,7 @@ public:
         FULLY=4003
     };
 
-    int getAscanLength();
+
 
 public slots:
     void plot(const QList<QPointF> &, bool);
@@ -59,9 +59,6 @@ private slots:
 
     void on_btnBack_clicked();
     void doThicknessCal();
-
-
-    void on_comboLength_currentIndexChanged(int index);
 
 private:
     QTimer m_timer;
@@ -102,7 +99,6 @@ public:
 signals:
     void setRectifyUncheck();
     void calculatedThickness(double);
-    void fsChanged(double);
     void sendThreshold(double);
 };
 

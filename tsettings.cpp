@@ -29,6 +29,11 @@ void TSettings::updateVel(double newVel)
     ui->spinVel->setValue(newVel);
 }
 
+int TSettings::getAscanIndex()
+{
+    return ui->comboLength->currentIndex() + 1;
+}
+
 void TSettings::on_btnConfirm_clicked()
 {
 
@@ -68,8 +73,8 @@ void TSettings::on_btnConfirm_clicked()
     int step = ui->spinEncoderStep->value();
     float res = ui->spinEncoderRes->value();
 
-    // setting+= QString::number(encoderTrigger)+ ";"; // encoder triggering
-    setting+=QString::number(0) + ";";
+    setting+= QString::number(encoderTrigger)+ ";"; // encoder triggering
+    // setting+=QString::number(0) + ";"; // encoder never triggers
     setting+= QString::number(step)+ ";"; // encoder skips
 
     // motor speed
@@ -127,3 +132,18 @@ bool TSettings::eventFilter(QObject *watched, QEvent *event)
 
     return QDialog::eventFilter(watched, event);
 }
+
+void TSettings::on_btnHide_clicked()
+{
+
+     emit settingHide();
+}
+
+
+void TSettings::on_comboLength_currentIndexChanged(int index)
+{
+    float fs = 125.0 / (ui->comboLength->currentIndex() + 1);
+    emit fsChanged(fs);
+    ui->label_fs->setText(QString::asprintf("%.2f MHz",fs));
+}
+

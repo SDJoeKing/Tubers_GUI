@@ -4,6 +4,8 @@
 #include "ui_tchartviewform.h"
 QElapsedTimer timerV;
 
+QString lengthAxisTitle = "A-scan length [ms]";
+
 TChartViewForm::TChartViewForm(QWidget *parent)
     : QWidget(parent)
     , ui(new Ui::TChartViewForm)
@@ -54,11 +56,14 @@ TChartViewForm::TChartViewForm(QWidget *parent)
 
     // label and axis format
     m_series->setName("A-scan");
-    m_X->setTitleText("A-scan data points");
+    m_X->setTitleText(lengthAxisTitle);
     m_Y->setTitleText("Amplitude [mV]");
-    m_X->setLabelFormat("%.2f");
+    m_X->setLabelFormat("%.3f");
     m_X->setMinorTickCount(2);
     m_X->applyNiceNumbers();
+
+
+    // update the value of xMax based on fs selected
 
     m_X->setRange(xMin, xMax);
     m_Y->setRange(yMin, yMax);
@@ -143,7 +148,7 @@ void TChartViewForm::changeAxisType(TChartViewForm::AXISTYPE type)
     }else if(type == AXISTYPE::SAMPLE)
     {
         auto _tempMax =depthToPoint(m_X->max() );
-        m_X->setTitleText("A-scan data points");
+        m_X->setTitleText(lengthAxisTitle);
         m_X->setRange(depthToPoint(m_X->min()), _tempMax);
 
         _xAxisType = AXISTYPE::SAMPLE;
@@ -157,13 +162,15 @@ void TChartViewForm::changeAxisType(TChartViewForm::AXISTYPE type)
 
     }else if(type == AXISTYPE::ABSOLUTEY)
     {
-        m_Y->setRange(0, m_Y->max());
+        auto max = m_Y->max() < yRangeMax ? m_Y->max() : yRangeMax;
+        m_Y->setRange(0, max);
         _yAxisType = AXISTYPE::ABSOLUTEY;
         qDebug() << "in axischange" << _yAxisType;
         updateLabelPosition();
     }else
     {
-        m_Y->setRange(-m_Y->max(), m_Y->max());
+        auto max = m_Y->max() < yRangeMax ? m_Y->max() : yRangeMax;
+        m_Y->setRange(-max, max);
         _yAxisType = AXISTYPE::FULLY;
         updateLabelPosition();
     }
@@ -222,7 +229,7 @@ bool TChartViewForm::eventFilter(QObject *watched, QEvent *event)
             m_ruler->replace(QList<QPointF>{QPointF(value.x(), m_Y->min()), QPointF(value.x(), m_Y->max())});
 
             m_dataTip->move(pos.toPoint().x()+20, pos.toPoint().y()-35 );
-            m_dataTip->setText(QString("X: %1\nY: %2").arg(value.x(), 0, 'f', 2).arg(value.y(), 0, 'f', 2));
+            m_dataTip->setText(QString("X: %1\nY: %2").arg(value.x(), 0, 'f', 4).arg(value.y(), 0, 'f', 4));
             m_dataTip->setVisible(true);
 
         }else if(event->type() == QEvent::Leave)
@@ -283,19 +290,34 @@ bool TChartViewForm::eventFilter(QObject *watched, QEvent *event)
         if(wheel->angleDelta().y()>0)
         {
             qDebug() << wheel->angleDelta().y();
-            _min*=1.1;
-            _max*=1.1;
+            if(_min < 0)
+                _min*=1.1;
+            else
+                _min /= 1.1;
+
+            if(_max < 0)
+                _max/=1.1;
+            else
+                _max *=1.1;
         }
         else
         {
             qDebug() << wheel->angleDelta().y();
-            _min/=1.1;
-            _max/=1.1;
+            if(_min < 0)
+                _min/=1.1;
+            else
+                _min *= 1.1;
+
+            if(_max < 0)
+                _max*=1.1;
+            else
+                _max /=1.1;
         }
         if(_yAxisType == AXISTYPE::ABSOLUTEY && _min<0)
             _min = 0;
 
-        m_Y->setRange(_min, _max);
+        if(_max - _min < yRangeMax && _max-_min > yRangeMin)
+            m_Y->setRange(_min, _max);
     }
 
     return QWidget::eventFilter(watched, event);
@@ -381,6 +403,13 @@ void TChartViewForm::startThickCal(bool arg)
         m_timer.stop();
 }
 
+void TChartViewForm::updateFs(const float newFs)
+// newFs comes in without e6
+{
+    fs = newFs*1e6;
+    updateXMax(fs);
+}
+
 
 void TChartViewForm::on_btnReset_clicked(bool checked)
 {
@@ -432,6 +461,15 @@ void TChartViewForm::on_btnSave_clicked()
     success = pix.save(path);
     if(!success && !path.isEmpty())
         QMessageBox::warning(this, "Warning", "Not able to save the image");
+}
+
+void TChartViewForm::updateXMax(const float newFs)
+{
+    // reset paint
+    m_series->clear();
+    qDebug() << newFs;
+    xMax = mTcpClient::DATA_SIZE/2/newFs * 1e3;
+    m_X->setRange(xMin, xMax);
 }
 
 void TChartViewForm::updateLabelPosition()

@@ -28,7 +28,7 @@ private:
 signals:
     void dataProcessed(const QList<QPointF> &, bool);
     void dataLogger(const char *);
-
+    void sendTemperature(const float);
 public slots:
     void process(const char *);
     void setVel(const float &vel);

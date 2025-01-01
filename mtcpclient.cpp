@@ -247,19 +247,19 @@ void mTcpClient::readMessage()
     {
         {
             QMutexLocker lk(&mu);
-            int size = (counter_data+m_readSize > DATA_SIZE ? DATA_SIZE : counter_data+m_readSize);
+            int size = (counter_data+m_readSize > DATA_SIZE_RECV ? DATA_SIZE_RECV : counter_data+m_readSize);
             m_data.replace(counter_data, size, tempData);
             counter_data+=m_readSize;
         }
 
 
-        if(counter_data>=DATA_SIZE + HEADER_SIZE )
+        if(counter_data>=DATA_SIZE_RECV )
         {
             m_commence = 0;
 
             {
                 QMutexLocker lk(&mu);
-                m_readyData.assign(m_data.sliced(HEADER_SIZE));
+                m_readyData.assign(m_data);
             }
 
             if(m_stopAcq)

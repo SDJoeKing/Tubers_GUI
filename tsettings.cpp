@@ -1,6 +1,6 @@
 #include "tsettings.h"
 #include "ui_tsettings.h"
-
+#include "mtcpclient.h"
 TSettings::TSettings(QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::TSettings)
@@ -12,6 +12,14 @@ TSettings::TSettings(QWidget *parent)
 
     installFilter(ui->scrollAreaWidgetContents_2);
 
+    // initialise ascan length
+    QStringList comboLength;
+
+    ui->comboLength->clear();
+    for(quint8 i=1;i<9; i++)
+        comboLength<< QString("%1 ms").arg(mTcpClient::DATA_SIZE/2/125e3 * i, 3,'f', 3);
+
+    ui->comboLength->addItems(comboLength);
 }
 
 TSettings::~TSettings()
@@ -19,10 +27,6 @@ TSettings::~TSettings()
     delete ui;
 }
 
-void TSettings::updateHz(QString arg)
-{
-    ui->labelHz->setText(arg);
-}
 
 void TSettings::updateVel(double newVel)
 {
@@ -83,7 +87,6 @@ void TSettings::on_btnConfirm_clicked()
 
     // velocity refreshrate
     setting+= QString::number(ui->spinVel->value()) + ";";
-    setting+= QString::number(ui->spinRefresh->value()) + ";";
 
     //filter setting
     setting+= QString::number(ui->spinOrder->value())+ ";";

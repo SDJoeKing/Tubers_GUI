@@ -49,6 +49,7 @@ public slots:
     void acquisitionStatus(bool);
     void toogleSave(bool);
     void startThickCal(bool);
+    void updateFs(const float);
 private slots:
 
     void backButtonEnabled(bool);
@@ -56,7 +57,7 @@ private slots:
     void on_btnZoom_clicked(bool checked);
     void on_btnReset_clicked(bool checked);
     void on_btnSave_clicked();
-
+    void updateXMax(const float);
     void on_btnBack_clicked();
     void doThicknessCal();
 
@@ -73,8 +74,10 @@ private:
     TGate *m_gate2;
     const float yMin=-500;
     const float yMax = 500;
+    const float yRangeMin = 10;
+    const float yRangeMax = 2000;
     const float xMin=0;
-    const float xMax = mTcpClient::DATA_SIZE/2;
+    float xMax = mTcpClient::DATA_SIZE/2/125e3;
     double m_vel = 5890.0;
     bool _dataTipOn=false;
     bool _zoomOn=false;
@@ -89,7 +92,7 @@ private:
     bool acquisitionRunning = false;
     QStack<QPair<QRectF, AXISTYPE>> zoomRectTrack;
     qreal maxInd(const QRectF &rect, bool);
-
+    float fs = 125e6;
 private:
     Ui::TChartViewForm *ui;
 

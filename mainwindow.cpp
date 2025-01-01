@@ -89,12 +89,15 @@ MainWindow::MainWindow(QWidget *parent)
     connect(this, &MainWindow::filterParam, m_processor, &Processor::updateFilter, Qt::QueuedConnection);
     connect(m_processor, &Processor::dataProcessed, this, &MainWindow::updateBScan, Qt::QueuedConnection);
     connect(m_processor, &Processor::dataProcessed, m_Ascan, &TChartViewForm::plot, Qt::QueuedConnection);
+    connect(m_processor, &Processor::sendTemperature, this, &MainWindow::updateTemp, Qt::QueuedConnection);
+
     connect(&processorThread, &QThread::finished, this, &MainWindow::threadFinished);
     processorThread.start();
 
-    // connect
+    // connect settings
     connect(m_settings, &TSettings::settingConfirm, this, &MainWindow::doSettingsConfirmed);
     connect(m_settings, &TSettings::settingHide, this, &MainWindow::hideSetting);
+
     // acquisition related
 
     connect(this, &MainWindow::velocitySet, m_Ascan, &TChartViewForm::setVelocity);
@@ -102,6 +105,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // key acquisitionRun or not
     connect(m_settings, &TSettings::fsChanged, this, &MainWindow::updateFs);
+    connect(m_settings, &TSettings::fsChanged, m_Ascan, &TChartViewForm::updateFs);
     connect(this, &MainWindow::acquisitionRun, m_Ascan, &TChartViewForm::acquisitionStatus);
     connect(this, &MainWindow::acquisitionRun, m_Ascan, &TChartViewForm::toogleSave);
     connect(ui->ckGates, &QCheckBox::checkStateChanged, m_Ascan, &TChartViewForm::startThickCal);
@@ -121,7 +125,7 @@ MainWindow::MainWindow(QWidget *parent)
     // final finish
     setConnectionIndicator();
     ui->spinEnvLevel->setValue(0);
-
+    ui->radioTemp->setText(QString::asprintf("Temperature: %.1f \u2103", 0.0));
     resetUI();
 
 }
@@ -160,6 +164,22 @@ void MainWindow::resetUI()
 void MainWindow::setConnectionIndicator()
 {
     ui->radioStatus->setStyleSheet(
+        "QRadioButton::indicator {"
+        "width:                  10px;"
+        "height:                 10px;"
+        "        border-radius:          7px;"
+        "}"
+        "QRadioButton::indicator:checked {"
+        "background-color:       green;"
+        "border:                 2px solid white;"
+        "}"
+        "QRadioButton::indicator:unchecked {"
+        "background-color:       red;"
+        "border:                 2px solid white;"
+        "}"
+        );
+
+    ui->radioTemp->setStyleSheet(
         "QRadioButton::indicator {"
         "width:                  10px;"
         "height:                 10px;"
@@ -593,6 +613,15 @@ void MainWindow::setThreshold(double thres)
     m_thres = thres;
 }
 
+void MainWindow::updateTemp(const float temp)
+{
+    ui->radioTemp->setText(QString::asprintf("Temperature: %.1f \u2103", temp));
+    if(temp > 70.0)
+        ui->radioTemp->setChecked(true);
+    else
+        ui->radioTemp->setChecked(false);
+}
+
 
 void MainWindow::updateFs(double newFs)
 {
@@ -613,5 +642,6 @@ void MainWindow::threadFinished()
 {
     m_quitEvent.quit();
 }
+
 
 

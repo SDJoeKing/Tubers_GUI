@@ -83,6 +83,7 @@ private slots:
     // processing
     void threadFinished();
     void setThreshold(double);
+    void updateTemp(const float);
 
 private:
     QThread socketThread;

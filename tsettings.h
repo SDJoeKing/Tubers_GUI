@@ -39,14 +39,13 @@ public:
         motorSpeed,
         motorAngle,
         velocity,
-        refreshRate,
         order,
         lowCut,
         highCut
     };
 
 public slots:
-    void updateHz(QString);
+
     void updateVel(double);
     int getAscanIndex();
 private slots:

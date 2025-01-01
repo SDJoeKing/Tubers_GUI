@@ -47,8 +47,7 @@ void Processor::process(const char *dataptr)
 {
     processTimer.restart();
     auto serverData = QByteArray::fromRawData(dataptr, mTcpClient::DATA_SIZE );
-    quint8 _forward = static_cast<quint8>(serverData.at(4));
-    int j=0;
+
     double xpoint=0;
     QList<QPointF> calPoint(mTcpClient::DATA_SIZE/2);
     quint16 temp1;
@@ -56,7 +55,19 @@ void Processor::process(const char *dataptr)
     float *dataPoint[1];
     float _temp[mTcpClient::DATA_SIZE/2]{0};
     dataPoint[0] = _temp;
-    QByteArray _arr(mTcpClient::DATA_SIZE/2, Qt::Uninitialized);
+
+    // QByteArray _arr(mTcpClient::DATA_SIZE/2, Qt::Uninitialized);
+
+    // take into account of header data
+    int j= mTcpClient::HEADER_SIZE;
+    // get system information from the header data
+    quint8 _forward = static_cast<quint8>(serverData.at(4));
+
+    temp1 =(serverData.at(7) << 8) & 0xFF00;
+    temp2 = (serverData.at(6)) & 0xFF;
+
+    float _temperature = (((float)(static_cast<qint16>(temp2 | temp1))/65536.0f)/0.00198421639f ) - 273.15f;
+
 
     bool _tempDepthFlag = false;
     if(depthAxis)
@@ -75,6 +86,7 @@ void Processor::process(const char *dataptr)
     {
         m_filter.process(mTcpClient::DATA_SIZE/2, dataPoint);
     }
+
     // rectified, envelope, depth?
     for (int i = 0; i < mTcpClient::DATA_SIZE/2; i++)
     {
@@ -96,6 +108,7 @@ void Processor::process(const char *dataptr)
 
     emit dataLogger(reinterpret_cast<const char *>(&_temp));
     emit dataProcessed(calPoint, _forward == 2 ? false : true);
+    emit sendTemperature(_temperature);
 }
 
 void Processor::setVel(const float &vel)

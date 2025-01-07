@@ -315,9 +315,10 @@ bool TChartViewForm::eventFilter(QObject *watched, QEvent *event)
         }
         if(_yAxisType == AXISTYPE::ABSOLUTEY && _min<0)
             _min = 0;
-
-        if(_max - _min < yRangeMax && _max-_min > yRangeMin)
+        auto vpp = _max - _min;
+        if(vpp < yRangeMax*1.1 && vpp > yRangeMin*1.1)
             m_Y->setRange(_min, _max);
+
     }
 
     return QWidget::eventFilter(watched, event);

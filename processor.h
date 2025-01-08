@@ -7,6 +7,8 @@
 #include <QEventLoop>
 #include "mtcpclient.h"
 
+#define FRAMERATE_CONTROL
+
 class Processor : public QObject
 {
     Q_OBJECT

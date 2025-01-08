@@ -2,6 +2,7 @@
 #include "mainwindow.h"
 
 QElapsedTimer processTimer;
+
 Processor::Processor(QObject *parent)
     : QObject{parent}
 {
@@ -9,6 +10,7 @@ Processor::Processor(QObject *parent)
     depthAxis = false;
     rectify = false;
     filtering = false;
+    processTimer.start();
     qDebug() << "Processor on";
 }
 
@@ -45,7 +47,7 @@ void Processor::close()
 
 void Processor::process(const char *dataptr)
 {
-    processTimer.restart();
+
     auto serverData = QByteArray::fromRawData(dataptr, mTcpClient::DATA_SIZE );
 
     double xpoint=0;
@@ -104,10 +106,17 @@ void Processor::process(const char *dataptr)
     //reset envelope;
     MainWindow::_env = 0;
 
-    qDebug() << "Proc: " << processTimer.durationElapsed();
-
     emit dataLogger(reinterpret_cast<const char *>(&_temp));
+
+#ifdef FRAMERATE_CONTROL
+    if(processTimer.durationElapsed().count() > 1.67e7 ) // 60HZ
+    {
+        emit dataProcessed(calPoint, _forward == 2 ? false : true);
+        processTimer.restart();
+    }
+#else
     emit dataProcessed(calPoint, _forward == 2 ? false : true);
+#endif
     emit sendTemperature(_temperature);
 }
 

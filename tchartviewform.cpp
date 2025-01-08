@@ -595,5 +595,69 @@ qreal TChartViewForm::maxInd(const QRectF &rect, bool thres)
     return _tempMax;
 }
 
+void TChartViewForm::setXRange(const float min, const float max)
+{
+    float _min = 0;
+    float _max = (_xAxisType == AXISTYPE::SAMPLE) ? xMax : xMax*m_vel;
 
+    if(min <=0)
+        _min = 0;
+    else
+        _min = min;
+
+    if(max <= _max)
+        _max = max;
+
+    m_X->setRange(_min, _max);
+}
+
+void TChartViewForm::setYRange(const float min, const float max)
+{
+    auto vpp = max - min;
+    if(!(vpp > yRangeMax || vpp < yRangeMin))
+        m_Y->setRange(min, max);
+
+}
+
+
+void TChartViewForm::on_btnIncr_clicked()
+{
+
+    float step = ui->lineStep->text().toFloat();
+
+    auto axis = m_X; // default to x axis control
+    if(ui->comboAxis->currentIndex() == 1) // Y axis
+        axis = m_Y;
+
+    //  control logic - if axis is X
+    if(axis == m_X)
+    {
+        setXRange(m_X->min()-step, m_X->max() + step);
+
+    }else
+    {
+        setYRange(m_Y->min()-step, m_Y->max() + step);
+    }
+
+}
+
+
+void TChartViewForm::on_btnDecr_clicked()
+{
+    float step = ui->lineStep->text().toFloat();
+
+    auto axis = m_X; // default to x axis control
+    if(ui->comboAxis->currentIndex() == 1) // Y axis
+        axis = m_Y;
+
+    //  control logic - if axis is X
+    if(axis == m_X)
+    {
+        setXRange(m_X->min()+step, m_X->max() - step);
+
+    }else
+    {
+        setYRange(m_Y->min()+step, m_Y->max() - step);
+    }
+}
 

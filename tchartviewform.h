@@ -61,6 +61,11 @@ private slots:
     void on_btnBack_clicked();
     void doThicknessCal();
 
+
+    void on_btnIncr_clicked();
+
+    void on_btnDecr_clicked();
+
 private:
     QTimer m_timer;
     TChartView *m_chartView;
@@ -93,8 +98,11 @@ private:
     QStack<QPair<QRectF, AXISTYPE>> zoomRectTrack;
     qreal maxInd(const QRectF &rect, bool);
     float fs = 125e6;
+
 private:
     Ui::TChartViewForm *ui;
+    void setXRange(const float, const float);
+    void setYRange(const float, const float);
 
     // QObject interface
 public:

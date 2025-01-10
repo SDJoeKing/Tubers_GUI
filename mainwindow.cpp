@@ -186,11 +186,11 @@ void MainWindow::setConnectionIndicator()
         "        border-radius:          7px;"
         "}"
         "QRadioButton::indicator:checked {"
-        "background-color:       green;"
+        "background-color:       red;"
         "border:                 2px solid white;"
         "}"
         "QRadioButton::indicator:unchecked {"
-        "background-color:       red;"
+        "background-color:       grey;"
         "border:                 2px solid white;"
         "}"
         );

@@ -57,7 +57,7 @@ private slots:
     void on_btnZoom_clicked(bool checked);
     void on_btnReset_clicked(bool checked);
     void on_btnSave_clicked();
-    void updateXMax(const float);
+    void updateXMax(const float &);
     void on_btnBack_clicked();
     void doThicknessCal();
 
@@ -65,6 +65,10 @@ private slots:
     void on_btnIncr_clicked();
 
     void on_btnDecr_clicked();
+
+
+
+    void on_comboAxis_currentIndexChanged(int index);
 
 private:
     QTimer m_timer;
@@ -90,23 +94,29 @@ private:
     AXISTYPE _yAxisType = AXISTYPE::FULLY;
     QList<QLabel *>_dataTipList;
     QLabel *generateLabel(QWidget *parent);
-    int depthToPoint(double depth);
-    double pointToDepth(int point);
+    double depthToTime(const double &depth);
+    double timeToDepth(const double &time);
     void updateLabelPosition();
     bool inRange(const QPointF &, QValueAxis *, QValueAxis *);
     bool acquisitionRunning = false;
     QStack<QPair<QRectF, AXISTYPE>> zoomRectTrack;
     qreal maxInd(const QRectF &rect, bool);
     float fs = 125e6;
+    QPair<QString, int> m_xUnit;
+    QPair<QString, int> m_yUnit;
 
 private:
     Ui::TChartViewForm *ui;
-    void setXRange(const float, const float);
-    void setYRange(const float, const float);
+    void setXRange(const float &, const float &);
+    void setYRange(const float &, const float &);
 
     // QObject interface
 public:
     virtual bool eventFilter(QObject *watched, QEvent *event) override;
+    void setXUnit(const QString &newXUnit);
+
+    void setYUnit(const QString &newYUnit);
+
 signals:
     void setRectifyUncheck();
     void calculatedThickness(double);

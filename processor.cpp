@@ -27,9 +27,10 @@ void Processor::setParam(const float &vel, const bool &depth, const bool &rect, 
     filtering = filt;
 }
 
-void Processor::updateFilter(const quint8 &order, const quint8 &fs, const float &fc, const float &fw)
+void Processor::updateFilter(const quint8 &order, const float &fs, const float &fc, const float &fw)
 {
     m_filter.setup( order, fs, fc, fw);
+    m_fs = fs;
 }
 
 void Processor::run()
@@ -48,7 +49,7 @@ void Processor::close()
 void Processor::process(const char *dataptr)
 {
 
-    auto serverData = QByteArray::fromRawData(dataptr, mTcpClient::DATA_SIZE );
+    auto serverData = QByteArray::fromRawData(dataptr, mTcpClient::DATA_SIZE_RECV );
 
     double xpoint=0;
     QList<QPointF> calPoint(mTcpClient::DATA_SIZE/2);
@@ -66,9 +67,10 @@ void Processor::process(const char *dataptr)
     quint8 _forward = static_cast<quint8>(serverData.at(4));
 
     temp1 =(serverData.at(7) << 8) & 0xFF00;
+
     temp2 = (serverData.at(6)) & 0xFF;
 
-    float _temperature = (((float)(static_cast<qint16>(temp2 | temp1))/65536.0f)/0.00198421639f ) - 273.15f;
+    float _temperature = (((float)(static_cast<quint16>(temp2 | temp1))/65536.0f)/0.00198421639f ) - 273.15f;
 
 
     bool _tempDepthFlag = false;
@@ -94,7 +96,9 @@ void Processor::process(const char *dataptr)
     {
         xpoint = i;
         if(_tempDepthFlag)
-            xpoint = i / 2/ 125e6 * m_vel * 1000;
+            xpoint = i / m_fs / 1e6 * m_vel * 1000;
+        else
+            xpoint = i / m_fs /1e6 *1000;
 
         if(rectify)
             dataPoint[0][i] = MainWindow::envelope(dataPoint[0][i], MainWindow::_env, MainWindow::m_ga, MainWindow::m_gr);

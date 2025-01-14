@@ -158,7 +158,6 @@ void MainWindow::resetUI()
 
     m_Ascan->clear();
 
-
 }
 
 void MainWindow::setConnectionIndicator()
@@ -202,7 +201,7 @@ MainWindow::~MainWindow()
     if(ui->btnConnect->isChecked())
     {
         ui->btnConnect->click(); //  manual disconnect
-        // socketThread.quit();
+
     }
 
     QTimer::singleShot(0, m_processor, &Processor::close);
@@ -244,6 +243,8 @@ void MainWindow::doSettingsConfirmed(QString str)
     qDebug() << list;
 
     m_vel = list[TSettings::velocity].toDouble();
+    emit velocitySet(m_vel);
+
     m_order = list[TSettings::order].toInt();
     m_fc = (list[TSettings::lowCut].toDouble() + list[TSettings::highCut].toDouble() )/ 2.0;
     m_fw= qAbs(list[TSettings::highCut].toDouble() - list[TSettings::lowCut].toDouble());
@@ -302,6 +303,7 @@ void MainWindow::on_btnConnect_clicked(bool checked)
         connect(m_client, &mTcpClient::clientMessage, this, &MainWindow::logMsg, Qt::QueuedConnection);
         connect(m_client, qOverload<const QString &>(&mTcpClient::tcpMessage), this, &MainWindow::logMsg, Qt::QueuedConnection);
         connect(m_client, &mTcpClient::serverReady, this, &MainWindow::toogleStatus, Qt::QueuedConnection);
+        connect(m_client, &mTcpClient::serverReady, ui->radioStatus, &QRadioButton::setChecked, Qt::QueuedConnection);
         connect(this, &MainWindow::stopAcqSig, m_client, &mTcpClient::setStopAcq, Qt::QueuedConnection);
         connect(m_client, &mTcpClient::acquisitionReady, this, &MainWindow::runAcquisition, Qt::QueuedConnection);
         connect(m_client, &mTcpClient::acquisitionStop, this, &MainWindow::stopAcquisition, Qt::QueuedConnection);
@@ -327,14 +329,12 @@ void MainWindow::on_btnConnect_clicked(bool checked)
     else
     {
         // disconnect
-
+        ui->radioStatus->setChecked(false);
         QTimer::singleShot(0, m_client, &mTcpClient::stopAcquisition);
         QTimer::singleShot(100, m_client, &mTcpClient::stop);
 
         resetUI();
         ui->btnRun->setDisabled(true);
-        QTimer::singleShot(110, this, [this](){socketThread.quit();});
-
     }
 }
 
@@ -347,14 +347,15 @@ void MainWindow::logMsg(QString str)
 
 void MainWindow::toogleStatus(bool arg)
 {
-    ui->radioStatus->setChecked(arg);
 
+    qDebug() << "radio status: " << arg;
     if(ui->btnConnect->isChecked() && arg)
     {
         ui->btnConnect->setText("Disconnect");
     }else
     {
         ui->btnConnect->setText("Connect");
+        socketThread.quit();
     }
 }
 

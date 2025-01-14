@@ -7,7 +7,7 @@
 #include <QEventLoop>
 #include "mtcpclient.h"
 
-#define FRAMERATE_CONTROL
+// #define FRAMERATE_CONTROL
 
 class Processor : public QObject
 {
@@ -22,6 +22,7 @@ public:
 private:
     Dsp::SimpleFilter<Dsp::Butterworth::BandPass <4> , 1> m_filter;
     float m_vel;
+    float m_fs;
     bool depthAxis;
     bool rectify;
     bool filtering;
@@ -37,7 +38,7 @@ public slots:
     void setDepth(const bool &depth);
     void setRectified(const bool &rect);
     void setFiltering(const bool &filt);
-    void updateFilter(const quint8 & order, const quint8 &fs, const float &fc, const float &fw);
+    void updateFilter(const quint8 & order, const float &fs, const float &fc, const float &fw);
 };
 
 #endif // PROCESSOR_H

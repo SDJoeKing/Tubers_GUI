@@ -20,7 +20,7 @@ public:
     explicit mTcpClient(QObject *parent=nullptr);
     ~mTcpClient();
 
-    static const quint16 DATA_SIZE = 16384*2 ;
+    static const quint16 DATA_SIZE = 16000*2 ;
     static const quint8 HEADER_SIZE = 8;
     static const quint16 DATA_SIZE_RECV = DATA_SIZE + HEADER_SIZE;
 
@@ -55,6 +55,7 @@ private:
     QEventLoop *m_loop;
     QString m_address;
     quint8 m_port;
+    bool shutdownLock;
 private slots:
     void readMessage(); //  signal readyRead, slot readMessage
     void errorOccurred(QAbstractSocket::SocketError socketError);

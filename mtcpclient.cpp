@@ -9,7 +9,7 @@ QByteArray stopAcq = QString("stop").toUtf8();
 mTcpClient::mTcpClient(QObject *parent)
     :QObject{parent}
 {
-
+    shutdownLock = true;
 }
 
 mTcpClient::~mTcpClient()
@@ -33,9 +33,10 @@ void mTcpClient::stop()
 {
     if(isOpen())
     {
+
         disconnected(); // send disconnect info first
         m_socket->disconnectFromHost();
-        m_socket->waitForDisconnected();
+        while(shutdownLock){};
     }
     this->m_socket->readAll();
     emit acquisitionStop();
@@ -123,6 +124,7 @@ void mTcpClient::setHostPort(const QString& addr, const quint8& port)
 
 static bool headerFound(const QByteArray &arr)
 {
+
 
 
     if(arr.size() > 3)
@@ -228,6 +230,7 @@ void mTcpClient::readMessage()
 
 
     QByteArray tempData = m_socket->readAll();
+
     m_readSize = tempData.size();
 
     if(!parseServerMsg(tempData) || m_readSize == 17)
@@ -314,4 +317,5 @@ void mTcpClient::notifyServerDown()
 {
     m_socket->flush();
     emit serverReady(false);
+    shutdownLock = false;
 }

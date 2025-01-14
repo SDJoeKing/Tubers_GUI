@@ -198,7 +198,7 @@ void mTcpClient::run()
 
     m_socket = new QTcpSocket(this);
 
-    m_socket->setSocketOption(QAbstractSocket::LowDelayOption, 0);
+    m_socket->setSocketOption(QAbstractSocket::LowDelayOption, 1);
     qDebug() << "socket thread: "<< this->thread();
     connect(m_socket, &QTcpSocket::connected, this, &mTcpClient::connected );
     connect(m_socket, &QTcpSocket::disconnected, this, &mTcpClient::notifyServerDown );

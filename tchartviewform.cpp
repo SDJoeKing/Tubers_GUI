@@ -567,7 +567,7 @@ void TChartViewForm::doThicknessCal()
     if(indGate1 == -1 || indGate2 == -1)
         return;
 
-    emit calculatedThickness(timeToDepth(qAbs(indGate2 - indGate1)));
+    emit calculatedThickness(timeToDepth(qAbs(indGate2 - indGate1) / 2 / fs * 1000)); // tbc
 }
 
 qreal TChartViewForm::maxInd(const QRectF &rect, bool thres)
@@ -579,18 +579,19 @@ qreal TChartViewForm::maxInd(const QRectF &rect, bool thres)
     // convert to series position
     QPointF value_left = m_chart->mapToValue(rect.topLeft(), m_series);
     QPointF value_right = m_chart->mapToValue(rect.bottomRight(), m_series);
-    int leftInd = value_left.x();
-    int rightInd = value_right.x();
+
+    int leftInd = (value_left.x() / m_X->max()) * mTcpClient::DATA_SIZE ;
+    int rightInd = (value_right.x()/ m_X->max()) * mTcpClient::DATA_SIZE ;
     double threshold = (value_left.y() + value_right.y()) / 2;
 
     if(thres)
         emit sendThreshold(threshold);
 
-    if(_xAxisType == AXISTYPE::DEPTH)
-    {
-        leftInd = depthToTime(value_left.x());
-        rightInd = depthToTime(value_right.x());
-    }
+    // if(_xAxisType == AXISTYPE::DEPTH)
+    // {
+    //     leftInd = depthToTime(value_left.x());
+    //     rightInd = depthToTime(value_right.x());
+    // }
 
     leftInd < 0 ? leftInd =0 : leftInd;
     rightInd < 0 ? rightInd =0 : rightInd;

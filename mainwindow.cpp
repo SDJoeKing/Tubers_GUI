@@ -544,6 +544,7 @@ void MainWindow::on_btnCal_clicked()
             return;
 
         auto distance = oldDepth * 2 / 1000 * 125e6 / m_vel;
+        qDebug() << distance; // tbc
         m_vel = newDepth * 2/1000 * 125e6 / distance;
 
         if(m_vel<=0)

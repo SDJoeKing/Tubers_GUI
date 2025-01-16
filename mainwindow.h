@@ -69,7 +69,7 @@ private slots:
     void on_ckRectify_clicked(bool checked);
     void updateBScan(const QList<QPointF> &data, bool);
     void on_actionReset_triggered(bool);
-    void setRectifyUnchecked();
+    void setRectifyChecked();
 
     void bScanCustomContext(const QPoint &pos);
     void on_btnCal_clicked();

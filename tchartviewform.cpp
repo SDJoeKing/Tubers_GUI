@@ -102,7 +102,7 @@ TChartViewForm::TChartViewForm(QWidget *parent)
 
     // connect
     connect(m_X, &QValueAxis::rangeChanged, ui->btnBack, &QPushButton::setEnabled);
-    connect(m_X, &QValueAxis::rangeChanged, this, &TChartViewForm::backButtonEnabled);
+    // connect(m_X, &QValueAxis::rangeChanged, this, &TChartViewForm::backButtonEnabled);
     connect(&m_timer, &QTimer::timeout, this, &TChartViewForm::doThicknessCal);
 
 
@@ -143,16 +143,18 @@ void TChartViewForm::changeXAxisType(const TChartViewForm::x_AXISTYPE &type)
         m_X->setTitleText(depthAxisTitle);
         float _tempMax = timeToDepth(m_X->max());
         float _tempMin = timeToDepth(m_X->min());
-        m_X->setRange( _tempMin, _tempMax);
 
         if(!(m_series->points().isEmpty()))
         {
             QList<QPointF> _tempPoints;
             for(auto &point : m_series->points())
                 _tempPoints.emplace_back(timeToDepth(point.x()) , point.y());
+
+            m_X->setRange(timeToDepth(xMin), timeToDepth(xMax));
             plot(_tempPoints, true);
         }
 
+        m_X->setRange( _tempMin, _tempMax);
         updateLabelPosition();
 
         setXUnit("mm");
@@ -162,12 +164,20 @@ void TChartViewForm::changeXAxisType(const TChartViewForm::x_AXISTYPE &type)
         _xAxisType = type;
 
         auto _tempMax =depthToTime(m_X->max() );
-        qDebug() << _tempMax;
+        float _tempMin = depthToTime(m_X->min());
+
         m_X->setTitleText(lengthAxisTitle);
-        m_X->setRange(depthToTime(m_X->min()), _tempMax);
 
-        _xAxisType = x_AXISTYPE::TIME;
+        if(!(m_series->points().isEmpty()))
+        {
+            QList<QPointF> _tempPoints;
+            for(auto &point : m_series->points())
+                _tempPoints.emplace_back(depthToTime(point.x()) , point.y());
+            m_X->setRange(xMin, xMax);
+            plot(_tempPoints, true);
+        }
 
+        m_X->setRange(_tempMin, _tempMax);
         updateLabelPosition();
 
         setXUnit("ms");
@@ -437,16 +447,18 @@ void TChartViewForm::on_btnReset_clicked(bool checked)
     auto currentPosition = m_ruler->points();
     m_ruler->replace(QList<QPointF>{QPointF(currentPosition.at(0).x(), yMin), QPointF(currentPosition.at(0).x(), yMax)});
     updateLabelPosition();
-    if(_yAxisType==y_AXISTYPE::RECTIFY)
+    if(_yAxisType==y_AXISTYPE::FULL)
     {
-        emit setRectifyUncheck();
-        _yAxisType = y_AXISTYPE::FULL;
+        emit setRectifyCheck();
     }
     if(_xAxisType == x_AXISTYPE::DEPTH)
     {
         m_X->setRange(timeToDepth(xMin), timeToDepth(xMax));
-
     }
+
+    // empty any residual zoomRectTrack
+    zoomRectTrack.clear();
+    ui->btnBack->setEnabled(false);
 }
 
 
@@ -545,13 +557,11 @@ void TChartViewForm::on_btnBack_clicked()
     }
 
     m_X->setRange(startPos.x(), endPos.x());
-    m_Y->setRange(endPos.y(), startPos.y());
+    if(_yAxisType==y_AXISTYPE::FULL )
+        m_Y->setRange(endPos.y(), startPos.y());
+    else
+        m_Y->setRange(qAbs(endPos.y()), qAbs(startPos.y()));
 
-    if(endPos.y()< 0 && _yAxisType==y_AXISTYPE::RECTIFY)
-    {
-        emit setRectifyUncheck();
-        _yAxisType = y_AXISTYPE::FULL;
-    }
 
     updateLabelPosition();
 

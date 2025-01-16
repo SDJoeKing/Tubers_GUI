@@ -113,7 +113,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->ckGates, &QCheckBox::checkStateChanged, m_Ascan, &TChartViewForm::startThickCal);
     connect(ui->ckGates, &QCheckBox::checkStateChanged, ui->btnCal, &QPushButton::setEnabled);
 
-    connect(m_Ascan, &TChartViewForm::setRectifyUncheck, this, &MainWindow::setRectifyUnchecked);
+    connect(m_Ascan, &TChartViewForm::setRectifyCheck, this, &MainWindow::setRectifyChecked);
     connect(m_Ascan, &TChartViewForm::calculatedThickness, ui->spinDepth, &QDoubleSpinBox::setValue);
     connect(m_Bscan, &QCustomPlot::customContextMenuRequested, this, &MainWindow::bScanCustomContext);
     connect(m_settings, &TSettings::bScanSetting, this, &MainWindow::do_bScanSetting);
@@ -522,7 +522,7 @@ void MainWindow::on_actionReset_triggered(bool checked)
     resetUI();
 }
 
-void MainWindow::setRectifyUnchecked()
+void MainWindow::setRectifyChecked()
 {
     ui->ckRectify->click();
 }

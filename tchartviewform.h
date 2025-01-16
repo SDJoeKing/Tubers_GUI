@@ -121,7 +121,7 @@ public:
     void setYUnit(const QString &newYUnit);
 
 signals:
-    void setRectifyUncheck();
+    void setRectifyCheck();
     void calculatedThickness(double);
     void sendThreshold(double);
 };

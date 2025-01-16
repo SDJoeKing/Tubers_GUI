@@ -157,14 +157,23 @@ void MainWindow::resetUI()
     ui->btnConnect->setChecked(false);
     ui->spinEnvLevel->setMinimum(0);
     ui->spinEnvLevel->setValue(0);
-    ui->ckRectify->setChecked(false);
-    ui->ckDepthAxis->setChecked(false);
-    ui->ckGates->setChecked(false);
-    ui->ckGates->clicked(false);
+
+    toggleOff(ui->ckRectify);// so that by default rectify
+    ui->ckRectify->click();
+
+    toggleOff(ui->ckDepthAxis);
+    toggleOff(ui->ckGates);
+
     ui->spinDepth->setValue(0.00);
 
     m_Ascan->clear();
 
+}
+
+void MainWindow::toggleOff(QCheckBox *widget)
+{
+    if(widget->isChecked())
+        widget->click();
 }
 
 void MainWindow::setConnectionIndicator()

@@ -123,7 +123,7 @@ private:
     void resetUI();
     void setConnectionIndicator();
     void set_envelope(float, float);
-
+    void toggleOff(QCheckBox *);
 signals:
     void velocitySet(double);
     void mainSendSetting(const QString &);

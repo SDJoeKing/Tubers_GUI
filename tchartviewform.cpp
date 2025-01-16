@@ -133,62 +133,67 @@ void TChartViewForm::plot(const QList<QPointF> &dataptr, bool p)
 
 }
 
-void TChartViewForm::changeAxisType(TChartViewForm::AXISTYPE type)
+void TChartViewForm::changeXAxisType(const TChartViewForm::x_AXISTYPE &type)
 {
-    if(type == AXISTYPE::DEPTH)
+
+    if(_xAxisType == x_AXISTYPE::TIME && type==x_AXISTYPE::DEPTH)
     {
+        _xAxisType = type;
+
         m_X->setTitleText(depthAxisTitle);
         float _tempMax = timeToDepth(m_X->max());
-        qDebug() << _tempMax;
-        m_X->setRange( timeToDepth(m_X->min()), _tempMax);
-        _xAxisType = AXISTYPE::DEPTH;
+        float _tempMin = timeToDepth(m_X->min());
+        m_X->setRange( _tempMin, _tempMax);
 
-        if(!m_series->points().isEmpty())
+        if(!(m_series->points().isEmpty()))
         {
             QList<QPointF> _tempPoints;
             for(auto &point : m_series->points())
                 _tempPoints.emplace_back(timeToDepth(point.x()) , point.y());
             plot(_tempPoints, true);
         }
+
         updateLabelPosition();
 
         setXUnit("mm");
-
-    }else if(type == AXISTYPE::SAMPLE)
+    }
+    else if(_xAxisType == x_AXISTYPE::DEPTH && type == x_AXISTYPE::TIME)
     {
+        _xAxisType = type;
+
         auto _tempMax =depthToTime(m_X->max() );
         qDebug() << _tempMax;
         m_X->setTitleText(lengthAxisTitle);
         m_X->setRange(depthToTime(m_X->min()), _tempMax);
 
-        _xAxisType = AXISTYPE::SAMPLE;
-
-        if(!m_series->points().isEmpty())
-        {
-            QList<QPointF> _tempPoints;
-            for(auto &point : m_series->points())
-                _tempPoints.emplace_back(depthToTime(point.x()) , point.y());
-            plot(_tempPoints, true);
-        }
+        _xAxisType = x_AXISTYPE::TIME;
 
         updateLabelPosition();
 
         setXUnit("ms");
+    }
 
-    }else if(type == AXISTYPE::ABSOLUTEY)
+
+}
+
+void TChartViewForm::changeYAxisType(const TChartViewForm::y_AXISTYPE &type)
+{
+
+    if(_yAxisType == y_AXISTYPE::FULL && type == y_AXISTYPE::RECTIFY)
     {
+        _yAxisType = y_AXISTYPE::RECTIFY;
         auto max = m_Y->max() < yRangeMax ? m_Y->max() : yRangeMax;
         m_Y->setRange(0, max);
-        _yAxisType = AXISTYPE::ABSOLUTEY;
-        qDebug() << "in axischange" << _yAxisType;
+
         updateLabelPosition();
 
 
-    }else
+    }else if((_yAxisType == y_AXISTYPE::RECTIFY && type == y_AXISTYPE::FULL))
     {
+        _yAxisType = y_AXISTYPE::FULL;
         auto max = m_Y->max() < yRangeMax ? m_Y->max() : yRangeMax;
         m_Y->setRange(-max, max);
-        _yAxisType = AXISTYPE::FULLY;
+
         updateLabelPosition();
     }
 
@@ -196,16 +201,15 @@ void TChartViewForm::changeAxisType(TChartViewForm::AXISTYPE type)
 
 void TChartViewForm::setVelocity(double vel)
 {
-    int originalPointMax = depthToTime(m_X->max());
-    int originalPointMin = depthToTime(m_X->min());
+    float ratio = vel / m_vel;
 
     m_vel=vel;
-    if(_xAxisType == AXISTYPE::DEPTH)
-    {
-        float _tempMax = timeToDepth(originalPointMax);
-        m_X->setRange( timeToDepth(originalPointMin), _tempMax);
-        updateLabelPosition();
-    }
+
+    float _tempMax = m_X->max() * ratio ;
+    float _tempMin = m_X->min() * ratio ;
+
+    m_X->setRange( _tempMin, _tempMax);
+    updateLabelPosition();
 }
 
 void TChartViewForm::clear()
@@ -262,13 +266,10 @@ bool TChartViewForm::eventFilter(QObject *watched, QEvent *event)
                 // get mouse pos
 
                 auto value = m_chart->mapToValue(mouse->pos(), m_series);
-                auto xposition = value.x();
+                auto xposition = _xAxisType == x_AXISTYPE::TIME ? value.x() : timeToDepth(value.x());
 
-                if(_xAxisType == AXISTYPE::DEPTH)
-                {
-                    value.setX(depthToTime(value.x()));
-                }
-                qreal _Yvalue = m_series->at(value.x()).y();
+                qreal _Yvalue = m_series->at(static_cast<int>(xposition / xMax)).y();
+
                 if(qAbs(value.y() - _Yvalue)<0.01*(m_Y->max() - m_Y->min()))
                 {
                     m_series->selectPoint(value.x());
@@ -277,10 +278,10 @@ bool TChartViewForm::eventFilter(QObject *watched, QEvent *event)
 
                     auto _tempLabel = generateLabel(m_chartView);
 
-                    _tempLabel->setText(QString("X: %1\nY: %2").arg(xposition, 0, 'f', 2).arg(value.y(), 0, 'f', 2));
+                    _tempLabel->setText(QString("X: %1\nY: %2").arg(value.x(), 0, 'f', 2).arg(value.y(), 0, 'f', 2));
 
                     // object name is always the index as x
-                    _tempLabel->setObjectName(QString("%1;%2").arg(value.x()).arg(value.y()));
+                    _tempLabel->setObjectName(QString("%1;%2").arg(xposition).arg(value.y())); // xposition always means time, saved as time
                     _dataTipList.emplaceBack(_tempLabel);
 
                     updateLabelPosition();
@@ -330,7 +331,7 @@ bool TChartViewForm::eventFilter(QObject *watched, QEvent *event)
             else
                 _max /=1.1;
         }
-        if(_yAxisType == AXISTYPE::ABSOLUTEY && _min<0)
+        if(_yAxisType == y_AXISTYPE::RECTIFY && _min<0)
             _min = 0;
         auto vpp = _max - _min;
         if(vpp < yRangeMax*1.1 && vpp > yRangeMin*1.1)
@@ -391,7 +392,7 @@ void TChartViewForm::doZoomInOut(QRectF rubberband)
 
     // push the rubberband into track queue
     QRectF currentFrame(QPointF(m_X->min(), m_Y->max()), QPointF(m_X->max(), m_Y->min()));
-    zoomRectTrack.push(QPair<QRectF, AXISTYPE>(currentFrame, _xAxisType));
+    zoomRectTrack.push(QPair<QRectF, x_AXISTYPE>(currentFrame, _xAxisType));
 
     auto startPos = m_chart->mapToValue(rubberband.topLeft(), m_series);
     auto endPos = m_chart->mapToValue(rubberband.bottomRight(), m_series);
@@ -436,14 +437,15 @@ void TChartViewForm::on_btnReset_clicked(bool checked)
     auto currentPosition = m_ruler->points();
     m_ruler->replace(QList<QPointF>{QPointF(currentPosition.at(0).x(), yMin), QPointF(currentPosition.at(0).x(), yMax)});
     updateLabelPosition();
-    if(_yAxisType==AXISTYPE::ABSOLUTEY)
+    if(_yAxisType==y_AXISTYPE::RECTIFY)
     {
         emit setRectifyUncheck();
-        _yAxisType = AXISTYPE::FULLY;
+        _yAxisType = y_AXISTYPE::FULL;
     }
-    if(_xAxisType == AXISTYPE::DEPTH)
+    if(_xAxisType == x_AXISTYPE::DEPTH)
     {
         m_X->setRange(timeToDepth(xMin), timeToDepth(xMax));
+
     }
 }
 
@@ -491,7 +493,9 @@ void TChartViewForm::updateXMax(const float &newFs)
 }
 
 void TChartViewForm::updateLabelPosition()
-{   qDebug() << "in UpdatePosition" <<_yAxisType;
+{
+
+    qDebug() << "in UpdateLabelPosition" <<_yAxisType;
     if(!_dataTipList.empty())
     {
         for(auto &_tempLabel : _dataTipList)
@@ -499,7 +503,7 @@ void TChartViewForm::updateLabelPosition()
             QString strValue = _tempLabel->objectName();
             QPointF value(strValue.split(";").at(0).toFloat(), strValue.split(";").at(1).toFloat());
 
-            if(_xAxisType == AXISTYPE::DEPTH)
+            if(_xAxisType == x_AXISTYPE::DEPTH)
                 value.setX(timeToDepth(value.x()));
 
             _tempLabel->setVisible(true);
@@ -525,16 +529,16 @@ void TChartViewForm::on_btnBack_clicked()
 {
     auto _pair = zoomRectTrack.pop();
     auto rect = _pair.first;
-    AXISTYPE _axisType = _pair.second;
+    x_AXISTYPE _oldAxisType = _pair.second;
 
     auto startPos = rect.topLeft();
     auto endPos = rect.bottomRight();
 
-    if(_axisType==AXISTYPE::DEPTH && _xAxisType == AXISTYPE::SAMPLE)
+    if(_xAxisType == x_AXISTYPE::TIME && _oldAxisType==x_AXISTYPE::DEPTH)
     {
         startPos.setX(depthToTime(startPos.x()));
         endPos.setX(depthToTime(endPos.x()));
-    }else if(_xAxisType==AXISTYPE::DEPTH && _axisType == AXISTYPE::SAMPLE)
+    }else if(_xAxisType==x_AXISTYPE::DEPTH && _oldAxisType == x_AXISTYPE::TIME)
     {
         startPos.setX(timeToDepth(startPos.x()));
         endPos.setX(timeToDepth(endPos.x()));
@@ -542,11 +546,11 @@ void TChartViewForm::on_btnBack_clicked()
 
     m_X->setRange(startPos.x(), endPos.x());
     m_Y->setRange(endPos.y(), startPos.y());
-    qDebug() << endPos.y() << _yAxisType;
-    if(endPos.y()< 0 && _yAxisType==AXISTYPE::ABSOLUTEY)
+
+    if(endPos.y()< 0 && _yAxisType==y_AXISTYPE::RECTIFY)
     {
         emit setRectifyUncheck();
-        _yAxisType = AXISTYPE::FULLY;
+        _yAxisType = y_AXISTYPE::FULL;
     }
 
     updateLabelPosition();
@@ -579,19 +583,21 @@ qreal TChartViewForm::maxInd(const QRectF &rect, bool thres)
     // convert to series position
     QPointF value_left = m_chart->mapToValue(rect.topLeft(), m_series);
     QPointF value_right = m_chart->mapToValue(rect.bottomRight(), m_series);
+    qreal _left = value_left.x();
+    qreal _right = value_right.x();
 
-    int leftInd = (value_left.x() / m_X->max()) * mTcpClient::DATA_SIZE ;
-    int rightInd = (value_right.x()/ m_X->max()) * mTcpClient::DATA_SIZE ;
-    double threshold = (value_left.y() + value_right.y()) / 2;
+    if(_xAxisType == x_AXISTYPE::DEPTH)
+    {
+        _left = depthToTime(value_left.x());
+        _right = depthToTime(value_right.x());
+    }
+
+    int leftInd = (_left / xMax) * mTcpClient::DATA_SIZE ;
+    int rightInd = (_right/ xMax) * mTcpClient::DATA_SIZE ;
+    double threshold = qAbs(value_left.y() + value_right.y()) / 2; // absolute thres
 
     if(thres)
         emit sendThreshold(threshold);
-
-    // if(_xAxisType == AXISTYPE::DEPTH)
-    // {
-    //     leftInd = depthToTime(value_left.x());
-    //     rightInd = depthToTime(value_right.x());
-    // }
 
     leftInd < 0 ? leftInd =0 : leftInd;
     rightInd < 0 ? rightInd =0 : rightInd;
@@ -602,8 +608,8 @@ qreal TChartViewForm::maxInd(const QRectF &rect, bool thres)
 
     for(int i = leftInd+1; i< rightInd; i++)
     {
-        double value = m_series->at(i).y();
-        if((value > m_series->at(_tempMax).y()) && value >threshold )
+        double value = qAbs(m_series->at(i).y()); // absolute value
+        if((value > qAbs(m_series->at(_tempMax).y())) && value >threshold )
             _tempMax = i;
     }
 
@@ -653,7 +659,7 @@ void TChartViewForm::setXUnit(const QString &newXUnit)
 void TChartViewForm::setXRange(const float &min, const float &max)
 {
     float _min = 0;
-    float _max = (_xAxisType == AXISTYPE::SAMPLE) ? xMax : xMax*m_vel;
+    float _max = (_xAxisType == x_AXISTYPE::TIME) ? xMax : xMax*m_vel/2;
 
     if(min <=0)
         _min = 0;
@@ -726,7 +732,7 @@ void TChartViewForm::on_comboAxis_currentIndexChanged(int index)
     {
     case 0: // X selected
         ui->labelUnit->setText(m_xUnit.first);
-        ui->steps->setMaximum((_xAxisType == AXISTYPE::SAMPLE) ? xMax : xMax*m_vel);
+        ui->steps->setMaximum((_xAxisType == x_AXISTYPE::TIME) ? xMax : xMax*m_vel/2);
         break;
     case 1: // Y seleceted
         ui->labelUnit->setText(m_yUnit.first);

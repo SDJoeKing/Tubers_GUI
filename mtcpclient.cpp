@@ -197,6 +197,8 @@ void mTcpClient::run()
     m_loop = new QEventLoop(this);
 
     m_socket = new QTcpSocket(this);
+    m_socket->setReadBufferSize(32768);
+
 
     m_socket->setSocketOption(QAbstractSocket::LowDelayOption, 1);
     qDebug() << "socket thread: "<< this->thread();
@@ -241,10 +243,10 @@ void mTcpClient::readMessage()
         m_commence = 1;
         counter_data = 0;
         m_readSize = tempData.size();
-        qDebug() << "H: " << m_readSize;
+        // qDebug() << "H: " << m_readSize;
     }
-    if(tempData.size() > 3)
-        qDebug() << "S: " << m_readSize << tempData.at(0)<<tempData.at(1)<<tempData.at(2)<<tempData.at(3);
+    // if(tempData.size() > 3)
+        // qDebug() << "S: " << m_readSize << tempData.at(0)<<tempData.at(1)<<tempData.at(2)<<tempData.at(3);
 
     if(m_commence)
     {

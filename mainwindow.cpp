@@ -101,7 +101,9 @@ MainWindow::MainWindow(QWidget *parent)
     // acquisition related
 
     connect(this, &MainWindow::velocitySet, m_Ascan, &TChartViewForm::setVelocity);
-    connect(this, &MainWindow::axisTypeChanged, m_Ascan, &TChartViewForm::changeAxisType);
+    connect(this, qOverload<const TChartViewForm::x_AXISTYPE &>(&MainWindow::axisTypeChanged), m_Ascan,&TChartViewForm::changeXAxisType);
+    connect(this, qOverload<const TChartViewForm::y_AXISTYPE &>(&MainWindow::axisTypeChanged), m_Ascan,&TChartViewForm::changeYAxisType);
+
 
     // key acquisitionRun or not
     connect(m_settings, &TSettings::fsChanged, this, &MainWindow::updateFs);
@@ -155,6 +157,11 @@ void MainWindow::resetUI()
     ui->btnConnect->setChecked(false);
     ui->spinEnvLevel->setMinimum(0);
     ui->spinEnvLevel->setValue(0);
+    ui->ckRectify->setChecked(false);
+    ui->ckDepthAxis->setChecked(false);
+    ui->ckGates->setChecked(false);
+    ui->ckGates->clicked(false);
+    ui->spinDepth->setValue(0.00);
 
     m_Ascan->clear();
 
@@ -417,7 +424,7 @@ void MainWindow::on_ckDepthAxis_clicked(bool checked)
     if(checked)
         emit axisTypeChanged(TChartViewForm::DEPTH);
     else
-        emit axisTypeChanged(TChartViewForm::SAMPLE);
+        emit axisTypeChanged(TChartViewForm::TIME);
 }
 
 
@@ -431,11 +438,11 @@ void MainWindow::on_ckRectify_clicked(bool checked)
 
     if(checked)
     {
-        emit axisTypeChanged(TChartViewForm::ABSOLUTEY);
+        emit axisTypeChanged(TChartViewForm::RECTIFY);
         ui->spinEnvLevel->setValue(1);
     }
     else
-        emit axisTypeChanged(TChartViewForm::FULLY);
+        emit axisTypeChanged(TChartViewForm::FULL);
 
 }
 
@@ -534,8 +541,9 @@ void MainWindow::bScanCustomContext(const QPoint &pos)
 void MainWindow::on_btnCal_clicked()
 {
     bool ok = false;
+    // ui->btnRun->toggle();
     auto newDepth = QInputDialog::getDouble(this, "Please input true thickness", "Thickness (mm): ", 0, 0, 5000.0, 2, &ok);
-
+    qDebug() << "\n\n\n Old Depth " << newDepth;
     if(ok)
     {
         auto oldDepth = ui->spinDepth->value();
@@ -544,7 +552,7 @@ void MainWindow::on_btnCal_clicked()
             return;
 
         auto distance = oldDepth * 2 / 1000 * 125e6 / m_vel;
-        qDebug() << distance; // tbc
+        qDebug() << "\n\n\n New Depth " << distance; // tbc
         m_vel = newDepth * 2/1000 * 125e6 / distance;
 
         if(m_vel<=0)

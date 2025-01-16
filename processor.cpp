@@ -72,11 +72,6 @@ void Processor::process(const char *dataptr)
 
     float _temperature = (((float)(static_cast<quint16>(temp2 | temp1))/65536.0f)/0.00198421639f ) - 273.15f;
 
-
-    bool _tempDepthFlag = false;
-    if(depthAxis)
-        _tempDepthFlag = true;
-
     for (int i = 0; i < mTcpClient::DATA_SIZE/2; i++)
     {
         temp1 =(serverData.at(j + 1) << 8) & 0xFF00;
@@ -94,9 +89,9 @@ void Processor::process(const char *dataptr)
     // rectified, envelope, depth?
     for (int i = 0; i < mTcpClient::DATA_SIZE/2; i++)
     {
-        xpoint = i;
-        if(_tempDepthFlag)
-            xpoint = i / m_fs / 1e6 * m_vel * 1000;
+
+        if(depthAxis)
+            xpoint = i / m_fs /2/ 1e6 * m_vel * 1000;
         else
             xpoint = i / m_fs /1e6 *1000;
 
@@ -106,7 +101,7 @@ void Processor::process(const char *dataptr)
         calPoint[i] = QPointF(xpoint, dataPoint[0][i]);
         _temp[i] = dataPoint[0][i];
     }
-
+    qDebug() << "Max: " << xpoint;
     //reset envelope;
     MainWindow::_env = 0;
 
@@ -132,6 +127,7 @@ void Processor::setVel(const float &vel)
 void Processor::setDepth(const bool &depth)
 {
     depthAxis = depth;
+
 }
 
 void Processor::setRectified(const bool &rect)

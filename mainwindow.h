@@ -128,7 +128,8 @@ signals:
     void velocitySet(double);
     void mainSendSetting(const QString &);
     void dataReceived(const QList<QPointF> &data);
-    void axisTypeChanged(TChartViewForm::AXISTYPE type);
+    void axisTypeChanged(const TChartViewForm::x_AXISTYPE &);
+    void axisTypeChanged(const TChartViewForm::y_AXISTYPE &type);
     void acquisitionRun(bool);
     void dataForLogger(const QByteArray &);
     void stopAcqSig();

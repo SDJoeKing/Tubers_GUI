@@ -29,20 +29,23 @@ public:
     explicit TChartViewForm(QWidget *parent = nullptr);
     ~TChartViewForm();
 
-    enum AXISTYPE
+    enum x_AXISTYPE
     {
-        SAMPLE = 4000,
-        DEPTH = 4001,
-        ABSOLUTEY=4002,
-        FULLY=4003
+        TIME = 4000,
+        DEPTH = 4001
     };
 
-
+    enum y_AXISTYPE
+    {
+        RECTIFY=4002,
+        FULL=4003
+    };
 
 public slots:
     void plot(const QList<QPointF> &, bool);
     void toogleGates(bool);
-    void changeAxisType(TChartViewForm::AXISTYPE);
+    void changeXAxisType(const TChartViewForm::x_AXISTYPE&);
+    void changeYAxisType(const TChartViewForm::y_AXISTYPE&);
     void setVelocity(double);
     void clear();
     void doZoomInOut(QRectF);
@@ -90,8 +93,8 @@ private:
     double m_vel = 5890.0;
     bool _dataTipOn=false;
     bool _zoomOn=false;
-    AXISTYPE _xAxisType = AXISTYPE::SAMPLE;
-    AXISTYPE _yAxisType = AXISTYPE::FULLY;
+    x_AXISTYPE _xAxisType = x_AXISTYPE::TIME;
+    y_AXISTYPE _yAxisType = y_AXISTYPE::FULL;
     QList<QLabel *>_dataTipList;
     QLabel *generateLabel(QWidget *parent);
     double depthToTime(const double &depth);
@@ -99,7 +102,7 @@ private:
     void updateLabelPosition();
     bool inRange(const QPointF &, QValueAxis *, QValueAxis *);
     bool acquisitionRunning = false;
-    QStack<QPair<QRectF, AXISTYPE>> zoomRectTrack;
+    QStack<QPair<QRectF, x_AXISTYPE>> zoomRectTrack;
     qreal maxInd(const QRectF &rect, bool);
     float fs = 125e6;
     QPair<QString, int> m_xUnit;

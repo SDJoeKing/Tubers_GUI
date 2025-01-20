@@ -43,16 +43,17 @@ public:
 
 public slots:
     void plot(const QList<QPointF> &, bool);
-    void toogleGates(bool);
+    void toggleGates(bool);
     void changeXAxisType(const TChartViewForm::x_AXISTYPE&);
     void changeYAxisType(const TChartViewForm::y_AXISTYPE&);
     void setVelocity(double);
     void clear();
     void doZoomInOut(QRectF);
     void acquisitionStatus(bool);
-    void toogleSave(bool);
+    void toggleSave(bool);
     void startThickCal(bool);
     void updateFs(const float);
+    void reset();
 private slots:
 
     void backButtonEnabled(bool);

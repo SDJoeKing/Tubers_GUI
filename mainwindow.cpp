@@ -109,7 +109,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_settings, &TSettings::fsChanged, this, &MainWindow::updateFs);
     connect(m_settings, &TSettings::fsChanged, m_Ascan, &TChartViewForm::updateFs);
     connect(this, &MainWindow::acquisitionRun, m_Ascan, &TChartViewForm::acquisitionStatus);
-    connect(this, &MainWindow::acquisitionRun, m_Ascan, &TChartViewForm::toogleSave);
+    connect(this, &MainWindow::acquisitionRun, m_Ascan, &TChartViewForm::toggleSave);
     connect(ui->ckGates, &QCheckBox::checkStateChanged, m_Ascan, &TChartViewForm::startThickCal);
     connect(ui->ckGates, &QCheckBox::checkStateChanged, ui->btnCal, &QPushButton::setEnabled);
 
@@ -167,6 +167,7 @@ void MainWindow::resetUI()
     m_settings->disableScroll(false);
     m_Ascan->clear();
 
+    m_Ascan->reset();
 }
 
 void MainWindow::toggleOff(QCheckBox *widget)
@@ -215,8 +216,8 @@ MainWindow::~MainWindow()
 
     if(ui->btnConnect->isChecked())
     {
-        ui->btnConnect->click(); //  manual disconnect
-
+        m_client->stop();
+        socketThread.quit();
     }
 
     QTimer::singleShot(0, m_processor, &Processor::close);
@@ -308,7 +309,7 @@ void MainWindow::on_btnConnect_clicked(bool checked)
 
         connect(m_client, &mTcpClient::clientMessage, this, &MainWindow::logMsg, Qt::QueuedConnection);
         connect(m_client, qOverload<const QString &>(&mTcpClient::tcpMessage), this, &MainWindow::logMsg, Qt::QueuedConnection);
-        connect(m_client, &mTcpClient::serverReady, this, &MainWindow::toogleStatus, Qt::QueuedConnection);
+        connect(m_client, &mTcpClient::serverReady, this, &MainWindow::toggleStatus, Qt::QueuedConnection);
         connect(m_client, &mTcpClient::serverReady, ui->radioStatus, &QRadioButton::setChecked, Qt::QueuedConnection);
         connect(this, &MainWindow::stopAcqSig, m_client, &mTcpClient::setStopAcq, Qt::QueuedConnection);
         connect(m_client, &mTcpClient::acquisitionReady, this, &MainWindow::runAcquisition, Qt::QueuedConnection);
@@ -351,7 +352,7 @@ void MainWindow::logMsg(QString str)
     ui->log->append(_prefix + "    " + str);
 }
 
-void MainWindow::toogleStatus(bool arg)
+void MainWindow::toggleStatus(bool arg)
 {
 
     qDebug() << "radio status: " << arg;
@@ -422,7 +423,7 @@ void MainWindow::on_spinEnvLevel_valueChanged(int arg1)
 
 void MainWindow::on_ckGates_clicked(bool checked)
 {
-    m_Ascan->toogleGates(checked);
+    m_Ascan->toggleGates(checked);
 }
 
 

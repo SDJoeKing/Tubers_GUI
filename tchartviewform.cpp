@@ -20,12 +20,12 @@ TChartViewForm::TChartViewForm(QWidget *parent)
     m_series = new QLineSeries();
     m_ruler = new QLineSeries();
 
-    m_series->setUseOpenGL(true);
-    m_ruler->setUseOpenGL(true);
+    // m_series->setUseOpenGL(true);
+    // m_ruler->setUseOpenGL(true);
 
     // config m_ruler
     QBrush brush(Qt::red, Qt::SolidPattern);
-    QPen pen(brush, 1, Qt::DashDotLine);
+    QPen pen(brush, 2, Qt::DashDotLine);
     m_ruler->setPen(pen);
     m_ruler->setVisible(false);
     m_ruler->append(QPointF(0, yMin));
@@ -237,7 +237,7 @@ void TChartViewForm::backButtonEnabled(bool arg)
         zoomRectTrack.clear();
 }
 
-void TChartViewForm::toogleGates(bool arg)
+void TChartViewForm::toggleGates(bool arg)
 {
     m_gate1->setVisible(arg);
     m_gate2->setVisible(arg);
@@ -273,22 +273,23 @@ bool TChartViewForm::eventFilter(QObject *watched, QEvent *event)
         }
         // To implement click data points
         else if(event->type() == QEvent::MouseButtonPress && !acquisitionRunning)
-        {
+        {   qDebug() << "mouse click triggered";
             auto mouse =  static_cast<QMouseEvent *>(event);
             if(mouse->button()==Qt::LeftButton && m_series->count() >0)
             {
                 // get mouse pos
 
                 auto value = m_chart->mapToValue(mouse->pos(), m_series);
-                auto xposition = _xAxisType == x_AXISTYPE::TIME ? value.x() : timeToDepth(value.x());
+                auto xposition = _xAxisType == x_AXISTYPE::TIME ? value.x() : depthToTime(value.x());  // this should be time
+                int index = static_cast<int>(xposition / xMax * mTcpClient::DATA_SIZE/2);
+                qreal _Yvalue = m_series->at(index).y();
 
-                qreal _Yvalue = m_series->at(static_cast<int>(xposition / xMax)).y();
-
-                if(qAbs(value.y() - _Yvalue)<0.01*(m_Y->max() - m_Y->min()))
+                if(qAbs(value.y() - _Yvalue)<0.05*(m_Y->max() - m_Y->min()))
                 {
-                    m_series->selectPoint(value.x());
+                    m_series->selectPoint(index);
+                    // qDebug() << "index select " << index;
                     m_series->setSelectedColor(Qt::red);
-                    value.setY(m_series->at(value.x()).y());
+                    value.setY(m_series->at(index).y());
 
                     auto _tempLabel = generateLabel(m_chartView);
 
@@ -351,6 +352,7 @@ bool TChartViewForm::eventFilter(QObject *watched, QEvent *event)
         if(vpp < yRangeMax*1.1 && vpp > yRangeMin*1.1)
             m_Y->setRange(_min, _max);
 
+        updateLabelPosition();
     }
 
     return QWidget::eventFilter(watched, event);
@@ -423,7 +425,7 @@ void TChartViewForm::acquisitionStatus(bool isRunning)
     acquisitionRunning = isRunning;
 }
 
-void TChartViewForm::toogleSave(bool arg)
+void TChartViewForm::toggleSave(bool arg)
 {
     ui->btnSave->setEnabled(!arg);
 }
@@ -441,6 +443,14 @@ void TChartViewForm::updateFs(const float newFs)
 {
     fs = newFs*1e6;
     updateXMax(fs);
+}
+
+void TChartViewForm::reset()
+{
+    if(ui->btnDataTip->isChecked())
+        ui->btnDataTip->click();
+    m_series->clear();
+    ui->btnReset->click();
 }
 
 
@@ -719,6 +729,7 @@ void TChartViewForm::on_btnIncr_clicked()
         setYRange(m_Y->min()-step, m_Y->max() + step);
     }
 
+    updateLabelPosition();
 }
 
 
@@ -739,6 +750,8 @@ void TChartViewForm::on_btnDecr_clicked()
     {
         setYRange(m_Y->min()+step, m_Y->max() - step);
     }
+
+    updateLabelPosition();
 }
 
 

@@ -58,7 +58,7 @@ private slots:
 
     // connected actions
     void logMsg(QString);
-    void toogleStatus(bool arg);
+    void toggleStatus(bool arg);
     void runAcquisition();
     void stopAcquisition();
     void on_btnRun_clicked(bool checked);

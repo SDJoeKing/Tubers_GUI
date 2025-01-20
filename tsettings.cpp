@@ -20,6 +20,7 @@ TSettings::TSettings(QWidget *parent)
         comboLength<< QString("%1 ms").arg(mTcpClient::DATA_SIZE/2/125e3 * i, 3,'f', 3);
 
     ui->comboLength->addItems(comboLength);
+    ui->btnConfirm->setVisible(false);
 }
 
 TSettings::~TSettings()
@@ -136,6 +137,20 @@ bool TSettings::eventFilter(QObject *watched, QEvent *event)
     return QDialog::eventFilter(watched, event);
 }
 
+void TSettings::sendSetting()
+{
+    ui->btnConfirm->click();
+}
+
+void TSettings::disableScroll(bool on)
+{
+    if(on) // disable
+        ui->scrollAreaWidgetContents_2->setDisabled(true);
+    else
+        ui->scrollAreaWidgetContents_2->setDisabled(false);
+
+}
+
 void TSettings::on_btnHide_clicked()
 {
 
@@ -149,4 +164,5 @@ void TSettings::on_comboLength_currentIndexChanged(int index)
     emit fsChanged(fs);
     ui->label_fs->setText(QString::asprintf("%.2f MHz",fs));
 }
+
 

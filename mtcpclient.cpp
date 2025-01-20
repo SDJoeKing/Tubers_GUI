@@ -1,4 +1,5 @@
 #include "mtcpclient.h"
+#include <thread>
 
 static int counter = 0;
 static int old_counter = 0;
@@ -160,7 +161,7 @@ bool mTcpClient::parseServerMsg(QByteArray &arr)
     // Settings
     else if(msg.contains("settings ok"))
     {
-        emit settingReady(true);
+        QTimer::singleShot(500, this, [this](){emit settingReady(true);}); //Note that 500 ms delay is for the hardware to apply the setting;
         emit tcpMessage(m_server + msg.sliced(0, 11));
         arr.slice(11);
         return -1;

@@ -16,7 +16,6 @@ MainWindow::MainWindow(QWidget *parent)
     // setWindowFlag(Qt::MSWindowsFixedSizeDialogHint);
     setWindowFlags(  Qt::Window | Qt::CustomizeWindowHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint) ;
     ui->log->setEnabled(false);
-    ui->btnRun->setEnabled(false);
     ui->ckBscan->setEnabled(false);
 
     // status bar
@@ -87,6 +86,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(ui->ckFilter, &QCheckBox::clicked, m_processor, &Processor::setFiltering, Qt::QueuedConnection);
     connect(m_processor, &Processor::dataLogger, m_logging, &Tlogging::setData, Qt::QueuedConnection);
     connect(this, &MainWindow::filterParam, m_processor, &Processor::updateFilter, Qt::QueuedConnection);
+    connect(this, &MainWindow::velocitySet, m_processor, &Processor::setVel, Qt::QueuedConnection);
     connect(m_processor, &Processor::dataProcessed, this, &MainWindow::updateBScan, Qt::QueuedConnection);
     connect(m_processor, &Processor::dataProcessed, m_Ascan, &TChartViewForm::plot, Qt::QueuedConnection);
     connect(m_processor, &Processor::sendTemperature, this, &MainWindow::updateTemp, Qt::QueuedConnection);
@@ -153,7 +153,6 @@ void MainWindow::resetUI()
 
     m_Bscan->setVisible(false);
     ui->log->clear();
-    ui->btnRun->setChecked(false);
     ui->btnConnect->setChecked(false);
     ui->spinEnvLevel->setMinimum(0);
     ui->spinEnvLevel->setValue(0);
@@ -165,7 +164,7 @@ void MainWindow::resetUI()
     toggleOff(ui->ckGates);
 
     ui->spinDepth->setValue(0.00);
-
+    m_settings->disableScroll(false);
     m_Ascan->clear();
 
 }
@@ -280,17 +279,8 @@ void MainWindow::doSettingsConfirmed(QString str)
         _status->setText(QString("Ultrasound Velocity: %1 m/s").arg(m_vel));
     }
 
-    if(ui->btnRun->isChecked())
-    {
-        ui->btnRun->click();
-        connect(m_client, &mTcpClient::settingReady, ui->btnRun, &QPushButton::click, Qt::QueuedConnection);
-        QTimer::singleShot(120, this, [this, settings](){emit mainSendSetting(settings); });
-        QTimer::singleShot(130, this, [this](){ disconnect(m_client, &mTcpClient::settingReady, ui->btnRun, &QPushButton::click);});
-    }
-    else
-    {
-        emit mainSendSetting(settings);
-    }
+    emit mainSendSetting(settings);
+
 
 }
 
@@ -315,7 +305,7 @@ void MainWindow::on_btnConnect_clicked(bool checked)
         // TCP Client
         m_client = new mTcpClient();
 
-        connect(m_client, &mTcpClient::settingReady, ui->btnRun, &QPushButton::setEnabled, Qt::QueuedConnection);
+
         connect(m_client, &mTcpClient::clientMessage, this, &MainWindow::logMsg, Qt::QueuedConnection);
         connect(m_client, qOverload<const QString &>(&mTcpClient::tcpMessage), this, &MainWindow::logMsg, Qt::QueuedConnection);
         connect(m_client, &mTcpClient::serverReady, this, &MainWindow::toogleStatus, Qt::QueuedConnection);
@@ -350,7 +340,7 @@ void MainWindow::on_btnConnect_clicked(bool checked)
         QTimer::singleShot(100, m_client, &mTcpClient::stop);
 
         resetUI();
-        ui->btnRun->setDisabled(true);
+
     }
 }
 
@@ -377,11 +367,16 @@ void MainWindow::toogleStatus(bool arg)
 
 void MainWindow::runAcquisition()
 {
+    emit acquisitionRun(true);
+    m_settings->disableScroll(true);
     ui->btnRun->setText("Stop");
+
 }
 
 void MainWindow::stopAcquisition()
 {
+    emit acquisitionRun(false);
+    m_settings->disableScroll(false);
     ui->btnRun->setText("Run");
 }
 
@@ -395,18 +390,22 @@ double MainWindow::envelope(double sample, double &value, double ga, double gr)
 void MainWindow::on_btnRun_clicked(bool checked)
 {
     if(checked)
-    { // clear client data buffer
-        QTimer::singleShot(0, m_client, [&](){m_client->startAcquisition();});
-        emit acquisitionRun(true);
+    {
+        // send current settings to hardware
+        m_settings->sendSetting();
+        connect(m_client, &mTcpClient::settingReady, m_client, &mTcpClient::startAcquisition);
+
     }else
     {
         emit stopAcqSig();
 
         QTimer::singleShot(0, m_client, [&](){m_client->flush();});
-        emit acquisitionRun(false);
+
     }
 
 }
+
+
 
 void MainWindow::set_envelope(float attack, float release)
 {

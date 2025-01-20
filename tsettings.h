@@ -67,6 +67,8 @@ private:
     // QObject interface
 public:
     virtual bool eventFilter(QObject *watched, QEvent *event) override;
+    void sendSetting();
+    void disableScroll(bool);
 };
 
 #endif // TSETTINGS_H

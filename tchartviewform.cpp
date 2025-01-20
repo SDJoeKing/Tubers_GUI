@@ -215,10 +215,14 @@ void TChartViewForm::setVelocity(double vel)
 
     m_vel=vel;
 
-    float _tempMax = m_X->max() * ratio ;
-    float _tempMin = m_X->min() * ratio ;
+    if(_xAxisType == x_AXISTYPE::DEPTH)
+    {
+        float _tempMax = m_X->max() * ratio ;
+        float _tempMin = m_X->min() * ratio ;
+        m_X->setRange( _tempMin, _tempMax);
+    }
 
-    m_X->setRange( _tempMin, _tempMax);
+
     updateLabelPosition();
 }
 
@@ -443,7 +447,7 @@ void TChartViewForm::updateFs(const float newFs)
 void TChartViewForm::on_btnReset_clicked(bool checked)
 {
     m_X->setRange(xMin, xMax);
-    m_Y->setRange(yMin, yMax);
+    m_Y->setRange(0, yMax);
     auto currentPosition = m_ruler->points();
     m_ruler->replace(QList<QPointF>{QPointF(currentPosition.at(0).x(), yMin), QPointF(currentPosition.at(0).x(), yMax)});
     updateLabelPosition();
@@ -578,10 +582,12 @@ void TChartViewForm::doThicknessCal()
     int indGate1 = maxInd(gate1_range, true);
     int indGate2 = maxInd(gate2_range, false);
 
+    qDebug() << "gate1 " << indGate1;
+    qDebug() << "gate2 " << indGate2;
     if(indGate1 == -1 || indGate2 == -1)
         return;
 
-    emit calculatedThickness(timeToDepth(qAbs(indGate2 - indGate1) / 2 / fs * 1000)); // tbc
+    emit calculatedThickness(timeToDepth(qAbs(indGate2 - indGate1) / fs * m_xUnit.second )); // tbc
 }
 
 qreal TChartViewForm::maxInd(const QRectF &rect, bool thres)
@@ -596,14 +602,17 @@ qreal TChartViewForm::maxInd(const QRectF &rect, bool thres)
     qreal _left = value_left.x();
     qreal _right = value_right.x();
 
+    qDebug() << "left: "<< _left;
+    qDebug() << "right: "<< _right;
+
     if(_xAxisType == x_AXISTYPE::DEPTH)
     {
         _left = depthToTime(value_left.x());
         _right = depthToTime(value_right.x());
     }
 
-    int leftInd = (_left / xMax) * mTcpClient::DATA_SIZE ;
-    int rightInd = (_right/ xMax) * mTcpClient::DATA_SIZE ;
+    int leftInd = (_left / xMax) * mTcpClient::DATA_SIZE /2;
+    int rightInd = (_right/ xMax) * mTcpClient::DATA_SIZE /2;
     double threshold = qAbs(value_left.y() + value_right.y()) / 2; // absolute thres
 
     if(thres)
@@ -611,8 +620,8 @@ qreal TChartViewForm::maxInd(const QRectF &rect, bool thres)
 
     leftInd < 0 ? leftInd =0 : leftInd;
     rightInd < 0 ? rightInd =0 : rightInd;
-    leftInd > mTcpClient::DATA_SIZE ? leftInd = mTcpClient::DATA_SIZE : leftInd;
-    rightInd > mTcpClient::DATA_SIZE ? rightInd = mTcpClient::DATA_SIZE : rightInd;
+    leftInd = leftInd > mTcpClient::DATA_SIZE/2 ? mTcpClient::DATA_SIZE/2 : leftInd;
+    rightInd = rightInd > mTcpClient::DATA_SIZE/2 ? mTcpClient::DATA_SIZE/2 : rightInd;
 
     int _tempMax = leftInd;
 

@@ -290,12 +290,12 @@ void MainWindow::doSettingsConfirmed(QString str)
     // for motor testing only
     if(encoderTriggerMode && acquisitionRunning)
     {
+        qDebug() << "here....................................";
         ui->btnRun->click();
         QTimer::singleShot(50, this, [&](){ui->btnRun->click();});
         return;
     }
 
-    qDebug()<< "send setting----------------------";
     emit mainSendSetting(settings);
 }
 
@@ -419,7 +419,6 @@ void MainWindow::on_btnRun_clicked(bool checked)
         {
             if(encoderTriggerMode)
             {
-                qDebug() << "triggermode stop";
                 QTimer::singleShot(0, m_client, [&](){m_client->writeData("stop");});
                 return;
             }

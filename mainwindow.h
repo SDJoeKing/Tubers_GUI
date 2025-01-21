@@ -118,6 +118,9 @@ private:
     Processor *m_processor;
     QEventLoop m_quitEvent;
 
+    // status
+    bool acquisitionRunning = false;
+    bool connected = false;
 // private functions
 private:
     void resetUI();

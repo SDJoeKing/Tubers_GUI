@@ -1,6 +1,10 @@
 #include "tsettings.h"
 #include "ui_tsettings.h"
 #include "mtcpclient.h"
+
+static QString encoderModeString = "Trigger Motor Run";
+ static QString contModeString = "Send Settings";
+
 TSettings::TSettings(QWidget *parent)
     : QDialog(parent)
     , ui(new Ui::TSettings)
@@ -37,6 +41,23 @@ void TSettings::updateVel(double newVel)
 int TSettings::getAscanIndex()
 {
     return ui->comboLength->currentIndex() + 1;
+}
+
+void TSettings::encoderTriggerMode(bool okay)
+{
+    if(okay) // use encoder motor triggering
+    {
+        ui->btnConfirm->setVisible(true);
+        ui->btnConfirm->setText(encoderModeString);
+
+    }else
+    {
+        ui->btnConfirm->setVisible(false);
+        ui->btnConfirm->setText(contModeString);
+    }
+
+    encoderMode = okay;
+
 }
 
 void TSettings::on_btnConfirm_clicked()
@@ -144,11 +165,13 @@ void TSettings::sendSetting()
 
 void TSettings::disableScroll(bool on)
 {
-    if(on) // disable
-        ui->scrollAreaWidgetContents_2->setDisabled(true);
-    else
-        ui->scrollAreaWidgetContents_2->setDisabled(false);
 
+    ui->frame->setDisabled(on);
+    ui->groupBox->setDisabled(on);
+        ui->groupBox_3->setDisabled(on);
+            ui->groupBscan->setDisabled(on);
+
+    ui->groupBox_2->setEnabled(true);
 }
 
 void TSettings::on_btnHide_clicked()

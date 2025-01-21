@@ -123,6 +123,8 @@ MainWindow::MainWindow(QWidget *parent)
     // setting/logging related
     connect(this, &MainWindow::velocitySet, m_settings, &TSettings::updateVel);
 
+    // tcpclient
+    m_client = nullptr;
 
     // final finish
     setConnectionIndicator();
@@ -256,16 +258,11 @@ void MainWindow::doSettingsConfirmed(QString str)
 
     // update internal ->s logic
 
-
-
     auto list = str.split(";");
     qDebug() << list;
 
     m_vel = list[TSettings::velocity].toDouble();
     emit velocitySet(m_vel);
-
-    // encoder mode?
-    encoderTriggerMode = list[TSettings::encoderTriggering].toUInt();
 
     m_order = list[TSettings::order].toInt();
     m_fc = (list[TSettings::lowCut].toDouble() + list[TSettings::highCut].toDouble() )/ 2.0;
@@ -286,9 +283,20 @@ void MainWindow::doSettingsConfirmed(QString str)
         _status->setText(QString("Ultrasound Velocity: %1 m/s").arg(m_vel));
     }
 
+    // encoder mode?
+    encoderTriggerMode = list[TSettings::encoderTriggering].toUInt();
+    m_settings->encoderTriggerMode(encoderTriggerMode);
+
+    // for motor testing only
+    if(encoderTriggerMode && acquisitionRunning)
+    {
+        ui->btnRun->click();
+        QTimer::singleShot(50, this, [&](){ui->btnRun->click();});
+        return;
+    }
+
+    qDebug()<< "send setting----------------------";
     emit mainSendSetting(settings);
-
-
 }
 
 void MainWindow::on_actionLogging_triggered(bool checked)
@@ -312,7 +320,6 @@ void MainWindow::on_btnConnect_clicked(bool checked)
         // TCP Client
         m_client = new mTcpClient();
 
-
         connect(m_client, &mTcpClient::clientMessage, this, &MainWindow::logMsg, Qt::QueuedConnection);
         connect(m_client, qOverload<const QString &>(&mTcpClient::tcpMessage), this, &MainWindow::logMsg, Qt::QueuedConnection);
         connect(m_client, &mTcpClient::serverReady, this, &MainWindow::toggleStatus, Qt::QueuedConnection);
@@ -322,12 +329,12 @@ void MainWindow::on_btnConnect_clicked(bool checked)
         connect(m_client, &mTcpClient::acquisitionStop, this, &MainWindow::stopAcquisition, Qt::QueuedConnection);
         connect(this, &MainWindow::dataReceived, m_client, &mTcpClient::clearData, Qt::QueuedConnection);
         connect(m_client, &mTcpClient::dataReady, m_processor, &Processor::process, Qt::QueuedConnection);
-        connect(m_client, &mTcpClient::connectFail, this, [this](){ui->btnConnect->setChecked(false);
+        connect(m_client, &mTcpClient::connectFail, this, [this](){ui->btnConnect->setChecked(false); connected=false;
                 QMessageBox::information(this, "Error", "Unable to make connection to server. Please check connection.");}, Qt::QueuedConnection);
         connect(this, &MainWindow::mainSendSetting, m_client, &mTcpClient::sendSetting, Qt::QueuedConnection);
         // connect fps
         connect(m_client, &mTcpClient::fps, this, &MainWindow::do_fps, Qt::QueuedConnection);
-
+        connect(m_client, &mTcpClient::settingReady, m_client, &mTcpClient::startAcquisition);
 
         QString address = ui->ipAddress->text().simplified().replace(" ", "");
         quint8 port = ui->port->text().toInt();
@@ -338,16 +345,17 @@ void MainWindow::on_btnConnect_clicked(bool checked)
         qDebug() << "m_client thread: "<< m_client->thread();
         connect(&socketThread, &QThread::started, m_client, &mTcpClient::run);
         socketThread.start();
+
     }
     else
     {
+
         // disconnect
         ui->radioStatus->setChecked(false);
         QTimer::singleShot(0, m_client, &mTcpClient::stopAcquisition);
         QTimer::singleShot(100, m_client, &mTcpClient::stop);
 
         resetUI();
-
     }
 }
 
@@ -364,9 +372,11 @@ void MainWindow::toggleStatus(bool arg)
     qDebug() << "radio status: " << arg;
     if(ui->btnConnect->isChecked() && arg)
     {
+        connected=true;
         ui->btnConnect->setText("Disconnect");
     }else
     {
+        connected=false;
         ui->btnConnect->setText("Connect");
         socketThread.quit();
     }
@@ -375,6 +385,7 @@ void MainWindow::toggleStatus(bool arg)
 void MainWindow::runAcquisition()
 {
     emit acquisitionRun(true);
+    acquisitionRunning = true;
     m_settings->disableScroll(true);
     ui->btnRun->setText("Stop");
 
@@ -383,6 +394,7 @@ void MainWindow::runAcquisition()
 void MainWindow::stopAcquisition()
 {
     emit acquisitionRun(false);
+    acquisitionRunning = false;
     m_settings->disableScroll(false);
     ui->btnRun->setText("Run");
 }
@@ -396,25 +408,26 @@ double MainWindow::envelope(double sample, double &value, double ga, double gr)
 
 void MainWindow::on_btnRun_clicked(bool checked)
 {
-    if(checked && m_client!=nullptr)
+    if(connected)
     {
-        // send current settings to hardware
-        m_settings->sendSetting();
-        connect(m_client, &mTcpClient::settingReady, m_client, &mTcpClient::startAcquisition);
-
-    }else
-    {
-        if(encoderTriggerMode and m_client!=nullptr)
+        if(checked && !acquisitionRunning)
         {
-            qDebug() << "triggermode stop";
-            QTimer::singleShot(0, m_client, [&](){m_client->writeData("stop");});
-            return;
+            // send current settings to hardware
+            m_settings->sendSetting();
+
+        }else
+        {
+            if(encoderTriggerMode)
+            {
+                qDebug() << "triggermode stop";
+                QTimer::singleShot(0, m_client, [&](){m_client->writeData("stop");});
+                return;
+            }
+            emit stopAcqSig();
+            QTimer::singleShot(0, m_client, [&](){m_client->flush();});
         }
-        emit stopAcqSig();
-        QTimer::singleShot(0, m_client, [&](){m_client->flush();});
-
-    }
-
+    }else
+        ui->btnRun->setChecked(false);
 }
 
 

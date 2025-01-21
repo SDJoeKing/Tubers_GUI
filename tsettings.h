@@ -48,6 +48,8 @@ public slots:
 
     void updateVel(double);
     int getAscanIndex();
+    void encoderTriggerMode(bool);
+
 private slots:
     void on_btnConfirm_clicked();
 
@@ -63,7 +65,7 @@ signals:
 private:
     Ui::TSettings *ui;
     void installFilter(QObject *);
-
+    bool encoderMode = false;
     // QObject interface
 public:
     virtual bool eventFilter(QObject *watched, QEvent *event) override;

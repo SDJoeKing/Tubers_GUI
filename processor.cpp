@@ -70,7 +70,9 @@ void Processor::process(const char *dataptr)
 
     temp2 = (serverData.at(6)) & 0xFF;
 
-    float _temperature = (((float)(static_cast<quint16>(temp2 | temp1))/65536.0f)/0.00198421639f ) - 273.15f;
+    float _temperature =  (static_cast<quint16>(temp2 | temp1));
+    qDebug() << "------- " << _temperature / 2 / 125e6 *2293.0 << " ------- ";
+    _temperature = ((_temperature/65536.0f)/0.00198421639f ) - 273.15f;
 
     for (int i = 0; i < mTcpClient::DATA_SIZE/2; i++)
     {

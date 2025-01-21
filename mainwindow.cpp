@@ -218,6 +218,7 @@ MainWindow::~MainWindow()
 
     if(ui->btnConnect->isChecked())
     {
+        m_client->flush();
         m_client->stop();
         socketThread.quit();
     }
@@ -335,6 +336,8 @@ void MainWindow::on_btnConnect_clicked(bool checked)
         // connect fps
         connect(m_client, &mTcpClient::fps, this, &MainWindow::do_fps, Qt::QueuedConnection);
         connect(m_client, &mTcpClient::settingReady, m_client, &mTcpClient::startAcquisition);
+        // connect error handling
+        connect(m_client, &mTcpClient::errorOccured, this, &MainWindow::do_ConnectLost, Qt::QueuedConnection);
 
         QString address = ui->ipAddress->text().simplified().replace(" ", "");
         quint8 port = ui->port->text().toInt();
@@ -678,6 +681,13 @@ void MainWindow::do_fps(float fps)
     {
         fpsBar->setText(QString::asprintf("FPS: %.1f", fps));
     }
+}
+
+void MainWindow::do_ConnectLost()
+{
+    // disconnect
+    ui->radioStatus->setChecked(false);
+    resetUI();
 }
 
 void MainWindow::threadFinished()

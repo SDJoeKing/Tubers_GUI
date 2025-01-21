@@ -76,7 +76,7 @@ signals:
     void dataReady(const char*);
     void fps(float rate);
     void connectFail();
-
+    void errorOccured();
     // QRunnable interface
 public:
     void run();

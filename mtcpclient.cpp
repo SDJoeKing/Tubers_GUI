@@ -300,6 +300,7 @@ void mTcpClient::errorOccurred(QAbstractSocket::SocketError socketError)
 {
     qDebug() << m_name + errorToType(socketError);
     emit tcpMessage(m_name + errorToType(socketError));
+    emit errorOccured();
 }
 
 void mTcpClient::connected()

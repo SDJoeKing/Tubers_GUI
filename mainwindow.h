@@ -79,7 +79,7 @@ private slots:
     void updateFs(double);
     // debugging fps
     void do_fps(float);
-
+    void do_ConnectLost();
     // processing
     void threadFinished();
     void setThreshold(double);

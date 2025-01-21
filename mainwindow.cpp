@@ -255,11 +255,17 @@ void MainWindow::doSettingsConfirmed(QString str)
 {
 
     // update internal ->s logic
+
+
+
     auto list = str.split(";");
     qDebug() << list;
 
     m_vel = list[TSettings::velocity].toDouble();
     emit velocitySet(m_vel);
+
+    // encoder mode?
+    encoderTriggerMode = list[TSettings::encoderTriggering].toUInt();
 
     m_order = list[TSettings::order].toInt();
     m_fc = (list[TSettings::lowCut].toDouble() + list[TSettings::highCut].toDouble() )/ 2.0;
@@ -390,7 +396,7 @@ double MainWindow::envelope(double sample, double &value, double ga, double gr)
 
 void MainWindow::on_btnRun_clicked(bool checked)
 {
-    if(checked)
+    if(checked && m_client!=nullptr)
     {
         // send current settings to hardware
         m_settings->sendSetting();
@@ -398,8 +404,13 @@ void MainWindow::on_btnRun_clicked(bool checked)
 
     }else
     {
+        if(encoderTriggerMode and m_client!=nullptr)
+        {
+            qDebug() << "triggermode stop";
+            QTimer::singleShot(0, m_client, [&](){m_client->writeData("stop");});
+            return;
+        }
         emit stopAcqSig();
-
         QTimer::singleShot(0, m_client, [&](){m_client->flush();});
 
     }

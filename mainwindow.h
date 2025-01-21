@@ -101,7 +101,7 @@ private:
     QLabel *m_status;
     QByteArray m_serverData;
     float m_vel=5890.0;
-
+    bool encoderTriggerMode = false;
     static void resetEnv();
     int m_currentLine=-1;
 

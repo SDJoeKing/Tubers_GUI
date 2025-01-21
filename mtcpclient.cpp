@@ -180,6 +180,7 @@ bool mTcpClient::parseServerMsg(QByteArray &arr)
         emit acquisitionStop();
         emit tcpMessage(m_server + msg.sliced(0, 19));
         arr.slice(19);
+        m_stopAcq = false;
         return -1;
     }
     else if(msg.contains("data acknowledged"))
@@ -271,7 +272,7 @@ void mTcpClient::readMessage()
             if(m_stopAcq)
             {
                 writeData(stopAcq);
-                m_stopAcq = 0;
+
             }else
             {
                 // send data acknowledgement

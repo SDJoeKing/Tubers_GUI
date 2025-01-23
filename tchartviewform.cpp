@@ -541,7 +541,7 @@ void TChartViewForm::updateLabelPosition()
             }
             auto labelPos = m_chart->mapToPosition(value, m_series);
             _tempLabel->move(labelPos.toPoint().x()+20, labelPos.toPoint().y()-35 );
-            _tempLabel->setText(QString("X: %1\nY: %2").arg(value.x(), 0, 'f', 2).arg(value.y(), 0, 'f', 2));
+            _tempLabel->setText(QString("X: %1\nY: %2").arg(value.x(), 0, 'f', 4).arg(value.y(), 0, 'f', 4));
         }
     }
 }

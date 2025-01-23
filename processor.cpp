@@ -71,7 +71,7 @@ void Processor::process(const char *dataptr)
     temp2 = (serverData.at(6)) & 0xFF;
 
     float _temperature =  (static_cast<quint16>(temp2 | temp1));
-    qDebug() << "------- " << _temperature / 2 / 125e6 *2293.0 << " ------- ";
+    // qDebug() << "------- " << _temperature / 2 / 125e6 *2293.0 << " ------- ";
     _temperature = ((_temperature/65536.0f)/0.00198421639f ) - 273.15f;
 
     for (int i = 0; i < mTcpClient::DATA_SIZE/2; i++)
@@ -103,7 +103,7 @@ void Processor::process(const char *dataptr)
         calPoint[i] = QPointF(xpoint, dataPoint[0][i]);
         _temp[i] = dataPoint[0][i];
     }
-    qDebug() << "Max: " << xpoint;
+
     //reset envelope;
     MainWindow::_env = 0;
 

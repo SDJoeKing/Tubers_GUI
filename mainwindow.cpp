@@ -153,6 +153,9 @@ void MainWindow::resetUI()
 
     // UI elements
 
+    if(ui->btnRun->isChecked())
+        ui->btnRun->setChecked(false);
+
     m_Bscan->setVisible(false);
     ui->log->clear();
     ui->btnConnect->setChecked(false);

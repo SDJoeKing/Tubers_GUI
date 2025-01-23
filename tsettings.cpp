@@ -47,12 +47,12 @@ void TSettings::encoderTriggerMode(bool okay)
 {
     if(okay) // use encoder motor triggering
     {
-        ui->btnConfirm->setVisible(true);
+
         ui->btnConfirm->setText(encoderModeString);
 
     }else
     {
-        ui->btnConfirm->setVisible(false);
+
         ui->btnConfirm->setText(contModeString);
     }
 

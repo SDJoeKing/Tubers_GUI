@@ -690,6 +690,7 @@ void MainWindow::do_ConnectLost()
 {
     // disconnect
     ui->radioStatus->setChecked(false);
+    stopAcquisition();
     resetUI();
 }
 

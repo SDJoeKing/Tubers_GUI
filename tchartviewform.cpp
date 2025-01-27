@@ -293,7 +293,7 @@ bool TChartViewForm::eventFilter(QObject *watched, QEvent *event)
 
                     auto _tempLabel = generateLabel(m_chartView);
 
-                    _tempLabel->setText(QString("X: %1\nY: %2").arg(value.x(), 0, 'f', 2).arg(value.y(), 0, 'f', 2));
+                    _tempLabel->setText(QString("X: %1\nY: %2").arg(value.x(), 0, 'f', 4).arg(value.y(), 0, 'f', 4));
 
                     // object name is always the index as x
                     _tempLabel->setObjectName(QString("%1;%2").arg(xposition).arg(value.y())); // xposition always means time, saved as time

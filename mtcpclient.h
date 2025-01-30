@@ -24,12 +24,12 @@ public:
     static const quint8 HEADER_SIZE = 8;
     static const quint16 DATA_SIZE_RECV = DATA_SIZE + HEADER_SIZE;
 
-    bool start(const QString &address, const quint8 port);
+    bool start(const QString &address, const quint16 port);
     void stop();
     void writeData(QByteArray arr);
     bool isOpen();
     const QByteArray& data();
-    void setHostPort(const QString&, const quint8&);
+    void setHostPort(const QString&, const quint16&);
 
 public slots:
     void startAcquisition();
@@ -54,7 +54,7 @@ private:
     bool m_stopAcq = 0;
     QEventLoop *m_loop;
     QString m_address;
-    quint8 m_port;
+    quint16 m_port;
     bool shutdownLock;
 private slots:
     void readMessage(); //  signal readyRead, slot readMessage

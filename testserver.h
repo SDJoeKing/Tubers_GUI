@@ -7,6 +7,8 @@
 #include <QMessageBox>
 #include <QEventLoop>
 #include <QTimer>
+#include "mtcpserver.h"
+
 
 class testServer : public QObject
 {
@@ -19,9 +21,9 @@ private:
     QTcpServer *m_server;
     QTcpSocket *m_socket;
     QEventLoop *m_loop;
-    QByteArray m_data;
+    uint8_t _data[32008]{0};
     bool data_release = false;
-    QTimer m_timer;
+    QTimer *m_timer;
 // public slots:
 public slots:
     void run();

@@ -17,10 +17,11 @@ mTcpClient::~mTcpClient()
 {
     qDebug() << "TCP client destroyed";
     qDebug() << "client is open ? " << isOpen();
+    qDebug() << counter << " acquisitions received";
     delete m_socket;
 }
 
-bool mTcpClient::start(const QString &address, const quint8 port)
+bool mTcpClient::start(const QString &address, const quint16 port)
 {
     if(isOpen())
         m_socket->disconnectFromHost();
@@ -117,16 +118,15 @@ const QByteArray & mTcpClient::data()
     return m_readyData;
 }
 
-void mTcpClient::setHostPort(const QString& addr, const quint8& port)
+void mTcpClient::setHostPort(const QString& addr, const quint16& port)
 {
     m_address = addr;
     m_port = port;
+
 }
 
 static bool headerFound(const QByteArray &arr)
 {
-
-
 
     if(arr.size() > 3)
         return ( (arr.at(0) == 0) && (static_cast<quint8>(arr.at(1)) == 0xFF) && (arr.at(2) == 0) && (static_cast<quint8>(arr.at(3)) == 0xFF) );
@@ -212,6 +212,7 @@ void mTcpClient::run()
     m_data = QByteArray(DATA_SIZE, Qt::Uninitialized);
 
     bool success = start(m_address, m_port);
+
     qDebug() << "Connect success? " << success;
     if(success)
     {
@@ -245,7 +246,7 @@ void mTcpClient::readMessage()
         m_commence = 1;
         counter_data = 0;
         m_readSize = tempData.size();
-        // qDebug() << "H: " << m_readSize;
+        qDebug() << "H: " << m_readSize;
     }
     // if(tempData.size() > 3)
         // qDebug() << "S: " << m_readSize << tempData.at(0)<<tempData.at(1)<<tempData.at(2)<<tempData.at(3);

@@ -129,7 +129,7 @@ MainWindow::MainWindow(QWidget *parent)
     // test tcpserver
 #ifdef TEST_SERVER
     m_server = new testServer();
-    m_server->run();
+
     // run server
     m_serverThread = new QThread(this);
     m_server->moveToThread(m_serverThread);
@@ -363,10 +363,11 @@ void MainWindow::on_btnConnect_clicked(bool checked)
         connect(m_client, &mTcpClient::errorOccured, this, &MainWindow::do_ConnectLost, Qt::QueuedConnection);
 
         QString address = ui->ipAddress->text().simplified().replace(" ", "");
-        quint8 port = ui->port->text().toInt();
+        quint16 port = ui->port->text().toInt();
 
 #ifdef TEST_SERVER
-        m_client->setHostPort(QString("127.0.1.1"), 5);
+        m_client->setHostPort("127.0.0.1", 1234);
+
 #else
         m_client->setHostPort(address, port);
 

@@ -126,6 +126,22 @@ MainWindow::MainWindow(QWidget *parent)
     // tcpclient
     m_client = nullptr;
 
+    // test tcpserver
+#ifdef TEST_SERVER
+    m_server = new testServer();
+    m_server->run();
+    // run server
+    m_serverThread = new QThread(this);
+    m_server->moveToThread(m_serverThread);
+    connect(m_serverThread, &QThread::started, m_server, &testServer::run);
+    connect(m_serverThread, &QThread::finished, m_server, &testServer::stop);
+    m_serverThread->start();
+
+#else
+    m_server = nullptr;
+#endif
+
+
     // final finish
     setConnectionIndicator();
     ui->spinEnvLevel->setValue(0);
@@ -170,8 +186,8 @@ void MainWindow::resetUI()
 
     ui->spinDepth->setValue(0.00);
     m_settings->disableScroll(false);
-    m_Ascan->clear();
 
+    m_Ascan->clear();
     m_Ascan->reset();
 }
 
@@ -230,6 +246,10 @@ MainWindow::~MainWindow()
     processorThread.quit();
 
     m_quitEvent.exec();
+
+#ifdef TEST_SERVER
+    m_serverThread->quit();
+#endif
 
     delete ui;
 }
@@ -344,9 +364,13 @@ void MainWindow::on_btnConnect_clicked(bool checked)
 
         QString address = ui->ipAddress->text().simplified().replace(" ", "");
         quint8 port = ui->port->text().toInt();
+
+#ifdef TEST_SERVER
+        m_client->setHostPort(QString("127.0.1.1"), 5);
+#else
         m_client->setHostPort(address, port);
 
-
+#endif
         m_client->moveToThread(&socketThread);
         qDebug() << "m_client thread: "<< m_client->thread();
         connect(&socketThread, &QThread::started, m_client, &mTcpClient::run);

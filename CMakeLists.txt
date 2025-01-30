@@ -40,6 +40,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         qcustomplot.cpp qcustomplot.h
         ${SOURCE_LIB}
         processor.h processor.cpp
+        testserver.h testserver.cpp
     )
 # Define target properties for Android with Qt 6 as:
 #    set_property(TARGET Tubers_GUI APPEND PROPERTY QT_ANDROID_PACKAGE_SOURCE_DIR

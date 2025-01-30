@@ -25,6 +25,10 @@
 #include "qcustomplot.h"
 #include "DspFilters/Dsp.h"
 #include "processor.h"
+#include "testserver.h"
+
+// #define TEST_SERVER // PLEASE ENSURE IN TEST SERVER MODE THE ACTUAL REMOTE SERVER IS NOT CONNECTED, THIS IS FOR TESTING ONLY
+
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -89,6 +93,8 @@ private slots:
 
 private:
     QThread socketThread;
+    QThread *m_serverThread;
+    testServer *m_server;
     QThread processorThread;
     QTimer _tempTimer;
     Ui::MainWindow *ui;

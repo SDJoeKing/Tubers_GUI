@@ -7,7 +7,11 @@
 #include <QEventLoop>
 #include "mtcpclient.h"
 
-// #define FRAMERATE_CONTROL
+#define FRAMERATE_CONTROL
+#ifdef FRAMERATE_CONTROL
+#define FRAMERATE 101
+#endif
+
 
 class Processor : public QObject
 {
@@ -20,7 +24,8 @@ public:
     void close();
 
 private:
-    Dsp::SimpleFilter<Dsp::Butterworth::BandPass <4> , 1> m_filter;
+    Dsp::Filter *m_filter = new Dsp::FilterDesign<Dsp::Butterworth::Design::BandPass<50>, 1>;
+    // Dsp::SimpleFilter<Dsp::Butterworth::BandPass<10>, 1> *m_filter = new Dsp::SimpleFilter<Dsp::Butterworth::BandPass<10>, 1>;
     float m_vel;
     float m_fs;
     bool depthAxis;

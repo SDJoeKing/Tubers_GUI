@@ -246,7 +246,7 @@ void mTcpClient::readMessage()
         m_commence = 1;
         counter_data = 0;
         m_readSize = tempData.size();
-        qDebug() << "H: " << m_readSize;
+
     }
     // if(tempData.size() > 3)
         // qDebug() << "S: " << m_readSize << tempData.at(0)<<tempData.at(1)<<tempData.at(2)<<tempData.at(3);
@@ -281,7 +281,6 @@ void mTcpClient::readMessage()
             }
 
             emit dataReady(m_readyData.constData());
-            qDebug() << "ACK";
 
             counter++;
             if(elapTimer.hasExpired(1000))

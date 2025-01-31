@@ -81,10 +81,14 @@ void TSettings::on_btnConfirm_clicked()
             power = 50;
             break;
         case 2:
+            power = 75;
+            break;
+        case 3:
             power = 100;
             break;
         default:
-            power = 50;
+            power = 100;
+
     }
 
     setting+= QString::number(power) + ";"; // power output

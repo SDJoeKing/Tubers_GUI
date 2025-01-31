@@ -283,7 +283,6 @@ void MainWindow::doSettingsConfirmed(QString str)
     // update internal ->s logic
 
     auto list = str.split(";");
-    qDebug() << list;
 
     m_vel = list[TSettings::velocity].toDouble();
     emit velocitySet(m_vel);
@@ -293,6 +292,7 @@ void MainWindow::doSettingsConfirmed(QString str)
     m_fw= qAbs(list[TSettings::highCut].toDouble() - list[TSettings::lowCut].toDouble());
 
     emit filterParam(m_order, m_fs, m_fc, m_fw);
+
 
     int _size = 0;
     for(int i = TSettings::txChannel ; i< TSettings::motorAngle + 1; i++)
@@ -314,7 +314,7 @@ void MainWindow::doSettingsConfirmed(QString str)
     // for motor testing only
     if(encoderTriggerMode && acquisitionRunning)
     {
-        qDebug() << "here....................................";
+
         ui->btnRun->click();
         QTimer::singleShot(50, this, [&](){ui->btnRun->click();});
         return;

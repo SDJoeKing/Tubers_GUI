@@ -10,6 +10,7 @@ Processor::Processor(QObject *parent)
     depthAxis = false;
     rectify = false;
     filtering = false;
+
     processTimer.start();
     qDebug() << "Processor on";
 }
@@ -29,7 +30,16 @@ void Processor::setParam(const float &vel, const bool &depth, const bool &rect, 
 
 void Processor::updateFilter(const quint8 &order, const float &fs, const float &fc, const float &fw)
 {
-    m_filter.setup( order, fs, fc, fw);
+
+    Dsp::Params params;
+
+    params[0] = fs;
+    params[1] = order;
+    params[2] = fc;
+    params[3] = fw;
+
+    m_filter->setParams(params);
+    // m_filter->setup(order, fs, fc, fw);
     m_fs = fs;
 }
 
@@ -85,7 +95,7 @@ void Processor::process(const char *dataptr)
 
     if(filtering)
     {
-        m_filter.process(mTcpClient::DATA_SIZE/2, dataPoint);
+        m_filter->process(mTcpClient::DATA_SIZE/2, dataPoint);
     }
 
     // rectified, envelope, depth?
@@ -110,7 +120,7 @@ void Processor::process(const char *dataptr)
     emit dataLogger(reinterpret_cast<const char *>(&_temp));
 
 #ifdef FRAMERATE_CONTROL
-    if(processTimer.durationElapsed().count() > 1.67e7 ) // 60HZ
+    if(processTimer.durationElapsed().count() > 1.0/FRAMERATE * 1e9 ) // 60HZ
     {
         emit dataProcessed(calPoint, _forward == 2 ? false : true);
         processTimer.restart();

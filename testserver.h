@@ -7,6 +7,9 @@
 #include <QMessageBox>
 #include <QEventLoop>
 #include <QTimer>
+#include <QRandomGenerator>
+#include <QFile>
+
 #include "mtcpserver.h"
 
 
@@ -21,9 +24,11 @@ private:
     QTcpServer *m_server;
     QTcpSocket *m_socket;
     QEventLoop *m_loop;
+    QByteArray m_arr;
     uint8_t _data[32008]{0};
     bool data_release = false;
     QTimer *m_timer;
+    QFile m_file;
 // public slots:
 public slots:
     void run();

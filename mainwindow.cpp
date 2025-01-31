@@ -667,8 +667,10 @@ void MainWindow::do_bScanSetting(bool arg, const QList<double> &settings)
             int step = settings[2];
             float encoder_res = settings[3];
             // x/y axis array size
+
             int nx = length / ((step+1)* encoder_res)+1;
             int ny = 4 * thick / 1000.0 / m_vel * 125e6;
+
 
             _map->data()->setSize(nx, ny); // we want the color map to have nx * ny data points
             _map->data()->setRange(QCPRange(0, length), QCPRange(0, 2 * thick));

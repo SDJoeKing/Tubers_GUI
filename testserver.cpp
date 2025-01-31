@@ -2,6 +2,23 @@
 int sent = 0;
 
 #include <QHostInfo>
+
+static void dataGen(char * byteArr, uint8_t * arr)
+{
+
+    float *_df = reinterpret_cast<float *>(byteArr);
+    quint16 j = 8;
+    for(size_t i=0; i<16000;i++)
+    {
+        qint16 _temp = static_cast<qint16>( (_df[i] + QRandomGenerator::global()->bounded(-10, 10)) / 1000 / 3.18 * 32768 );
+        arr[j] = (_temp) & 0x00FF;
+        arr[j+1] = (_temp >>8) &0x00FF;
+        j+=2;
+
+    }
+}
+
+
 testServer::testServer(QWidget *parent) : QObject(parent)
 {
     m_socket=nullptr;
@@ -13,10 +30,18 @@ testServer::testServer(QWidget *parent) : QObject(parent)
      _data[2] = 0;
      _data[3] = 0x00FF;
 
+     m_file.setFileName("../../test_data");
 
+     if(m_file.open(QIODevice::ReadOnly))
+     {
+         m_arr =  m_file.readAll();
+         char * _d = m_arr.data();
+         dataGen(_d, _data);
+     }else
+     {
+         qDebug()<< "Open file not successful";
+     }
 
-    // for(size_t i=8; i<32000+8; i++)
-    //     m_data[i] = 0;
 
 }
 
@@ -31,6 +56,8 @@ testServer::~testServer()
 
     qDebug() << "Test server closed, " << sent << " acquisitions sent";
 
+    if(m_file.isOpen())
+        m_file.close();
 }
 
 void testServer::run()
@@ -124,6 +151,8 @@ void testServer::do_sendData()
     if(data_release)
     {
         data_release = false;
+
+        dataGen(m_arr.data(), _data);
         // datasending logic
         m_socket->write(reinterpret_cast<const char *>(_data), 32008);
         sent++;

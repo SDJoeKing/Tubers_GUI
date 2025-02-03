@@ -109,6 +109,7 @@ TChartViewForm::TChartViewForm(QWidget *parent)
     // units
     setXUnit("ms");
     setYUnit("mV");
+    ui->steps->setValue((m_X->max() - m_X->min()) * 0.05);
 }
 
 TChartViewForm::~TChartViewForm()
@@ -773,10 +774,14 @@ void TChartViewForm::on_comboAxis_currentIndexChanged(int index)
     case 0: // X selected
         ui->labelUnit->setText(m_xUnit.first);
         ui->steps->setMaximum((_xAxisType == x_AXISTYPE::TIME) ? xMax : xMax*m_vel/2);
+        if(m_X)
+            ui->steps->setValue((m_X->max() - m_X->min()) * 0.05);
         break;
     case 1: // Y seleceted
         ui->labelUnit->setText(m_yUnit.first);
         ui->steps->setMaximum(2000);
+        if(m_Y)
+            ui->steps->setValue((m_Y->max() - m_Y->min()) * 0.05);
         break;
     default:
         break;

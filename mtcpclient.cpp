@@ -166,6 +166,11 @@ bool mTcpClient::parseServerMsg(QByteArray &arr)
         arr.slice(11);
         return -1;
     }
+    else if(msg.contains("bad settings"))
+    {
+        emit badSettings();
+        return 1;
+    }
     // acquisition
     else if(msg.contains("starting acquisition"))
     {

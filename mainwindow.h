@@ -27,7 +27,7 @@
 #include "processor.h"
 #include "testserver.h"
 
-// #define TEST_SERVER // PLEASE ENSURE IN TEST SERVER MODE THE ACTUAL REMOTE SERVER IS NOT CONNECTED, THIS IS FOR TESTING ONLY
+#define TEST_SERVER // PLEASE ENSURE IN TEST SERVER MODE THE ACTUAL REMOTE SERVER IS NOT CONNECTED, THIS IS FOR TESTING ONLY
 
 
 QT_BEGIN_NAMESPACE
@@ -89,6 +89,8 @@ private slots:
     void setThreshold(double);
     void updateTemp(const float);
 
+    // badsettings
+    void do_badSettings();
 
 
 private:

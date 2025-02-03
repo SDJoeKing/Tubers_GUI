@@ -709,6 +709,11 @@ void TChartViewForm::setYRange(const float &min, const float &max)
 
 }
 
+void TChartViewForm::updateSteps()
+{
+
+}
+
 
 void TChartViewForm::on_btnIncr_clicked()
 {
@@ -726,7 +731,10 @@ void TChartViewForm::on_btnIncr_clicked()
 
     }else
     {
-        setYRange(m_Y->min()-step, m_Y->max() + step);
+        qreal ymin = m_Y->min()-step;
+        if(ymin < 0.0 && _yAxisType==y_AXISTYPE::RECTIFY)
+            ymin = 0.0;
+        setYRange(ymin, m_Y->max() + step);
     }
 
     updateLabelPosition();

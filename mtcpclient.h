@@ -77,6 +77,7 @@ signals:
     void fps(float rate);
     void connectFail();
     void errorOccured();
+    void badSettings();
     // QRunnable interface
 public:
     void run();

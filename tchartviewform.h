@@ -113,7 +113,7 @@ private:
     Ui::TChartViewForm *ui;
     void setXRange(const float &, const float &);
     void setYRange(const float &, const float &);
-
+    void updateSteps();
     // QObject interface
 public:
     virtual bool eventFilter(QObject *watched, QEvent *event) override;

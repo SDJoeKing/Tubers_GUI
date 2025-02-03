@@ -4,6 +4,7 @@
 #include <QDialog>
 #include <QSizePolicy>
 #include <QFocusEvent>
+#include <mtcpclient.h>
 
 namespace Ui {
 class TSettings;
@@ -57,15 +58,20 @@ private slots:
 
     void on_comboLength_currentIndexChanged(int index);
 
+
+
 signals:
     void settingConfirm(const QString &settings);
     void bScanSetting(bool, const QList<double> &settings);
     void settingHide();
     void fsChanged(const float);
+    void badSettings();
 private:
     Ui::TSettings *ui;
     void installFilter(QObject *);
     bool encoderMode = false;
+    QString m_pulse;
+    quint8 m_pulseLength = 16;
     // QObject interface
 public:
     virtual bool eventFilter(QObject *watched, QEvent *event) override;

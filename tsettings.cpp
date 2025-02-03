@@ -25,6 +25,8 @@ TSettings::TSettings(QWidget *parent)
 
     ui->comboLength->addItems(comboLength);
     ui->btnConfirm->setVisible(false);
+
+    m_pulse = ui->pulseSequence->text();
 }
 
 TSettings::~TSettings()
@@ -67,7 +69,27 @@ void TSettings::on_btnConfirm_clicked()
     setting+= QString::number(ui->spinTx->value()) + ";"; // txchan
     setting+= QString::number(ui->spinRx->value()) + ";"; // rx
     setting+= QString::number(ui->spinPulseDelay->value()) + ";"; // pulse delay
-    setting+= QString(ui->pulseSequence->text()) + ";"; // pulseSequence
+    QString _input = ui->pulseSequence->text();
+    if(_input.size() != m_pulseLength )
+    {
+        QMessageBox::critical(this, "Error", "Invalid pulse sequence, please double check.");
+        ui->pulseSequence->setText(m_pulse);
+        emit badSettings();
+        return;
+    }else{
+        for(size_t i=0; i<m_pulseLength; i++)
+        {
+            if(!QString("PpNnCc").contains(_input.at(i)))
+            {
+                QMessageBox::critical(this, "Error", "Invalid pulse sequence, please double check.");
+                ui->pulseSequence->setText(m_pulse);
+                emit badSettings();
+                return;
+            }
+        }
+    }
+    m_pulse = _input;
+    setting+= QString(_input) + ";"; // pulseSequence
     setting+= QString::number(ui->spinFrequency->value()) + ";"; // pulse freq
     setting+= QString::number(ui->prf->value()) + ";"; // prf
 
@@ -191,5 +213,7 @@ void TSettings::on_comboLength_currentIndexChanged(int index)
     emit fsChanged(fs);
     ui->label_fs->setText(QString::asprintf("%.2f MHz",fs));
 }
+
+
 
 

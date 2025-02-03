@@ -121,8 +121,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_Ascan, &TChartViewForm::sendThreshold, this, &MainWindow::setThreshold);
 
     // setting/logging related
+    connect(m_settings,  &TSettings::badSettings, this, &MainWindow::do_badSettings);
+    connect(m_client,  &mTcpClient::badSettings, this, &MainWindow::do_badSettings);
     connect(this, &MainWindow::velocitySet, m_settings, &TSettings::updateVel);
-
     // tcpclient
     m_client = nullptr;
 
@@ -418,6 +419,7 @@ void MainWindow::runAcquisition()
     emit acquisitionRun(true);
     acquisitionRunning = true;
     m_settings->disableScroll(true);
+    ui->btnRun->setChecked(true);
     ui->btnRun->setText("Stop");
 
 }
@@ -428,6 +430,7 @@ void MainWindow::stopAcquisition()
     acquisitionRunning = false;
     m_settings->disableScroll(false);
     ui->btnRun->setText("Run");
+    ui->btnRun->setChecked(false);
 }
 
 double MainWindow::envelope(double sample, double &value, double ga, double gr)
@@ -695,6 +698,11 @@ void MainWindow::updateTemp(const float temp)
         ui->radioTemp->setChecked(true);
     else
         ui->radioTemp->setChecked(false);
+}
+
+void MainWindow::do_badSettings()
+{
+    stopAcquisition();
 }
 
 

@@ -122,7 +122,6 @@ MainWindow::MainWindow(QWidget *parent)
 
     // setting/logging related
     connect(m_settings,  &TSettings::badSettings, this, &MainWindow::do_badSettings);
-    connect(m_client,  &mTcpClient::badSettings, this, &MainWindow::do_badSettings);
     connect(this, &MainWindow::velocitySet, m_settings, &TSettings::updateVel);
     // tcpclient
     m_client = nullptr;
@@ -362,6 +361,7 @@ void MainWindow::on_btnConnect_clicked(bool checked)
         connect(m_client, &mTcpClient::settingReady, m_client, &mTcpClient::startAcquisition);
         // connect error handling
         connect(m_client, &mTcpClient::errorOccured, this, &MainWindow::do_ConnectLost, Qt::QueuedConnection);
+        connect(m_client,  &mTcpClient::badSettings, this, &MainWindow::do_badSettings);
 
         QString address = ui->ipAddress->text().simplified().replace(" ", "");
         quint16 port = ui->port->text().toInt();

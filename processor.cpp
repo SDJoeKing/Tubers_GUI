@@ -4,8 +4,9 @@
 QElapsedTimer processTimer;
 QMutex mu;
 
+
 float lerp(int a, int b, float t);
-std::unique_ptr<std::vector<float>> correlate(const float * dataArr, quint16 len, std::shared_ptr<std::vector<float>> SEQ);
+void correlate(const float * dataArr, quint16 len, std::shared_ptr<std::vector<float>> SEQ, float *);
 std::shared_ptr<std::vector<float>> genPulse(std::unique_ptr<std::vector<int>>, quint16 );
 
 
@@ -19,9 +20,9 @@ Processor::Processor(QObject *parent)
 
     processTimer.start();
 
-    m_sequence = genPulse(std::make_unique<std::vector<int>>(std::vector<int>{1,1,-1,1}), 10);
+    m_sequence = genPulse(std::make_unique<std::vector<int>>(std::vector<int>{1,1,-1,1,1,1,-1,1,1,1,-1,1,1,1,-1,1}), 10);
 
-    qDebug() << "Processor on";
+    qDebug() << "Processor on ";
 }
 
 Processor::~Processor()
@@ -74,10 +75,11 @@ void Processor::process(const char *dataptr)
     QList<QPointF> calPoint(mTcpClient::DATA_SIZE/2);
     quint16 temp1;
     quint16 temp2;
-    float *dataPoint[1];
+    float *dataPoint[2];
     float _temp[mTcpClient::DATA_SIZE/2]{0};
+    float _temp2[mTcpClient::DATA_SIZE/2]{0};
     dataPoint[0] = _temp;
-
+    dataPoint[1] = _temp2;
     // QByteArray _arr(mTcpClient::DATA_SIZE/2, Qt::Uninitialized);
 
     // take into account of header data
@@ -102,19 +104,15 @@ void Processor::process(const char *dataptr)
         j += 2;
     }
 
+
     {
         QMutexLocker lk(&mu);
-        auto _corr = correlate(dataPoint[0], mTcpClient::DATA_SIZE/2,  m_sequence);
-        qDebug() << "corre len ---------- " << _corr->size() << "  end: "<< *(_corr->end());
-        for(size_t i = 0; i<mTcpClient::DATA_SIZE/2; i++)
-        {
-            dataPoint[0][i] = _corr->at(i);
-        }
+        correlate(dataPoint[0], mTcpClient::DATA_SIZE/2,  m_sequence, dataPoint[1]);
     }
 
     if(filtering)
     {
-        m_filter->process(mTcpClient::DATA_SIZE/2, dataPoint);
+        m_filter->process(mTcpClient::DATA_SIZE/2, &dataPoint[1] );
     }
 
 
@@ -129,10 +127,10 @@ void Processor::process(const char *dataptr)
             xpoint = i / m_fs /1e6 *1000;
 
         if(rectify)
-            dataPoint[0][i] = MainWindow::envelope(dataPoint[0][i], MainWindow::_env, MainWindow::m_ga, MainWindow::m_gr);
+            dataPoint[1][i] = MainWindow::envelope(dataPoint[1][i], MainWindow::_env, MainWindow::m_ga, MainWindow::m_gr);
 
-        calPoint[i] = QPointF(xpoint, dataPoint[0][i]);
-        _temp[i] = dataPoint[0][i];
+        calPoint[i] = QPointF(xpoint, dataPoint[1][i]);
+        _temp[i] = dataPoint[1][i];
     }
 
     //reset envelope;
@@ -189,12 +187,12 @@ std::shared_ptr<std::vector<float>> genPulse(std::unique_ptr<std::vector<int>> S
     return output;
 }
 
-std::unique_ptr<std::vector<float>> correlate(const float * dataArr, quint16 len, std::shared_ptr<std::vector<float>> SEQ)
+void correlate(const float * dataArr, quint16 len, std::shared_ptr<std::vector<float>> SEQ, float *output)
 {
-    auto output = std::make_unique<std::vector<float>>(len);
+
 
     if(SEQ->size() > len)
-        return output;
+        return ;
 
     quint16 sum_counter = 0;
 
@@ -204,14 +202,13 @@ std::unique_ptr<std::vector<float>> correlate(const float * dataArr, quint16 len
         {
             if(i+j >= len)
                 break;
-            output->at(i) += dataArr[i+j] * SEQ->at(j);
+            output[i] += dataArr[i+j] * SEQ->at(j);
             sum_counter++;
         }
-        output->at(i) /= sum_counter;
+        output[i] /= sum_counter;
         sum_counter = 0;
     }
 
-    return output;
 }
 
 float lerp(int a, int b, float t)

@@ -6,7 +6,7 @@
 #include <QElapsedTimer>
 #include <QEventLoop>
 #include "mtcpclient.h"
-
+#include <cmath>
 
 #ifdef FRAMERATE_CONTROL
 #define FRAMERATE 101
@@ -31,7 +31,7 @@ private:
     bool rectify;
     bool filtering;
     QEventLoop *m_loop;
-
+    std::shared_ptr<std::vector<float>> m_sequence;
 signals:
     void dataProcessed(const QList<QPointF> &, bool);
     void dataLogger(const char *);

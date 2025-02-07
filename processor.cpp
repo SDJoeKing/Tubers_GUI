@@ -2,6 +2,12 @@
 #include "mainwindow.h"
 
 QElapsedTimer processTimer;
+QMutex mu;
+
+float lerp(int a, int b, float t);
+std::unique_ptr<std::vector<float>> correlate(const float * dataArr, quint16 len, std::shared_ptr<std::vector<float>> SEQ);
+std::shared_ptr<std::vector<float>> genPulse(std::unique_ptr<std::vector<int>>, quint16 );
+
 
 Processor::Processor(QObject *parent)
     : QObject{parent}
@@ -12,6 +18,9 @@ Processor::Processor(QObject *parent)
     filtering = false;
 
     processTimer.start();
+
+    m_sequence = genPulse(std::make_unique<std::vector<int>>(std::vector<int>{1,1,-1,1}), 10);
+
     qDebug() << "Processor on";
 }
 
@@ -93,10 +102,22 @@ void Processor::process(const char *dataptr)
         j += 2;
     }
 
+    {
+        QMutexLocker lk(&mu);
+        auto _corr = correlate(dataPoint[0], mTcpClient::DATA_SIZE/2,  m_sequence);
+        qDebug() << "corre len ---------- " << _corr->size() << "  end: "<< *(_corr->end());
+        for(size_t i = 0; i<mTcpClient::DATA_SIZE/2; i++)
+        {
+            dataPoint[0][i] = _corr->at(i);
+        }
+    }
+
     if(filtering)
     {
         m_filter->process(mTcpClient::DATA_SIZE/2, dataPoint);
     }
+
+
 
     // rectified, envelope, depth?
     for (int i = 0; i < mTcpClient::DATA_SIZE/2; i++)
@@ -150,4 +171,50 @@ void Processor::setRectified(const bool &rect)
 void Processor::setFiltering(const bool &filt)
 {
     filtering = filt;
+}
+
+std::shared_ptr<std::vector<float>> genPulse(std::unique_ptr<std::vector<int>> SEQ, quint16 len)
+{
+    std::unique_ptr<std::vector<float>> output = std::make_unique<std::vector<float>>();
+    SEQ->emplace_back(0);
+    float step = 1.0/len;
+    for(size_t j = 0; j < SEQ->size() - 1; j++)
+    {
+        for(size_t i = 0; i < len; i++)
+        {
+            output->emplace_back(lerp(SEQ->at(j), SEQ->at(j+1), i*step));
+        }
+    }
+
+    return output;
+}
+
+std::unique_ptr<std::vector<float>> correlate(const float * dataArr, quint16 len, std::shared_ptr<std::vector<float>> SEQ)
+{
+    auto output = std::make_unique<std::vector<float>>(len);
+
+    if(SEQ->size() > len)
+        return output;
+
+    quint16 sum_counter = 0;
+
+    for(size_t i=0; i<len; i++)
+    {
+        for(size_t j = 0; j<SEQ->size(); j++)
+        {
+            if(i+j >= len)
+                break;
+            output->at(i) += dataArr[i+j] * SEQ->at(j);
+            sum_counter++;
+        }
+        output->at(i) /= sum_counter;
+        sum_counter = 0;
+    }
+
+    return output;
+}
+
+float lerp(int a, int b, float t)
+{
+    return a + t * (b - a);
 }

@@ -7,7 +7,7 @@
 #include <QEventLoop>
 #include "mtcpclient.h"
 
-#define FRAMERATE_CONTROL
+
 #ifdef FRAMERATE_CONTROL
 #define FRAMERATE 101
 #endif
@@ -25,7 +25,6 @@ public:
 
 private:
     Dsp::Filter *m_filter = new Dsp::FilterDesign<Dsp::Butterworth::Design::BandPass<50>, 1>;
-    // Dsp::SimpleFilter<Dsp::Butterworth::BandPass<10>, 1> *m_filter = new Dsp::SimpleFilter<Dsp::Butterworth::BandPass<10>, 1>;
     float m_vel;
     float m_fs;
     bool depthAxis;

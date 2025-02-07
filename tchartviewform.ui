@@ -65,16 +65,16 @@
       </widget>
      </item>
      <item>
-      <widget class="QToolButton" name="btnIncr">
+      <widget class="QToolButton" name="btnDecr">
        <property name="text">
-        <string>+</string>
+        <string>Zoom In</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QToolButton" name="btnDecr">
+      <widget class="QToolButton" name="btnIncr">
        <property name="text">
-        <string>-</string>
+        <string>Zoom Out</string>
        </property>
       </widget>
      </item>

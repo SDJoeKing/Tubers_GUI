@@ -184,7 +184,12 @@ void TChartViewForm::changeXAxisType(const TChartViewForm::x_AXISTYPE &type)
         setXUnit("ms");
     }
 
-
+    // trigger axiscombo change
+    if(ui->comboAxis->currentIndex() == 0)
+    {
+        ui->comboAxis->setCurrentIndex(1);
+        ui->comboAxis->setCurrentIndex(0);
+    }
 }
 
 void TChartViewForm::changeYAxisType(const TChartViewForm::y_AXISTYPE &type)
@@ -413,6 +418,12 @@ void TChartViewForm::doZoomInOut(QRectF rubberband)
 
     auto startPos = m_chart->mapToValue(rubberband.topLeft(), m_series);
     auto endPos = m_chart->mapToValue(rubberband.bottomRight(), m_series);
+
+
+    if(_yAxisType == y_AXISTYPE::RECTIFY)
+        endPos.ry() < 0 ? endPos.ry() = 0 : endPos.ry();
+    startPos.rx() < 0 ? startPos.rx() = 0: startPos.rx();
+
     m_X->setRange(startPos.x(), endPos.x());
     m_Y->setRange(endPos.y(), startPos.y());
 
@@ -728,7 +739,7 @@ void TChartViewForm::on_btnIncr_clicked()
     //  control logic - if axis is X
     if(axis == m_X)
     {
-        setXRange(m_X->min()-step, m_X->max() + step);
+        setXRange(m_X->min(), m_X->max() + step);
 
     }else
     {
@@ -753,11 +764,17 @@ void TChartViewForm::on_btnDecr_clicked()
     //  control logic - if axis is X
     if(axis == m_X)
     {
-        setXRange(m_X->min()+step, m_X->max() - step);
+        if(m_X->max() - step <= (m_X->max() - m_X->min()) * 0.05)
+            return;
+
+        setXRange(m_X->min(), m_X->max() - step);
 
     }else
     {
-        setYRange(m_Y->min()+step, m_Y->max() - step);
+        if(_yAxisType == y_AXISTYPE::FULL)
+            setYRange(m_Y->min()+step, m_Y->max() - step);
+        else
+            setYRange(m_Y->min(), m_Y->max() - step);
     }
 
     updateLabelPosition();

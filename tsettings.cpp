@@ -3,7 +3,7 @@
 #include "mtcpclient.h"
 
 static QString encoderModeString = "Trigger Motor Run";
- static QString contModeString = "Send Settings";
+static QString contModeString = "Send Settings";
 
 TSettings::TSettings(QWidget *parent)
     : QDialog(parent)

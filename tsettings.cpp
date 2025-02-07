@@ -72,18 +72,16 @@ void TSettings::on_btnConfirm_clicked()
     QString _input = ui->pulseSequence->text();
     if(_input.size() != m_pulseLength )
     {
-        QMessageBox::critical(this, "Error", "Invalid pulse sequence, please double check.");
         ui->pulseSequence->setText(m_pulse);
-        emit badSettings();
+        errorInSettings("Invalid pulse sequence, please double check.");
         return;
     }else{
         for(size_t i=0; i<m_pulseLength; i++)
         {
             if(!QString("PpNnCc").contains(_input.at(i)))
             {
-                QMessageBox::critical(this, "Error", "Invalid pulse sequence, please double check.");
                 ui->pulseSequence->setText(m_pulse);
-                emit badSettings();
+                errorInSettings("Invalid pulse sequence, please double check.");
                 return;
             }
         }
@@ -140,7 +138,11 @@ void TSettings::on_btnConfirm_clicked()
     setting+= QString::number(ui->spinOrder->value())+ ";";
     setting+= QString::number(ui->spinLowCut->value()) + ";";
     setting+= QString::number(ui->spinHighCut->value())+ ";";
-
+    if(ui->spinHighCut->value() <= ui->spinLowCut->value())
+    {
+        errorInSettings("Filter high cutoff frequency must be larger than low cutoff frequency");
+        return;
+    }
 
     emit settingConfirm(setting);
 
@@ -212,6 +214,12 @@ void TSettings::on_comboLength_currentIndexChanged(int index)
     float fs = 125.0 / (ui->comboLength->currentIndex() + 1);
     emit fsChanged(fs);
     ui->label_fs->setText(QString::asprintf("%.2f MHz",fs));
+}
+
+void TSettings::errorInSettings(const QString &msg)
+{
+    QMessageBox::critical(this, "Error", msg);
+    emit badSettings();
 }
 
 

@@ -58,7 +58,7 @@ private slots:
 
     void on_comboLength_currentIndexChanged(int index);
 
-
+    void errorInSettings(const QString &);
 
 signals:
     void settingConfirm(const QString &settings);

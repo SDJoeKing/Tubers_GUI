@@ -31,7 +31,12 @@ private:
     bool rectify;
     bool filtering;
     QEventLoop *m_loop;
-    std::shared_ptr<std::vector<float>> m_sequence;
+    std::shared_ptr<std::vector<float>> m_sequenceA;
+    std::shared_ptr<std::vector<float>> m_sequenceB;
+    bool m_golay;
+    float m_golayData[mTcpClient::DATA_SIZE/2]{0};
+    bool m_golayASeq = true;
+    bool m_golayReady = false;
 signals:
     void dataProcessed(const QList<QPointF> &, bool);
     void dataLogger(const char *);
@@ -43,6 +48,7 @@ public slots:
     void setRectified(const bool &rect);
     void setFiltering(const bool &filt);
     void updateFilter(const quint8 & order, const float &fs, const float &fc, const float &fw);
+    void updateGolaySetting(bool useGolay, const QString &seq, const float &freq, quint8);
 };
 
 #endif // PROCESSOR_H

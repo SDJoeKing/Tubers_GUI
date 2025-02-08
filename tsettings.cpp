@@ -25,8 +25,9 @@ TSettings::TSettings(QWidget *parent)
 
     ui->comboLength->addItems(comboLength);
     ui->btnConfirm->setVisible(false);
+    ui->radioManual->click();
+    ui->radioManual->toggled(true);
 
-    m_pulse = ui->pulseSequence->text();
 }
 
 TSettings::~TSettings()
@@ -69,18 +70,53 @@ void TSettings::on_btnConfirm_clicked()
     setting+= QString::number(ui->spinTx->value()) + ";"; // txchan
     setting+= QString::number(ui->spinRx->value()) + ";"; // rx
     setting+= QString::number(ui->spinPulseDelay->value()) + ";"; // pulse delay
-    QString _input = ui->pulseSequence->text();
+    QString _input;
+
+    if(ui->radioManual->isChecked())
+    {
+        _input = ui->pulseSequence->text();
+        _input += _input;
+    }else if(ui->radioPresetGolay->isChecked())
+    {
+        auto seqA = ui->comboPresetGolayA->currentText().simplified().replace(" ", "");
+        auto seqB = ui->comboPresetGolayB->currentText().simplified().replace(" ", "");
+
+        while(seqA.size() != m_pulseLength / 2)
+        {
+            seqA += 'C';
+            seqB += 'C';
+        }
+        _input = seqA + seqB;
+    }
+    else
+        _input = ui->lineGolayA->text() + ui->lineGolayB->text();
+
+
     if(_input.size() != m_pulseLength )
     {
-        ui->pulseSequence->setText(m_pulse);
+        if(ui->radioManual->isChecked())
+            ui->pulseSequence->setText(m_pulse);
+        else
+        {
+            ui->lineGolayA->setText(m_pulse.sliced(0, m_pulseLength/2));
+            ui->lineGolayB->setText(m_pulse.sliced(m_pulseLength/2));
+        }
+
         errorInSettings("Invalid pulse sequence, please double check.");
         return;
+
     }else{
         for(size_t i=0; i<m_pulseLength; i++)
         {
             if(!QString("PpNnCc").contains(_input.at(i)))
             {
-                ui->pulseSequence->setText(m_pulse);
+                if(ui->radioManual->isChecked())
+                    ui->pulseSequence->setText(m_pulse);
+                else
+                {
+                    ui->lineGolayA->setText(m_pulse.sliced(0, m_pulseLength/2));
+                    ui->lineGolayB->setText(m_pulse.sliced(m_pulseLength/2));
+                }
                 errorInSettings("Invalid pulse sequence, please double check.");
                 return;
             }
@@ -144,6 +180,8 @@ void TSettings::on_btnConfirm_clicked()
         return;
     }
 
+    setting+= QString::number( (ui->radioManual->isChecked() ? 0 : 1) ) + ";";
+
     emit settingConfirm(setting);
 
     QList<double> bscanSetting;
@@ -165,6 +203,11 @@ void TSettings::installFilter(QObject *obj)
         if(qobject_cast<QAbstractSpinBox *>(child) || qobject_cast<QComboBox *>(child))
             child->installEventFilter(this);
     }
+}
+
+quint8 TSettings::pulseLength() const
+{
+    return m_pulseLength;
 }
 
 
@@ -224,4 +267,79 @@ void TSettings::errorInSettings(const QString &msg)
 
 
 
+
+
+void TSettings::on_radioManual_toggled(bool checked)
+{
+    manualSeqVisible(checked);
+    m_pulse = ui->pulseSequence->text();
+
+}
+
+
+void TSettings::on_radioPresetGolay_toggled(bool checked)
+{
+    presetGolayVisible(checked);
+
+}
+
+
+void TSettings::on_radioManualGolay_toggled(bool checked)
+{
+    manualGolayVisible(checked);
+    m_pulse = ui->lineGolayA->text() + ui->lineGolayB->text();
+
+}
+
+void TSettings::manualSeqVisible(bool vis)
+{
+    ui->labelSeq->setVisible(vis);
+    ui->pulseSequence->setVisible(vis);
+
+    if(vis == true)
+    {
+        presetGolayVisible(!vis);
+        manualGolayVisible(!vis);
+    }
+
+
+}
+
+void TSettings::presetGolayVisible(bool vis)
+{
+    ui->labelPresetGolayA->setVisible(vis);
+    ui->labelPresetGolayB->setVisible(vis);
+    ui->comboPresetGolayA->setVisible(vis);
+    ui->comboPresetGolayB->setVisible(vis);
+
+    if(vis == true)
+    {
+        manualSeqVisible(!vis);
+        manualGolayVisible(!vis);
+    }
+
+}
+
+void TSettings::manualGolayVisible(bool vis)
+{
+    ui->labelGolayA->setVisible(vis);
+    ui->labelGolayB->setVisible(vis);
+    ui->lineGolayA->setVisible(vis);
+    ui->lineGolayB->setVisible(vis);
+
+    if(vis == true)
+    {
+        presetGolayVisible(!vis);
+        manualSeqVisible(!vis);
+    }
+
+
+}
+
+
+
+void TSettings::on_comboPresetGolayA_currentIndexChanged(int index)
+{
+    ui->comboPresetGolayB->setCurrentIndex(index);
+}
 

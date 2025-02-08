@@ -90,6 +90,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_processor, &Processor::dataProcessed, this, &MainWindow::updateBScan, Qt::QueuedConnection);
     connect(m_processor, &Processor::dataProcessed, m_Ascan, &TChartViewForm::plot, Qt::QueuedConnection);
     connect(m_processor, &Processor::sendTemperature, this, &MainWindow::updateTemp, Qt::QueuedConnection);
+    connect(this, &MainWindow::golayCoding, m_processor, &Processor::updateGolaySetting, Qt::QueuedConnection);
 
     connect(&processorThread, &QThread::finished, this, &MainWindow::threadFinished);
     processorThread.start();
@@ -319,6 +320,8 @@ void MainWindow::doSettingsConfirmed(QString str)
         QTimer::singleShot(50, this, [&](){ui->btnRun->click();});
         return;
     }
+
+    emit golayCoding(list[TSettings::golay].toInt(), list[TSettings::pulseSequence], list[TSettings::pulseFreq].toFloat(), m_settings->pulseLength());
 
     emit mainSendSetting(settings);
 }

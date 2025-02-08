@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>270</width>
-    <height>810</height>
+    <width>445</width>
+    <height>899</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -19,7 +19,7 @@
   <property name="windowTitle">
    <string>Dialog</string>
   </property>
-  <layout class="QGridLayout" name="gridLayout">
+  <layout class="QGridLayout" name="gridLayout_3">
    <item row="0" column="0">
     <widget class="QScrollArea" name="scrollArea">
      <property name="sizePolicy">
@@ -39,12 +39,12 @@
        <rect>
         <x>0</x>
         <y>0</y>
-        <width>283</width>
-        <height>800</height>
+        <width>411</width>
+        <height>1046</height>
        </rect>
       </property>
-      <layout class="QGridLayout" name="gridLayout_3">
-       <item row="0" column="0">
+      <layout class="QVBoxLayout" name="verticalLayout_6">
+       <item>
         <widget class="QFrame" name="frame">
          <property name="frameShape">
           <enum>QFrame::Shape::StyledPanel</enum>
@@ -544,7 +544,7 @@
          </layout>
         </widget>
        </item>
-       <item row="1" column="0">
+       <item>
         <widget class="QGroupBox" name="groupBox">
          <property name="maximumSize">
           <size>
@@ -652,71 +652,287 @@
          </layout>
         </widget>
        </item>
-       <item row="2" column="0">
+       <item>
         <widget class="QGroupBox" name="groupBox_3">
          <property name="maximumSize">
           <size>
            <width>16777215</width>
-           <height>70</height>
+           <height>300</height>
           </size>
          </property>
          <property name="title">
           <string>Pulse Config</string>
          </property>
-         <layout class="QFormLayout" name="formLayout_3">
-          <property name="leftMargin">
-           <number>2</number>
-          </property>
-          <property name="topMargin">
-           <number>2</number>
-          </property>
-          <property name="rightMargin">
-           <number>2</number>
-          </property>
-          <property name="bottomMargin">
-           <number>2</number>
-          </property>
+         <layout class="QGridLayout" name="gridLayout">
           <item row="0" column="0">
-           <widget class="QLabel" name="labelHz_8">
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>20</height>
-             </size>
+           <widget class="QFrame" name="frame_3">
+            <property name="frameShape">
+             <enum>QFrame::Shape::StyledPanel</enum>
             </property>
-            <property name="text">
-             <string>Sequence     </string>
+            <property name="frameShadow">
+             <enum>QFrame::Shadow::Raised</enum>
             </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <widget class="QLineEdit" name="pulseSequence">
-            <property name="font">
-             <font>
-              <pointsize>9</pointsize>
-             </font>
-            </property>
-            <property name="focusPolicy">
-             <enum>Qt::FocusPolicy::ClickFocus</enum>
-            </property>
-            <property name="toolTip">
-             <string/>
-            </property>
-            <property name="inputMask">
-             <string>AAAAAAAAAAAAAAAA</string>
-            </property>
-            <property name="text">
-             <string>PNCCCCCCCCCCCCCC</string>
-            </property>
-            <property name="maxLength">
-             <number>16</number>
-            </property>
+            <layout class="QVBoxLayout" name="verticalLayout_5">
+             <property name="leftMargin">
+              <number>0</number>
+             </property>
+             <property name="topMargin">
+              <number>0</number>
+             </property>
+             <property name="rightMargin">
+              <number>0</number>
+             </property>
+             <item>
+              <layout class="QVBoxLayout" name="verticalLayout_2">
+               <item>
+                <widget class="QRadioButton" name="radioManual">
+                 <property name="text">
+                  <string>Manual Sequence</string>
+                 </property>
+                 <property name="checked">
+                  <bool>true</bool>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QRadioButton" name="radioPresetGolay">
+                 <property name="text">
+                  <string>Preset Golay Coding</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QRadioButton" name="radioManualGolay">
+                 <property name="text">
+                  <string>Manual Golay Coding</string>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item>
+              <layout class="QHBoxLayout" name="horizontalLayout_2">
+               <item>
+                <widget class="QLabel" name="labelSeq">
+                 <property name="maximumSize">
+                  <size>
+                   <width>16777215</width>
+                   <height>20</height>
+                  </size>
+                 </property>
+                 <property name="text">
+                  <string>Sequence     </string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLineEdit" name="pulseSequence">
+                 <property name="font">
+                  <font>
+                   <pointsize>9</pointsize>
+                  </font>
+                 </property>
+                 <property name="focusPolicy">
+                  <enum>Qt::FocusPolicy::ClickFocus</enum>
+                 </property>
+                 <property name="toolTip">
+                  <string/>
+                 </property>
+                 <property name="inputMask">
+                  <string>AAAAAAAAAAAAAAAA</string>
+                 </property>
+                 <property name="text">
+                  <string>PNCCCCCCCCCCCCCC</string>
+                 </property>
+                 <property name="maxLength">
+                  <number>16</number>
+                 </property>
+                </widget>
+               </item>
+              </layout>
+             </item>
+             <item>
+              <layout class="QVBoxLayout" name="verticalLayout_3">
+               <item>
+                <layout class="QHBoxLayout" name="horizontalLayout_3">
+                 <item>
+                  <widget class="QLabel" name="labelPresetGolayA">
+                   <property name="maximumSize">
+                    <size>
+                     <width>16777215</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                   <property name="text">
+                    <string>Golay-A</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QComboBox" name="comboPresetGolayA">
+                   <item>
+                    <property name="text">
+                     <string>P P </string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>P P N P</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>P P P N P P N P</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>N N P N N N N P N P P P N P N N</string>
+                    </property>
+                   </item>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+               <item>
+                <layout class="QHBoxLayout" name="horizontalLayout_4">
+                 <item>
+                  <widget class="QLabel" name="labelPresetGolayB">
+                   <property name="maximumSize">
+                    <size>
+                     <width>16777215</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                   <property name="text">
+                    <string>Golay-B</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QComboBox" name="comboPresetGolayB">
+                   <property name="enabled">
+                    <bool>false</bool>
+                   </property>
+                   <item>
+                    <property name="text">
+                     <string>P N </string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>P P P N</string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>P P P N N N P N </string>
+                    </property>
+                   </item>
+                   <item>
+                    <property name="text">
+                     <string>N N P N N N N P P N N N P N P P</string>
+                    </property>
+                   </item>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+              </layout>
+             </item>
+             <item>
+              <layout class="QVBoxLayout" name="verticalLayout_4">
+               <item>
+                <layout class="QHBoxLayout" name="horizontalLayout_5">
+                 <item>
+                  <widget class="QLabel" name="labelGolayA">
+                   <property name="maximumSize">
+                    <size>
+                     <width>16777215</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                   <property name="text">
+                    <string>Golay-A</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLineEdit" name="lineGolayA">
+                   <property name="font">
+                    <font>
+                     <pointsize>9</pointsize>
+                    </font>
+                   </property>
+                   <property name="focusPolicy">
+                    <enum>Qt::FocusPolicy::ClickFocus</enum>
+                   </property>
+                   <property name="toolTip">
+                    <string/>
+                   </property>
+                   <property name="inputMask">
+                    <string>AAAAAAAAAAAAAAAA</string>
+                   </property>
+                   <property name="text">
+                    <string>PNCCCCCCCCCCCCCC</string>
+                   </property>
+                   <property name="maxLength">
+                    <number>16</number>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+               <item>
+                <layout class="QHBoxLayout" name="horizontalLayout_6">
+                 <item>
+                  <widget class="QLabel" name="labelGolayB">
+                   <property name="maximumSize">
+                    <size>
+                     <width>16777215</width>
+                     <height>20</height>
+                    </size>
+                   </property>
+                   <property name="text">
+                    <string>Golay-B</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QLineEdit" name="lineGolayB">
+                   <property name="font">
+                    <font>
+                     <pointsize>9</pointsize>
+                    </font>
+                   </property>
+                   <property name="focusPolicy">
+                    <enum>Qt::FocusPolicy::ClickFocus</enum>
+                   </property>
+                   <property name="toolTip">
+                    <string/>
+                   </property>
+                   <property name="inputMask">
+                    <string>AAAAAAAAAAAAAAAA</string>
+                   </property>
+                   <property name="text">
+                    <string>PNCCCCCCCCCCCCCC</string>
+                   </property>
+                   <property name="maxLength">
+                    <number>16</number>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+              </layout>
+             </item>
+            </layout>
            </widget>
           </item>
          </layout>
         </widget>
        </item>
-       <item row="3" column="0">
+       <item>
         <widget class="QGroupBox" name="groupBscan">
          <property name="title">
           <string>Include B-Scan ?</string>
@@ -841,7 +1057,7 @@
          </layout>
         </widget>
        </item>
-       <item row="4" column="0">
+       <item>
         <widget class="QGroupBox" name="groupBox_2">
          <property name="title">
           <string/>
@@ -864,7 +1080,7 @@
          </layout>
         </widget>
        </item>
-       <item row="5" column="0">
+       <item>
         <spacer name="verticalSpacer">
          <property name="orientation">
           <enum>Qt::Orientation::Vertical</enum>

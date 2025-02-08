@@ -42,7 +42,8 @@ public:
         velocity,
         order,
         lowCut,
-        highCut
+        highCut,
+        golay
     };
 
 public slots:
@@ -60,23 +61,39 @@ private slots:
 
     void errorInSettings(const QString &);
 
+    void on_radioManual_toggled(bool checked);
+
+    void on_radioPresetGolay_toggled(bool checked);
+
+    void on_radioManualGolay_toggled(bool checked);
+
+    void manualSeqVisible(bool);
+
+    void presetGolayVisible(bool);
+
+    void manualGolayVisible(bool);
+
+    void on_comboPresetGolayA_currentIndexChanged(int index);
+
 signals:
     void settingConfirm(const QString &settings);
     void bScanSetting(bool, const QList<double> &settings);
     void settingHide();
     void fsChanged(const float);
     void badSettings();
+
 private:
     Ui::TSettings *ui;
     void installFilter(QObject *);
     bool encoderMode = false;
     QString m_pulse;
-    quint8 m_pulseLength = 16;
+    quint8 m_pulseLength = 32;
     // QObject interface
 public:
     virtual bool eventFilter(QObject *watched, QEvent *event) override;
     void sendSetting();
     void disableScroll(bool);
+    quint8 pulseLength() const;
 };
 
 #endif // TSETTINGS_H

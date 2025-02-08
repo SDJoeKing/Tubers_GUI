@@ -20,7 +20,7 @@ Processor::Processor(QObject *parent)
 
     processTimer.start();
 
-    m_sequence = genPulse(std::make_unique<std::vector<int>>(std::vector<int>{1,1,-1,1,1,1,-1,1,1,1,-1,1,1,1,-1,1}), 10);
+    m_sequenceA = genPulse(std::make_unique<std::vector<int>>(std::vector<int>{1,1,-1,1,1,1,-1,1,1,1,-1,1,1,1,-1,1}), 10);
 
     qDebug() << "Processor on ";
 }
@@ -53,6 +53,42 @@ void Processor::updateFilter(const quint8 &order, const float &fs, const float &
     m_fs = fs;
 }
 
+void Processor::updateGolaySetting(bool useGolay, const QString &seq, const float &freq, quint8 len)
+{
+    // ensure when restarting acq, golaysettings are reset
+
+    m_golayReady = false;
+    m_golayASeq = true;
+
+    m_golay = useGolay;
+
+    if(m_golay)
+    {
+        std::vector<int> _tempVecA;
+        std::vector<int> _tempVecB;
+
+        QString _tempA = seq.sliced(0, len/2);
+        QString _tempB = seq.sliced(len/2);
+
+        quint8 counter = _tempA.size() - 1;
+        while(_tempA.at(counter).toUpper() == 'C' && counter != 0)
+        {
+            counter -= 1;
+        }
+
+        for(size_t i = 0; i<=counter; i++)
+        {
+            _tempVecA.emplace_back( (_tempA.at(i).toUpper() == 'P') ? 1 : ((_tempA.at(i).toUpper() == 'N') ? -1 : 0));
+            _tempVecB.emplace_back( (_tempB.at(i).toUpper() == 'P') ? 1 : ((_tempB.at(i).toUpper() == 'N') ? -1 : 0));
+        }
+
+        m_sequenceA = genPulse(std::make_unique<std::vector<int>>(_tempVecA)  , (int)(100/freq/2));
+        m_sequenceB = genPulse(std::make_unique<std::vector<int>>(_tempVecB) , (int)(100/freq/2));
+    }
+
+}
+
+
 void Processor::run()
 {
     m_loop = new QEventLoop(this);
@@ -75,11 +111,12 @@ void Processor::process(const char *dataptr)
     QList<QPointF> calPoint(mTcpClient::DATA_SIZE/2);
     quint16 temp1;
     quint16 temp2;
-    float *dataPoint[2];
+    float *dataPoint[1];
     float _temp[mTcpClient::DATA_SIZE/2]{0};
-    float _temp2[mTcpClient::DATA_SIZE/2]{0};
+
+
     dataPoint[0] = _temp;
-    dataPoint[1] = _temp2;
+
     // QByteArray _arr(mTcpClient::DATA_SIZE/2, Qt::Uninitialized);
 
     // take into account of header data
@@ -104,18 +141,36 @@ void Processor::process(const char *dataptr)
         j += 2;
     }
 
-
+    if(m_golay)
     {
         QMutexLocker lk(&mu);
-        correlate(dataPoint[0], mTcpClient::DATA_SIZE/2,  m_sequence, dataPoint[1]);
+        if(m_golayASeq)
+        {
+
+            correlate(dataPoint[0], mTcpClient::DATA_SIZE/2,  m_sequenceA, m_golayData);
+            m_golayASeq = false;
+
+        }else
+        {
+            correlate(dataPoint[0], mTcpClient::DATA_SIZE/2,  m_sequenceB, m_golayData);
+            m_golayASeq = true;
+            for(auto &i : m_golayData)
+            {
+                i/=2;
+            }
+            m_golayReady = true;
+        }
     }
+
+    if(m_golay && !m_golayReady) // if using golay and the sequence B has not been received, simply skip plotting
+        return;
+    else if(m_golay && m_golayReady)
+        dataPoint[0] = m_golayData;
 
     if(filtering)
     {
-        m_filter->process(mTcpClient::DATA_SIZE/2, &dataPoint[1] );
+        m_filter->process(mTcpClient::DATA_SIZE/2, dataPoint);
     }
-
-
 
     // rectified, envelope, depth?
     for (int i = 0; i < mTcpClient::DATA_SIZE/2; i++)
@@ -127,10 +182,10 @@ void Processor::process(const char *dataptr)
             xpoint = i / m_fs /1e6 *1000;
 
         if(rectify)
-            dataPoint[1][i] = MainWindow::envelope(dataPoint[1][i], MainWindow::_env, MainWindow::m_ga, MainWindow::m_gr);
+            dataPoint[0][i] = MainWindow::envelope(dataPoint[0][i], MainWindow::_env, MainWindow::m_ga, MainWindow::m_gr);
 
-        calPoint[i] = QPointF(xpoint, dataPoint[1][i]);
-        _temp[i] = dataPoint[1][i];
+        calPoint[i] = QPointF(xpoint, dataPoint[0][i]);
+        _temp[i] = dataPoint[0][i];
     }
 
     //reset envelope;
@@ -138,8 +193,16 @@ void Processor::process(const char *dataptr)
 
     emit dataLogger(reinterpret_cast<const char *>(&_temp));
 
+    // empty m_golayData
+    for(auto &i : m_golayData)
+    {
+        i = 0;
+    }
+
+    m_golayReady = false;
+
 #ifdef FRAMERATE_CONTROL
-    if(processTimer.durationElapsed().count() > 1.0/FRAMERATE * 1e9 ) // 60HZ
+    if(processTimer.durationElapsed().count() > 1.0/FRAMERATE * 1e9 )
     {
         emit dataProcessed(calPoint, _forward == 2 ? false : true);
         processTimer.restart();
@@ -198,15 +261,16 @@ void correlate(const float * dataArr, quint16 len, std::shared_ptr<std::vector<f
 
     for(size_t i=0; i<len; i++)
     {
+        float _tempV = 0;
         for(size_t j = 0; j<SEQ->size(); j++)
         {
             if(i+j >= len)
                 break;
-            output[i] += dataArr[i+j] * SEQ->at(j);
+            _tempV += dataArr[i+j] * SEQ->at(j);
             sum_counter++;
         }
-        output[i] /= sum_counter;
-        sum_counter = 0;
+        output[i] = _tempV / sum_counter;
+        sum_counter = 1;
     }
 
 }

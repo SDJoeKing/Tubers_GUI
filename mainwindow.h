@@ -142,5 +142,6 @@ signals:
     void dataForLogger(const QByteArray &);
     void stopAcqSig();
     void filterParam(const quint8 & order, const quint8 &fs, const float &fc, const float &fw);
+    void golayCoding(bool, const QString &, const float&, quint8);
 };
 #endif // MAINWINDOW_H

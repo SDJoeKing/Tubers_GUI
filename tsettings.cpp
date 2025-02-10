@@ -27,7 +27,8 @@ TSettings::TSettings(QWidget *parent)
     ui->btnConfirm->setVisible(false);
     ui->radioManual->click();
     ui->radioManual->toggled(true);
-
+    ui->labelPresetGolayB->setVisible(false);
+    ui->comboPresetGolayB->setVisible(false);
 }
 
 TSettings::~TSettings()
@@ -78,7 +79,26 @@ void TSettings::on_btnConfirm_clicked()
         _input += _input;
     }else if(ui->radioPresetGolay->isChecked())
     {
-        auto seqA = ui->comboPresetGolayA->currentText().simplified().replace(" ", "");
+        quint8 _index = ui->comboPresetGolayA->currentIndex();
+        QString seqA;
+        switch(_index)
+        {
+            case 0:
+                seqA = "PP";
+                break;
+            case 1:
+                seqA = "PPNP";
+                break;
+            case 2:
+                seqA = "PPPNPPNP";
+                break;
+            case 3:
+                seqA = "NNPNNNNPNPPPNPNN";
+                break;
+            default:
+                seqA = "PP";
+
+        }
         auto seqB = ui->comboPresetGolayB->currentText().simplified().replace(" ", "");
 
         while(seqA.size() != m_pulseLength / 2)
@@ -308,10 +328,7 @@ void TSettings::manualSeqVisible(bool vis)
 void TSettings::presetGolayVisible(bool vis)
 {
     ui->labelPresetGolayA->setVisible(vis);
-    ui->labelPresetGolayB->setVisible(vis);
     ui->comboPresetGolayA->setVisible(vis);
-    ui->comboPresetGolayB->setVisible(vis);
-
     if(vis == true)
     {
         manualSeqVisible(!vis);

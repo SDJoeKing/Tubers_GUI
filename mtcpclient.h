@@ -21,7 +21,7 @@ public:
     ~mTcpClient();
 
     static const quint16 DATA_SIZE = 16000*2 ;
-    static const quint8 HEADER_SIZE = 8;
+    static const quint8 HEADER_SIZE = 10;
     static const quint16 DATA_SIZE_RECV = DATA_SIZE + HEADER_SIZE;
 
     bool start(const QString &address, const quint16 port);

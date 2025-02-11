@@ -2,8 +2,9 @@
 #include "mainwindow.h"
 
 QElapsedTimer processTimer;
+QElapsedTimer fpsTimer;
 QMutex mu;
-
+int counter = 0;
 
 float lerp(int a, int b, float t);
 void correlate(const float * dataArr, quint16 len, std::shared_ptr<std::vector<float>> SEQ, float *);
@@ -19,6 +20,7 @@ Processor::Processor(QObject *parent)
     filtering = false;
 
     processTimer.start();
+    fpsTimer.start();
 
     m_sequenceA = genPulse(std::make_unique<std::vector<int>>(std::vector<int>{1,1,-1,1,1,1,-1,1,1,1,-1,1,1,1,-1,1}), 10);
 
@@ -124,11 +126,12 @@ void Processor::process(const char *dataptr)
     // get system information from the header data
     quint8 _forward = static_cast<quint8>(serverData.at(4));
 
-    temp1 =(serverData.at(7) << 8) & 0xFF00;
+    temp1 =(serverData.at(8) << 8) & 0xFF00;
 
-    temp2 = (serverData.at(6)) & 0xFF;
+    temp2 = (serverData.at(7)) & 0xFF;
 
     float _temperature =  (static_cast<quint16>(temp2 | temp1));
+    int linkSpeed = (static_cast<quint8>(serverData.at(9)) * 10);
     // qDebug() << "------- " << _temperature / 2 / 125e6 *2293.0 << " ------- ";
     _temperature = ((_temperature/65536.0f)/0.00198421639f ) - 273.15f;
 
@@ -192,7 +195,7 @@ void Processor::process(const char *dataptr)
     MainWindow::_env = 0;
 
     emit dataLogger(reinterpret_cast<const char *>(&_temp));
-
+    counter++;
     // empty m_golayData
     for(auto &i : m_golayData)
     {
@@ -201,16 +204,24 @@ void Processor::process(const char *dataptr)
 
     m_golayReady = false;
 
+    if(fpsTimer.hasExpired(1000))
+    {
+        emit plotRate(counter / (processTimer.elapsed() / 1000.0));
+        fpsTimer.restart();
+    }
+
 #ifdef FRAMERATE_CONTROL
     if(processTimer.durationElapsed().count() > 1.0/FRAMERATE * 1e9 )
     {
         emit dataProcessed(calPoint, _forward == 2 ? false : true);
+
         processTimer.restart();
+        counter = 0;
     }
 #else
     emit dataProcessed(calPoint, _forward == 2 ? false : true);
 #endif
-    emit sendTemperature(_temperature);
+    emit sendTemperatureNLinkSpeed(_temperature, linkSpeed);
 }
 
 void Processor::setVel(const float &vel)
@@ -257,7 +268,7 @@ void correlate(const float * dataArr, quint16 len, std::shared_ptr<std::vector<f
     if(SEQ->size() > len)
         return ;
 
-    quint16 sum_counter = 0;
+    quint16 sum_counter = 1;
 
     for(size_t i=0; i<len; i++)
     {
@@ -269,7 +280,7 @@ void correlate(const float * dataArr, quint16 len, std::shared_ptr<std::vector<f
             _tempV += dataArr[i+j] * SEQ->at(j);
             sum_counter++;
         }
-        output[i] = _tempV / sum_counter;
+        output[i] += _tempV / sum_counter;
         sum_counter = 1;
     }
 

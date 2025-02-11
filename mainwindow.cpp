@@ -24,7 +24,11 @@ MainWindow::MainWindow(QWidget *parent)
     ui->statusBar->addPermanentWidget(m_status);
     QLabel *fpsBar = new QLabel(this);
     fpsBar->setObjectName("fpsBar");
+    QLabel *plotRateBar = new QLabel(this);
+    plotRateBar->setObjectName("plotRateBar");
+
     ui->statusBar->addWidget(fpsBar);
+    ui->statusBar->addWidget(plotRateBar);
 
     // Graph page & Dock widget
     QMainWindow *graphFrame = new QMainWindow();
@@ -89,7 +93,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(this, &MainWindow::velocitySet, m_processor, &Processor::setVel, Qt::QueuedConnection);
     connect(m_processor, &Processor::dataProcessed, this, &MainWindow::updateBScan, Qt::QueuedConnection);
     connect(m_processor, &Processor::dataProcessed, m_Ascan, &TChartViewForm::plot, Qt::QueuedConnection);
-    connect(m_processor, &Processor::sendTemperature, this, &MainWindow::updateTemp, Qt::QueuedConnection);
+    connect(m_processor, &Processor::sendTemperatureNLinkSpeed, this, &MainWindow::updateTempNLinkSpeed, Qt::QueuedConnection);
     connect(this, &MainWindow::golayCoding, m_processor, &Processor::updateGolaySetting, Qt::QueuedConnection);
 
     connect(&processorThread, &QThread::finished, this, &MainWindow::threadFinished);
@@ -362,6 +366,7 @@ void MainWindow::on_btnConnect_clicked(bool checked)
         // connect fps
         connect(m_client, &mTcpClient::fps, this, &MainWindow::do_fps, Qt::QueuedConnection);
         connect(m_client, &mTcpClient::settingReady, m_client, &mTcpClient::startAcquisition);
+        connect(m_processor, &Processor::plotRate, this, &MainWindow::do_plotRate, Qt::QueuedConnection);
         // connect error handling
         connect(m_client, &mTcpClient::errorOccured, this, &MainWindow::do_ConnectLost, Qt::QueuedConnection);
         connect(m_client,  &mTcpClient::badSettings, this, &MainWindow::do_badSettings);
@@ -694,9 +699,10 @@ void MainWindow::setThreshold(double thres)
     m_thres = thres;
 }
 
-void MainWindow::updateTemp(const float temp)
+void MainWindow::updateTempNLinkSpeed(const float &temp, const float &speed)
 {
     ui->radioTemp->setText(QString::asprintf("Temperature: %.1f \u2103", temp));
+    ui->labelSpeed->setText(QString("Ethernet Speed: %1 Mbits/s").arg(speed));
     if(temp > 70.0)
         ui->radioTemp->setChecked(true);
     else
@@ -720,7 +726,16 @@ void MainWindow::do_fps(float fps)
     auto fpsBar = ui->statusBar->findChild<QLabel *>("fpsBar");
     if(fpsBar)
     {
-        fpsBar->setText(QString::asprintf("FPS: %.1f", fps));
+        fpsBar->setText(QString::asprintf("Data Rate: %.1f", fps));
+    }
+}
+
+void MainWindow::do_plotRate(const float &fps)
+{
+    auto plotRateBar = ui->statusBar->findChild<QLabel *>("plotRateBar");
+    if(plotRateBar)
+    {
+        plotRateBar->setText(QString::asprintf("Plot FPS: %.1f", fps));
     }
 }
 
@@ -736,6 +751,9 @@ void MainWindow::threadFinished()
 {
     m_quitEvent.quit();
 }
+
+
+
 
 
 

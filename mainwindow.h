@@ -80,11 +80,12 @@ private slots:
     void updateFs(double);
     // debugging fps
     void do_fps(float);
+    void do_plotRate(const float&);
     void do_ConnectLost();
     // processing
     void threadFinished();
     void setThreshold(double);
-    void updateTemp(const float);
+    void updateTempNLinkSpeed(const float&, const float &);
 
     // badsettings
     void do_badSettings();

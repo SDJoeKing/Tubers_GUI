@@ -29,6 +29,12 @@ TSettings::TSettings(QWidget *parent)
     ui->radioManual->toggled(true);
     ui->labelPresetGolayB->setVisible(false);
     ui->comboPresetGolayB->setVisible(false);
+
+    ui->labelGolayA->setVisible(false);
+    ui->labelGolayB->setVisible(false);
+    ui->lineGolayA->setVisible(false);
+    ui->lineGolayB->setVisible(false);
+    ui->radioManualGolay->setVisible(false);
 }
 
 TSettings::~TSettings()
@@ -93,7 +99,7 @@ void TSettings::on_btnConfirm_clicked()
                 seqA = "PPPNPPNP";
                 break;
             case 3:
-                seqA = "NNPNNNNPNPPPNPNN";
+                seqA = "PPPPPPNNNPPNNPNP"; // N N P N N N N P P N N N P N P P
                 break;
             default:
                 seqA = "PP";
@@ -174,6 +180,16 @@ void TSettings::on_btnConfirm_clicked()
 
     //encoder / bscan setting
     int encoderTrigger = ui->groupBscan->isChecked();
+
+    if(!encoderTrigger && ui->radioManual->isChecked())
+        encoderTrigger = 0;
+    else if(encoderTrigger && ui->radioManual->isChecked())
+        encoderTrigger = 1;
+    else if(!encoderTrigger && ui->radioPresetGolay->isChecked())
+        encoderTrigger = 2;
+    else if(encoderTrigger && ui->radioPresetGolay->isChecked())
+        encoderTrigger = 3;
+
     float thick = ui->spinThick->value();
     float length = ui->spinScanLength->value();
     int step = ui->spinEncoderStep->value();

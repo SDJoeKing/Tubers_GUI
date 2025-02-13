@@ -116,7 +116,7 @@ private:
     int m_order = 4;
     double m_fc = 5;
     double m_fw = 8;
-    int m_fs = 125;
+    float m_fs = 125;
 
     bool use_bscan = 0;
     double m_thres = 0.0;
@@ -142,7 +142,7 @@ signals:
     void acquisitionRun(bool);
     void dataForLogger(const QByteArray &);
     void stopAcqSig();
-    void filterParam(const quint8 & order, const quint8 &fs, const float &fc, const float &fw);
+    void filterParam(const quint8 & order, const float &fs, const float &fc, const float &fw);
     void golayCoding(bool, const QString &, const float&, quint8);
 };
 #endif // MAINWINDOW_H

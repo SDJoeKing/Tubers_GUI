@@ -1,10 +1,13 @@
 #include "tgate.h"
+#include "tchartviewform.h"
 #include <QBrush>
 #include <QGraphicsSceneMouseEvent>
 #include <QGraphicsRectItem>
 #include <QGraphicsScene>
-TGate::TGate(QGraphicsItem *parent) : QGraphicsItemGroup{parent}
+#include <qwidget.h>
+TGate::TGate(QWidget * canvas, QGraphicsItem *parent) : QGraphicsItemGroup{parent}
 {
+    _canvas = canvas;
     QRectF f1(-25, -5, 2, 10);
     QRectF f2(25, -5, 2, 10);
     QRectF f3(-23, -1, 50, 2);
@@ -66,9 +69,12 @@ void TGate::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
         qDebug() << "Scene pos" <<  event->scenePos();
         qDebug() << "Event pos" << event->pos();
         auto itemList = childItems();
-
+        QGraphicsRectItem * leftItem = qgraphicsitem_cast<QGraphicsRectItem *>(itemList.at(1));
+        QGraphicsRectItem * midItem = qgraphicsitem_cast<QGraphicsRectItem *>(itemList.at(0));
+        QGraphicsRectItem * rightItem = qgraphicsitem_cast<QGraphicsRectItem *>(itemList.at(2));
         auto pos = event->pos();
         auto scenePos = event->scenePos();
+
         if(m_moving)
         {
 
@@ -80,23 +86,23 @@ void TGate::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
             if(pos.x()>M_XBOUND)
             {
                 // // lengthen middle one
-                QGraphicsRectItem *midItem = qgraphicsitem_cast<QGraphicsRectItem *>(itemList.at(0));
+
                 QRectF rectCur = midItem->rect();
                 midItem->setRect(rectCur.left(), rectCur.top(), -rectCur.left()+pos.x(), 2);
 
                 // // move right one
-                QGraphicsRectItem *rightItem = qgraphicsitem_cast<QGraphicsRectItem *>(itemList.at(2));
+
                 rightItem->setRect(pos.x(), -5, 2, 10);
 
-            }else if (pos.x()<-M_XBOUND)
+            } else if (pos.x()<-M_XBOUND)
             {
                 // // lengthen middle one
-                QGraphicsRectItem *midItem = qgraphicsitem_cast<QGraphicsRectItem *>(itemList.at(0));
+
                 QRectF rectCur = midItem->rect();
                 midItem->setRect(pos.x(), rectCur.top(), rectCur.right()-pos.x(), 2);
 
                 // // move left one
-                QGraphicsRectItem *leftItem = qgraphicsitem_cast<QGraphicsRectItem *>(itemList.at(1));
+
                 leftItem->setRect(pos.x(), -5, 2, 10);
 
             }
@@ -105,15 +111,31 @@ void TGate::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
                 // itemList.at(0)->moveBy(itemPos.x() - itemList.at(2)->x(), 0);
             }
 
-
-
         }
         else
         {
         // just normal dragging
             qDebug() << m_moving << "Dragging";
-        auto lastPos = event->lastScenePos();
-        this->moveBy(scenePos.x() - lastPos.x(), scenePos.y() - lastPos.y());
+        // limit the scene size so the gate will not go overborder
+
+            auto leftRect = leftItem->mapRectToScene(leftItem->rect());
+            auto rightRect = leftItem->mapRectToScene(rightItem->rect());
+            auto midRect = midItem->mapRectToScene(midItem->rect());
+            auto chartview = qobject_cast<TChartViewForm *>(_canvas);
+
+            if(leftRect.x() <= chartview->chartRect().left())
+                this->moveBy(1 - leftRect.x(), 0);
+            if(rightRect.x() >= chartview->chartRect().right())
+                this->moveBy( chartview->chartRect().right() - rightRect.x(), 0);
+            if(midRect.y() >= chartview->chartRect().bottom())
+                this->moveBy(0,  chartview->chartRect().bottom() - midRect.y());
+            if(midRect.y() <= chartview->chartRect().top())
+            {
+                this->moveBy(0,   + 1);
+                return;
+            }
+            auto lastPos = event->lastScenePos();
+            this->moveBy(scenePos.x() - lastPos.x(), scenePos.y() - lastPos.y());
         }
     }
     // QGraphicsItemGroup::mouseMoveEvent(event);
@@ -141,6 +163,7 @@ bool TGate::itemSelected(QGraphicsItem *item, QPointF point)
     return((itemRect.x() >= rectf.left() )&&  (itemRect.x() <= rectf.right())
             && (itemRect.y() >= rectf.top() )&&  (itemRect.y() <= rectf.bottom()));
 }
+
 
 
 QRectF TGate::boundingRect() const

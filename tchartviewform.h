@@ -54,6 +54,7 @@ public slots:
     void startThickCal(bool);
     void updateFs(const float);
     void reset();
+    QRectF chartRect() const;
 private slots:
 
     void backButtonEnabled(bool);
@@ -125,6 +126,10 @@ signals:
     void setRectifyCheck();
     void calculatedThickness(double);
     void sendThreshold(double);
+
+    // QWidget interface
+protected:
+    virtual void resizeEvent(QResizeEvent *event) override;
 };
 
 #endif // TCHARTVIEWFORM_H

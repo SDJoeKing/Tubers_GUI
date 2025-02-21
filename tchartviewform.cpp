@@ -71,8 +71,8 @@ TChartViewForm::TChartViewForm(QWidget *parent)
 
     m_chartView->setViewportUpdateMode(QGraphicsView::FullViewportUpdate);
     // gate
-    m_gate1 = new TGate();
-    m_gate2 = new TGate();
+    m_gate1 = new TGate(this);
+    m_gate2 = new TGate(this);
     m_gate1->setZValue(100);
     m_gate2->setZValue(100);
     m_gate1->setVisible(false);
@@ -465,6 +465,11 @@ void TChartViewForm::reset()
     ui->btnReset->click();
 }
 
+QRectF TChartViewForm::chartRect() const
+{
+    return this->m_chart->rect();
+}
+
 
 void TChartViewForm::on_btnReset_clicked(bool checked)
 {
@@ -676,6 +681,20 @@ void TChartViewForm::setYUnit(const QString &newYUnit)
         ui->labelUnit->setText(m_yUnit.first);
     else
         ui->labelUnit->setText(m_xUnit.first);
+}
+
+void TChartViewForm::resizeEvent(QResizeEvent *event)
+{
+
+
+
+    qreal heightRatio =  event->size().toSizeF().height() / event->oldSize().toSizeF().height();
+    qreal widthRatio =  event->size().toSizeF().width() / event->oldSize().toSizeF().width();
+    qDebug() << heightRatio << widthRatio;
+    m_gate1->moveBy( (widthRatio - 1) * m_gate1->scenePos().x(), (heightRatio - 1)* m_gate1->scenePos().y() );
+    m_gate2->moveBy( (widthRatio - 1) * m_gate2->scenePos().x(), (heightRatio - 1)* m_gate2->scenePos().y() );
+
+    QWidget::resizeEvent(event);
 }
 
 void TChartViewForm::setXUnit(const QString &newXUnit)

@@ -11,7 +11,7 @@
 #include <QFile>
 
 #include "mtcpserver.h"
-
+#include "mtcpclient.h"
 
 class testServer : public QObject
 {
@@ -25,7 +25,7 @@ private:
     QTcpSocket *m_socket;
     QEventLoop *m_loop;
     QByteArray m_arr;
-    uint8_t _data[32008]{0};
+    uint8_t _data[mTcpClient::DATA_SIZE_RECV]{0};
     bool data_release = false;
     QTimer *m_timer;
     QFile m_file;

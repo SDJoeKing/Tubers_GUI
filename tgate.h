@@ -10,6 +10,8 @@ public:
     explicit TGate(QWidget * canvas, QGraphicsItem *parent = nullptr);
     QRectF posRange();
     bool groupSelected(QPointF point);
+    QPointF ascanValue() const;
+    void updateAscanValue();
     // QGraphicsItem interface
 protected:
     virtual void mousePressEvent(QGraphicsSceneMouseEvent *event) override;
@@ -20,6 +22,8 @@ private:
     bool m_moving=false;
     const float M_XBOUND=25;
     QWidget *_canvas;
+    QPointF m_ascanValue;
+
     // QGraphicsItem interface
 public:
     // virtual QRectF boundingRect() const override;

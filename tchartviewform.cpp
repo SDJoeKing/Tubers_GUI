@@ -190,6 +190,9 @@ void TChartViewForm::changeXAxisType(const TChartViewForm::x_AXISTYPE &type)
         ui->comboAxis->setCurrentIndex(1);
         ui->comboAxis->setCurrentIndex(0);
     }
+
+    m_gate1->updateAscanValue();
+    m_gate2->updateAscanValue();
 }
 
 void TChartViewForm::changeYAxisType(const TChartViewForm::y_AXISTYPE &type)
@@ -253,6 +256,10 @@ void TChartViewForm::toggleGates(bool arg)
     QPointF gate2ScenePos = m_gate2->scenePos();
     m_gate1->moveBy(sceneRect.width()/2 - gate1ScenePos.x() - 30, sceneRect.height()/2 - gate1ScenePos.y());
     m_gate2->moveBy(sceneRect.width()/2- gate2ScenePos.x() + 30, sceneRect.height()/2- gate2ScenePos.y());
+
+    m_gate1->updateAscanValue();
+    m_gate2->updateAscanValue();
+
 }
 
 bool TChartViewForm::eventFilter(QObject *watched, QEvent *event)
@@ -468,6 +475,11 @@ void TChartViewForm::reset()
 QRectF TChartViewForm::chartRect() const
 {
     return this->m_chart->rect();
+}
+
+QPointF TChartViewForm::ascanValue(const QPointF & pos) const
+{
+    return m_chart->mapToValue(pos, m_series);
 }
 
 
@@ -687,12 +699,20 @@ void TChartViewForm::resizeEvent(QResizeEvent *event)
 {
 
 
+    auto newPosGate1 = m_chart->mapToPosition(m_gate1->ascanValue(), m_series);
+    auto newPosGate2 = m_chart->mapToPosition(m_gate2->ascanValue(), m_series);
 
-    qreal heightRatio =  event->size().toSizeF().height() / event->oldSize().toSizeF().height();
-    qreal widthRatio =  event->size().toSizeF().width() / event->oldSize().toSizeF().width();
-    qDebug() << heightRatio << widthRatio;
-    m_gate1->moveBy( (widthRatio - 1) * m_gate1->scenePos().x(), (heightRatio - 1)* m_gate1->scenePos().y() );
-    m_gate2->moveBy( (widthRatio - 1) * m_gate2->scenePos().x(), (heightRatio - 1)* m_gate2->scenePos().y() );
+    m_gate1->moveBy(newPosGate1.x() - m_gate1->scenePos().x(), newPosGate1.y() - m_gate1->scenePos().y());
+    m_gate2->moveBy(newPosGate2.x() - m_gate2->scenePos().x(), newPosGate2.y() - m_gate2->scenePos().y());
+
+    m_gate1->updateAscanValue();
+    m_gate2->updateAscanValue();
+
+    // qreal heightRatio =  event->size().toSizeF().height() / event->oldSize().toSizeF().height();
+    // qreal widthRatio =  event->size().toSizeF().width() / event->oldSize().toSizeF().width();
+    // qDebug() << heightRatio << widthRatio;
+    // m_gate1->moveBy( (widthRatio - 1) * m_gate1->scenePos().x(), (heightRatio - 1)* m_gate1->scenePos().y() );
+    // m_gate2->moveBy( (widthRatio - 1) * m_gate2->scenePos().x(), (heightRatio - 1)* m_gate2->scenePos().y() );
 
     QWidget::resizeEvent(event);
 }

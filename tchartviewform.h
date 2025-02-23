@@ -55,6 +55,7 @@ public slots:
     void updateFs(const float);
     void reset();
     QRectF chartRect() const;
+    QPointF ascanValue(const QPointF &) const;
 private slots:
 
     void backButtonEnabled(bool);

@@ -32,6 +32,8 @@ TGate::TGate(QWidget * canvas, QGraphicsItem *parent) : QGraphicsItemGroup{paren
     for(auto const &i:l)
         qDebug() << i;
 
+    auto mtchartviewForm = qobject_cast<TChartViewForm *>(_canvas);
+    m_ascanValue = mtchartviewForm->ascanValue(itemMid->scenePos());
 
 }
 bool TGate::groupSelected(QPointF point)
@@ -40,6 +42,19 @@ bool TGate::groupSelected(QPointF point)
 
     return((point.x() >= rectf.left() )&&  (point.x() <= rectf.right())
             && (point.y() >= rectf.top() )&&  (point.y() <= rectf.bottom()));
+}
+
+QPointF TGate::ascanValue() const
+{
+    return m_ascanValue;
+}
+
+void TGate::updateAscanValue()
+{
+    auto itemList = childItems();
+    QGraphicsRectItem * midItem = qgraphicsitem_cast<QGraphicsRectItem *>(itemList.at(0));
+    auto mtchartviewForm = qobject_cast<TChartViewForm *>(_canvas);
+    m_ascanValue = mtchartviewForm->ascanValue(midItem->scenePos());
 }
 QRectF TGate::posRange()
 {
@@ -108,7 +123,6 @@ void TGate::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
             }
             else{
                 // do nothing
-                // itemList.at(0)->moveBy(itemPos.x() - itemList.at(2)->x(), 0);
             }
 
         }
@@ -129,13 +143,20 @@ void TGate::mouseMoveEvent(QGraphicsSceneMouseEvent *event)
                 this->moveBy( chartview->chartRect().right() - rightRect.x(), 0);
             if(midRect.y() >= chartview->chartRect().bottom())
                 this->moveBy(0,  chartview->chartRect().bottom() - midRect.y());
+
+            updateAscanValue();
+
+
             if(midRect.y() <= chartview->chartRect().top())
             {
                 this->moveBy(0,   + 1);
+                updateAscanValue();
                 return;
             }
             auto lastPos = event->lastScenePos();
             this->moveBy(scenePos.x() - lastPos.x(), scenePos.y() - lastPos.y());
+            updateAscanValue();
+
         }
     }
     // QGraphicsItemGroup::mouseMoveEvent(event);

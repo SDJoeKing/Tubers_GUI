@@ -20,7 +20,7 @@ TChartViewForm::TChartViewForm(QWidget *parent)
     m_series = new QLineSeries();
     m_ruler = new QLineSeries();
 
-    // m_series->setUseOpenGL(true);
+    m_series->setUseOpenGL(true);
     // m_ruler->setUseOpenGL(true);
 
     // config m_ruler

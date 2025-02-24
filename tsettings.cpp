@@ -82,6 +82,10 @@ void TSettings::on_btnConfirm_clicked()
     if(ui->radioManual->isChecked())
     {
         _input = ui->pulseSequence->text();
+        while(_input.size() != m_pulseLength / 2)
+        {
+            _input += 'C';
+        }
         _input += _input;
     }else if(ui->radioPresetGolay->isChecked())
     {
@@ -374,5 +378,23 @@ void TSettings::manualGolayVisible(bool vis)
 void TSettings::on_comboPresetGolayA_currentIndexChanged(int index)
 {
     ui->comboPresetGolayB->setCurrentIndex(index);
+}
+
+
+void TSettings::on_pulseSequence_textChanged(const QString &arg1)
+{
+
+    ui->pulseSequence->setText(arg1.simplified().replace(" ", ""));
+    qDebug() << ui->pulseSequence->text();
+    ui->pulseSequence->setCursorPosition(ui->pulseSequence->text().size());
+}
+
+
+
+
+void TSettings::on_pulseSequence_cursorPositionChanged(int arg1, int arg2)
+{
+    if(arg2 == m_pulseLength / 2)
+        ui->pulseSequence->setCursorPosition(arg2-1);
 }
 

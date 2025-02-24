@@ -75,6 +75,10 @@ private slots:
 
     void on_comboPresetGolayA_currentIndexChanged(int index);
 
+    void on_pulseSequence_textChanged(const QString &arg1);
+
+    void on_pulseSequence_cursorPositionChanged(int arg1, int arg2);
+
 signals:
     void settingConfirm(const QString &settings);
     void bScanSetting(bool, const QList<double> &settings);

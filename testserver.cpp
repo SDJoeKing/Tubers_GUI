@@ -72,7 +72,7 @@ void testServer::run()
     qDebug() << info.addresses();
 
     // m_server->listen(QHostAddress("127.0.1.1"), 5);
-    m_server->listen(QHostAddress::Any, 1234);
+    m_server->listen(QHostAddress::AnyIPv4, 5000);
 
     // signal connection
     connect(m_timer, &QTimer::timeout, this, &testServer::do_sendData);
@@ -139,7 +139,7 @@ void testServer::do_readyRead()
 
     }else if(msg.contains("data acknowledged"))
     {
-        m_socket->write("data acknowledged");
+        // m_socket->write("data acknowledged");
         data_release = true;
     }
 

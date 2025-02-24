@@ -375,7 +375,7 @@ void MainWindow::on_btnConnect_clicked(bool checked)
         quint16 port = ui->port->text().toInt();
 
 #ifdef TEST_SERVER
-        m_client->setHostPort("127.0.1.1", 1234);
+        m_client->setHostPort("127.0.0.1", 5000);
 
 #else
         m_client->setHostPort(address, port);

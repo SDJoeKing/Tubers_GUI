@@ -194,6 +194,8 @@ void MainWindow::resetUI()
 
     m_Ascan->clear();
     m_Ascan->reset();
+
+    ui->labelSpeed->setText("Ethernet Speed:");
 }
 
 void MainWindow::toggleOff(QCheckBox *widget)

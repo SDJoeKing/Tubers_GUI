@@ -20,8 +20,8 @@ TChartViewForm::TChartViewForm(QWidget *parent)
     m_series = new QLineSeries();
     m_ruler = new QLineSeries();
 
-    m_series->setUseOpenGL(true);
-    m_ruler->setUseOpenGL(true);
+    // m_series->setUseOpenGL(true);
+    // m_ruler->setUseOpenGL(true);
 
     // config m_ruler
     QBrush brush(Qt::red, Qt::SolidPattern);
@@ -300,6 +300,7 @@ bool TChartViewForm::eventFilter(QObject *watched, QEvent *event)
                 if(qAbs(value.y() - _Yvalue)<0.05*(m_Y->max() - m_Y->min()))
                 {
                     m_series->selectPoint(index);
+                    // m_series->selected
                     // qDebug() << "index select " << index;
                     m_series->setSelectedColor(Qt::red);
                     value.setY(m_series->at(index).y());

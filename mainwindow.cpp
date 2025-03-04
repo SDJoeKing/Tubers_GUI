@@ -50,6 +50,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // configure B-scan
     // m_Bscan->addGraph()
+    m_Bscan->yAxis->setRangeReversed(true);
     QCPColorMap *_colorMap = new QCPColorMap(m_Bscan->xAxis, m_Bscan->yAxis);
 
     m_Bscan->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -524,7 +525,7 @@ void MainWindow::on_ckRectify_clicked(bool checked)
 
 int findFrontWall(const QList<QPointF> &data)
 {
-    int _max = 3000; // in water less than 2mm
+    int _max = 0; // in water less than 2mm
     double value = 0;
     for(int i = _max; i< mTcpClient::DATA_SIZE/2; i++)
     {
@@ -547,12 +548,11 @@ void MainWindow::updateBScan(const QList<QPointF> &data, bool forward)
     auto _colorMap = static_cast<QCPColorMap *>(m_Bscan->plottable());
     int valueSize = _colorMap->data()->valueSize();
     // functions to find the first front wall peaks
-    int _start = findFrontWall(data)-50;
-
+    // int _start = findFrontWall(data);
+    int _start = 0;
     if((valueSize + _start) > data.size())
         valueSize = data.size() - _start;
 
-    forward = true;
     if(forward)
     {
         m_currentLine >= _colorMap->data()->keySize() ? m_currentLine=0: m_currentLine++;
@@ -561,14 +561,14 @@ void MainWindow::updateBScan(const QList<QPointF> &data, bool forward)
         for(int i=_start; i<valueSize + _start; i++)
         {
             auto value = data[i].y() > m_thres ? data[i].y() : 0;
-            auto plotValue = value > 0 ? value / data[_start+50].y() : 0;
+            auto plotValue = value > 0 ? value / data[_start].y() : 0;
             _colorMap->data()->setCell(m_currentLine, i - _start, plotValue);
         }
     }else
     {
         //  remove current front line
 
-        m_currentLine <= 0 ? m_currentLine=0 : m_currentLine-=1;
+        m_currentLine <= 0 ? m_currentLine=0 : m_currentLine--;
         for(int i=_start; i<valueSize + _start; i++)
         {
             auto value = data[i].y() > m_thres ? data[i].y() : 0;
@@ -677,16 +677,16 @@ void MainWindow::do_bScanSetting(bool arg, const QList<double> &settings)
         {
             float thick = settings[0];
             float length = settings[1];
-            int step = settings[2];
+            // int step = settings[2];
             float encoder_res = settings[3];
             // x/y axis array size
 
-            int nx = length / ((step+1)* encoder_res)+1;
-            int ny = 4 * thick / 1000.0 / m_vel * 125e6;
+            int nx = length / (encoder_res)+1;
+            int ny = 2 * thick / 1000.0 / m_vel * 125e6;
 
 
             _map->data()->setSize(nx, ny); // we want the color map to have nx * ny data points
-            _map->data()->setRange(QCPRange(0, length), QCPRange(0, 2 * thick));
+            _map->data()->setRange(QCPRange(0, length), QCPRange(0, thick));
             _map->setGradient(QCPColorGradient::gpJet);
 
             _map->rescaleDataRange();

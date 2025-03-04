@@ -124,8 +124,8 @@ void Processor::process(const char *dataptr)
     // take into account of header data
     int j= mTcpClient::HEADER_SIZE;
     // get system information from the header data
-    quint8 _forward = static_cast<quint8>(serverData.at(4));
-
+    quint8 _forward = static_cast<quint8>(serverData.at(5));
+    qDebug() << _forward;
     temp1 =(serverData.at(8) << 8) & 0xFF00;
 
     temp2 = (serverData.at(7)) & 0xFF;

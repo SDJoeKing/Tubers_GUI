@@ -102,7 +102,8 @@ TChartViewForm::TChartViewForm(QWidget *parent)
 
     // connect
     connect(m_X, &QValueAxis::rangeChanged, ui->btnBack, &QPushButton::setEnabled);
-    // connect(m_X, &QValueAxis::rangeChanged, this, &TChartViewForm::backButtonEnabled);
+    connect(m_X, &QValueAxis::rangeChanged, this, &TChartViewForm::updateGatePosition);
+    connect(m_Y, &QValueAxis::rangeChanged, this, &TChartViewForm::updateGatePosition);
     connect(&m_timer, &QTimer::timeout, this, &TChartViewForm::doThicknessCal);
 
 
@@ -699,22 +700,8 @@ void TChartViewForm::setYUnit(const QString &newYUnit)
 void TChartViewForm::resizeEvent(QResizeEvent *event)
 {
 
-
-    auto newPosGate1 = m_chart->mapToPosition(m_gate1->ascanValue(), m_series);
-    auto newPosGate2 = m_chart->mapToPosition(m_gate2->ascanValue(), m_series);
-
-    m_gate1->moveBy(newPosGate1.x() - m_gate1->scenePos().x(), newPosGate1.y() - m_gate1->scenePos().y());
-    m_gate2->moveBy(newPosGate2.x() - m_gate2->scenePos().x(), newPosGate2.y() - m_gate2->scenePos().y());
-
-    m_gate1->updateAscanValue();
-    m_gate2->updateAscanValue();
-
-    // qreal heightRatio =  event->size().toSizeF().height() / event->oldSize().toSizeF().height();
-    // qreal widthRatio =  event->size().toSizeF().width() / event->oldSize().toSizeF().width();
-    // qDebug() << heightRatio << widthRatio;
-    // m_gate1->moveBy( (widthRatio - 1) * m_gate1->scenePos().x(), (heightRatio - 1)* m_gate1->scenePos().y() );
-    // m_gate2->moveBy( (widthRatio - 1) * m_gate2->scenePos().x(), (heightRatio - 1)* m_gate2->scenePos().y() );
-
+    updateGatePosition();
+    updateLabelPosition();
     QWidget::resizeEvent(event);
 }
 
@@ -760,12 +747,6 @@ void TChartViewForm::setYRange(const float &min, const float &max)
         m_Y->setRange(min, max);
 
 }
-
-void TChartViewForm::updateSteps()
-{
-
-}
-
 
 void TChartViewForm::on_btnIncr_clicked()
 {
@@ -818,6 +799,25 @@ void TChartViewForm::on_btnDecr_clicked()
     }
 
     updateLabelPosition();
+}
+
+void TChartViewForm::updateGatePosition()
+//update gates and label positions if exist
+{
+    // if gates
+    if(m_gate1->isVisible() || m_gate2->isVisible())
+    {
+        auto newPosGate1 = m_chart->mapToPosition(m_gate1->ascanValue(), m_series);
+        auto newPosGate2 = m_chart->mapToPosition(m_gate2->ascanValue(), m_series);
+
+        m_gate1->moveBy(newPosGate1.x() - m_gate1->scenePos().x(), newPosGate1.y() - m_gate1->scenePos().y());
+        m_gate2->moveBy(newPosGate2.x() - m_gate2->scenePos().x(), newPosGate2.y() - m_gate2->scenePos().y());
+
+        m_gate1->updateAscanValue();
+        m_gate2->updateAscanValue();
+
+    }
+
 }
 
 

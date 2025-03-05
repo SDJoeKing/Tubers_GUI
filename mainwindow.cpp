@@ -4,7 +4,7 @@
 double MainWindow::_env=0;
 double MainWindow::m_ga = 0;
 double MainWindow::m_gr = 0;
-
+static int bscanUpdateOnce = 0;
 QElapsedTimer timer;
 
 MainWindow::MainWindow(QWidget *parent)
@@ -523,11 +523,13 @@ void MainWindow::on_ckRectify_clicked(bool checked)
 
 }
 
-int findFrontWall(const QList<QPointF> &data)
+int findFrontWall(const QList<QPointF> &data, int start, int end)
 {
-    int _max = 0; // in water less than 2mm
+    int _max = start; // in water less than 2mm
+    int _end = mTcpClient::DATA_SIZE/2 < end ? mTcpClient::DATA_SIZE/2 : end;
+
     double value = 0;
-    for(int i = _max; i< mTcpClient::DATA_SIZE/2; i++)
+    for(int i = _max; i<_end; i++)
     {
         auto _v = qAbs(data[i].y());
         if(_v >= value)
@@ -545,11 +547,24 @@ void MainWindow::updateBScan(const QList<QPointF> &data, bool forward)
     if(!use_bscan)
         return;
 
+
+
     auto _colorMap = static_cast<QCPColorMap *>(m_Bscan->plottable());
     int valueSize = _colorMap->data()->valueSize();
     // functions to find the first front wall peaks
-    // int _start = findFrontWall(data);
+
     int _start = 0;
+
+    if(m_Ascan->gatesToggled())
+    {
+        _start = m_Ascan->gatePeak(); // gate 1 peak
+        _start < 0 ? _start = 0 : _start;
+
+    }else
+    {
+        _start = findFrontWall(data, _start, _start + 1000);
+    }
+
     if((valueSize + _start) > data.size())
         valueSize = data.size() - _start;
 
@@ -561,8 +576,14 @@ void MainWindow::updateBScan(const QList<QPointF> &data, bool forward)
         for(int i=_start; i<valueSize + _start; i++)
         {
             auto value = data[i].y() > m_thres ? data[i].y() : 0;
-            auto plotValue = value > 0 ? value / data[_start].y() : 0;
+            auto plotValue = value > 0 ?  value / data[_start].y() : 0;
+
+            // conditions to mitigate extraneous point
+            if(plotValue > 1.1)
+                plotValue = 1;
+
             _colorMap->data()->setCell(m_currentLine, i - _start, plotValue);
+
         }
     }else
     {
@@ -572,12 +593,22 @@ void MainWindow::updateBScan(const QList<QPointF> &data, bool forward)
         for(int i=_start; i<valueSize + _start; i++)
         {
             auto value = data[i].y() > m_thres ? data[i].y() : 0;
-            auto plotValue = value > 0 ? value / data[_start+50].y() : 0;
+            auto plotValue = value > 0 ? value / data[_start].y() : 0;
+
+            // conditions to mitigate extraneous point
+            if(plotValue > 1.1)
+                plotValue = 1;
+
             _colorMap->data()->setCell(m_currentLine+1, i - _start, 0);
             _colorMap->data()->setCell(m_currentLine, i - _start, plotValue);
         }
     }
-    _colorMap->rescaleDataRange();
+
+    // if(bscanUpdateOnce == 0)
+    {
+        _colorMap->rescaleDataRange();
+        bscanUpdateOnce++;
+    }
     _colorMap->rescaleAxes();
     _colorMap->setGradient(QCPColorGradient::gpJet);
     m_Bscan->replot(QCustomPlot::rpQueuedRefresh);
@@ -670,7 +701,7 @@ void MainWindow::do_bScanSetting(bool arg, const QList<double> &settings)
 
         // clear graph for replot;
         _map->data()->fill(0);
-
+        bscanUpdateOnce = 0;
         // reset front head to -1
         m_currentLine = -1;
         if(_map)
@@ -688,7 +719,6 @@ void MainWindow::do_bScanSetting(bool arg, const QList<double> &settings)
             _map->data()->setSize(nx, ny); // we want the color map to have nx * ny data points
             _map->data()->setRange(QCPRange(0, length), QCPRange(0, thick));
             _map->setGradient(QCPColorGradient::gpJet);
-
             _map->rescaleDataRange();
             _map->rescaleAxes();
             m_Bscan->replot(QCustomPlot::rpImmediateRefresh);

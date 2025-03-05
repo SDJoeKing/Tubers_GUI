@@ -484,6 +484,17 @@ QPointF TChartViewForm::ascanValue(const QPointF & pos) const
     return m_chart->mapToValue(pos, m_series);
 }
 
+bool TChartViewForm::gatesToggled()
+// BOTH GATES ARE VISIBLE
+{
+    return (m_gate1->isVisible() && m_gate2->isVisible());
+}
+
+int TChartViewForm::gatePeak()
+{
+    return maxInd(m_gate1->posRange(), true);
+}
+
 
 void TChartViewForm::on_btnReset_clicked(bool checked)
 {

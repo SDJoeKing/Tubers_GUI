@@ -10,7 +10,9 @@ static void dataGen(char * byteArr, uint8_t * arr)
     quint16 j = mTcpClient::HEADER_SIZE;
     for(size_t i=0; i<mTcpClient::DATA_SIZE/2;i++)
     {
-        qint16 _temp = static_cast<qint16>( (_df[i] + QRandomGenerator::global()->bounded(-10, 10)) / 1000 / 3.18 * 32768 );
+        bool _t = (i < 1000 && QRandomGenerator::global()->bounded(0, 10000) > 9998) ? 1 : 0;
+
+        qint16 _temp = static_cast<qint16>( _t ?  32768*1.8 : _df[i] / 1000 / 3.18 * 32768 );
         arr[j] = (_temp) & 0x00FF;
         arr[j+1] = (_temp >>8) &0x00FF;
         j+=2;

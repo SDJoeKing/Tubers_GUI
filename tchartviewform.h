@@ -56,6 +56,8 @@ public slots:
     void reset();
     QRectF chartRect() const;
     QPointF ascanValue(const QPointF &) const;
+    bool gatesToggled();
+    int gatePeak();
 private slots:
 
     void backButtonEnabled(bool);

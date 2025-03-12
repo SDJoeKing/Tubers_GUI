@@ -35,6 +35,35 @@ TSettings::TSettings(QWidget *parent)
     ui->lineGolayA->setVisible(false);
     ui->lineGolayB->setVisible(false);
     ui->radioManualGolay->setVisible(false);
+
+    // connections:
+    connect(ui->powerOutput, &QComboBox::currentIndexChanged, this, &TSettings::sendSetting);
+    connect(ui->comboLength, &QComboBox::currentIndexChanged, this, &TSettings::sendSetting);
+    connect(ui->comboPresetGolayA, &QComboBox::currentIndexChanged, this, &TSettings::sendSetting);
+
+    connect(ui->spinTx, &QSpinBox::editingFinished, this, &TSettings::sendSetting);
+    connect(ui->spinRx, &QSpinBox::editingFinished, this, &TSettings::sendSetting);
+    connect(ui->spinPulseDelay, &QSpinBox::editingFinished, this, &TSettings::sendSetting);
+    connect(ui->spinFrequency, &QSpinBox::editingFinished, this, &TSettings::sendSetting);
+    connect(ui->prf, &QSpinBox::editingFinished, this, &TSettings::sendSetting);
+    connect(ui->spinGain, &QSpinBox::editingFinished, this, &TSettings::sendSetting);
+    connect(ui->spinAvg, &QSpinBox::editingFinished, this, &TSettings::sendSetting);
+    connect(ui->spinVel, &QSpinBox::editingFinished, this, &TSettings::sendSetting);
+    connect(ui->spinOrder, &QSpinBox::editingFinished, this, &TSettings::sendSetting);
+    connect(ui->spinHighCut, &QSpinBox::editingFinished, this, &TSettings::sendSetting);
+    connect(ui->spinLowCut, &QSpinBox::editingFinished, this, &TSettings::sendSetting);
+    connect(ui->spinThick, &QSpinBox::editingFinished, this, &TSettings::sendSetting);
+    connect(ui->spinScanLength, &QSpinBox::editingFinished, this, &TSettings::sendSetting);
+    connect(ui->spinEncoderRes, &QSpinBox::editingFinished, this, &TSettings::sendSetting);
+    connect(ui->spinEncoderStep, &QSpinBox::editingFinished, this, &TSettings::sendSetting);
+    connect(ui->motorAngle, &QSpinBox::editingFinished, this, &TSettings::sendSetting);
+    connect(ui->motorSpeed, &QSpinBox::editingFinished, this, &TSettings::sendSetting);
+    connect(ui->pulseSequence, &QLineEdit::editingFinished, this, &TSettings::sendSetting);
+
+    connect(ui->radioManual, &QRadioButton::clicked, this, &TSettings::do_settingChanged);
+    connect(ui->radioPresetGolay,&QRadioButton::clicked, this, &TSettings::do_settingChanged);
+
+
 }
 
 TSettings::~TSettings()
@@ -396,5 +425,18 @@ void TSettings::on_pulseSequence_cursorPositionChanged(int arg1, int arg2)
 {
     if(arg2 == m_pulseLength / 2)
         ui->pulseSequence->setCursorPosition(arg2-1);
+}
+
+void TSettings::do_settingChanged(bool ok)
+{
+    if(ok)
+        sendSetting();
+}
+
+
+
+void TSettings::on_groupBscan_clicked()
+{
+    sendSetting();
 }
 

@@ -56,6 +56,7 @@ private:
     QString m_address;
     quint16 m_port;
     bool shutdownLock;
+    bool acquisitionRunning;
 private slots:
     void readMessage(); //  signal readyRead, slot readMessage
     void errorOccurred(QAbstractSocket::SocketError socketError);

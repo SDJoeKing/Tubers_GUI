@@ -118,7 +118,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(this, &MainWindow::acquisitionRun, m_Ascan, &TChartViewForm::toggleSave);
     connect(ui->ckGates, &QCheckBox::checkStateChanged, m_Ascan, &TChartViewForm::startThickCal);
     connect(ui->ckGates, &QCheckBox::checkStateChanged, ui->btnCal, &QPushButton::setEnabled);
-
+    connect(m_Ascan, &TChartViewForm::scaleSet, m_processor, &Processor::updateScale);
     connect(m_Ascan, &TChartViewForm::setRectifyCheck, this, &MainWindow::setRectifyChecked);
     connect(m_Ascan, &TChartViewForm::calculatedThickness, ui->spinDepth, &QDoubleSpinBox::setValue);
     connect(m_Bscan, &QCustomPlot::customContextMenuRequested, this, &MainWindow::bScanCustomContext);
@@ -429,7 +429,7 @@ void MainWindow::runAcquisition()
 {
     emit acquisitionRun(true);
     acquisitionRunning = true;
-    m_settings->disableScroll(true);
+    // m_settings->disableScroll(true);
     ui->btnRun->setChecked(true);
     ui->btnRun->setText("Stop");
 
@@ -464,7 +464,7 @@ void MainWindow::on_btnRun_clicked(bool checked)
         {
             if(encoderTriggerMode)
             {
-                QTimer::singleShot(0, m_client, [&](){m_client->writeData("stop");});
+                QTimer::singleShot(10, m_client, [&](){m_client->writeData("stop");});
                 return;
             }
             emit stopAcqSig();
@@ -562,11 +562,13 @@ void MainWindow::updateBScan(const QList<QPointF> &data, bool forward)
 
     }else
     {
-        _start = findFrontWall(data, _start, _start + 1000);
+        _start = findFrontWall(data, _start, _start + 200);
     }
 
     if((valueSize + _start) > data.size())
         valueSize = data.size() - _start;
+
+    // _start = 0;
 
     if(forward)
     {
@@ -579,7 +581,7 @@ void MainWindow::updateBScan(const QList<QPointF> &data, bool forward)
             auto plotValue = value > 0 ?  value / data[_start].y() : 0;
 
             // conditions to mitigate extraneous point
-            if(plotValue > 1.1)
+            if(plotValue > 1.0)
                 plotValue = 1;
 
             _colorMap->data()->setCell(m_currentLine, i - _start, plotValue);
@@ -596,7 +598,7 @@ void MainWindow::updateBScan(const QList<QPointF> &data, bool forward)
             auto plotValue = value > 0 ? value / data[_start].y() : 0;
 
             // conditions to mitigate extraneous point
-            if(plotValue > 1.1)
+            if(plotValue > 1.0)
                 plotValue = 1;
 
             _colorMap->data()->setCell(m_currentLine+1, i - _start, 0);

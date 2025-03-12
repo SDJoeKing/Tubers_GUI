@@ -58,7 +58,7 @@ TChartViewForm::TChartViewForm(QWidget *parent)
     // label and axis format
     m_series->setName("A-scan");
     m_X->setTitleText(lengthAxisTitle);
-    m_Y->setTitleText("Amplitude [mV]");
+    m_Y->setTitleText("Amplitude [FSH %]");
     m_X->setLabelFormat("%.3f");
     m_X->setMinorTickCount(2);
     m_X->applyNiceNumbers();
@@ -337,36 +337,41 @@ bool TChartViewForm::eventFilter(QObject *watched, QEvent *event)
         QWheelEvent *wheel = static_cast<QWheelEvent *>(event);
         if(wheel->angleDelta().y()>0)
         {
-            qDebug() << wheel->angleDelta().y();
-            if(_min < 0)
-                _min*=1.1;
-            else
-                _min /= 1.1;
+            // // qDebug() << wheel->angleDelta().y();
+            // if(_min < 0)
+            //     _min*=1.1;
+            // else
+            //     _min /= 1.1;
 
-            if(_max < 0)
-                _max/=1.1;
-            else
-                _max *=1.1;
+            // if(_max < 0)
+            //     _max/=1.1;
+            // else
+            //     _max *=1.1;
+            m_scale += 0.1;
         }
         else
         {
-            qDebug() << wheel->angleDelta().y();
-            if(_min < 0)
-                _min/=1.1;
-            else
-                _min *= 1.1;
+            // // qDebug() << wheel->angleDelta().y();
+            // if(_min < 0)
+            //     _min/=1.1;
+            // else
+            //     _min *= 1.1;
 
-            if(_max < 0)
-                _max*=1.1;
-            else
-                _max /=1.1;
+            // if(_max < 0)
+            //     _max*=1.1;
+            // else
+            //     _max /=1.1;
+            m_scale -= 0.1;
+            m_scale <0 ? m_scale = 0.01 : m_scale;
         }
-        if(_yAxisType == y_AXISTYPE::RECTIFY && _min<0)
-            _min = 0;
-        auto vpp = _max - _min;
-        if(vpp < yRangeMax*1.1 && vpp > yRangeMin*1.1)
-            m_Y->setRange(_min, _max);
+        // if(_yAxisType == y_AXISTYPE::RECTIFY && _min<0)
+        //     _min = 0;
+        // auto vpp = _max - _min;
 
+        // if(vpp < yRangeMax*1.1 && vpp > yRangeMin*1.1)
+        //     m_Y->setRange(_min, _max);
+
+        emit scaleSet(m_scale);
         updateLabelPosition();
     }
 
@@ -832,9 +837,6 @@ void TChartViewForm::updateGatePosition()
 }
 
 
-
-
-
 void TChartViewForm::on_comboAxis_currentIndexChanged(int index)
 {
     switch(index)
@@ -854,5 +856,19 @@ void TChartViewForm::on_comboAxis_currentIndexChanged(int index)
     default:
         break;
     }
+}
+
+
+void TChartViewForm::on_btnConfig_clicked()
+{
+    if(gatesToggled())
+    {
+        // calculate 80% second peak at 2nd reflection
+        qreal ind = maxInd(m_gate2->posRange(),false);
+
+        if(ind  >= 0 )
+            m_scale = 80 / (m_series->at( maxInd(m_gate2->posRange(),false)).y() / m_scale);
+    }
+    emit scaleSet(m_scale);
 }
 

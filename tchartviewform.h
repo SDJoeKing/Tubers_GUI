@@ -78,6 +78,8 @@ private slots:
 
     void on_comboAxis_currentIndexChanged(int index);
 
+    void on_btnConfig_clicked();
+
 private:
     QTimer m_timer;
     TChartView *m_chartView;
@@ -89,10 +91,10 @@ private:
     QValueAxis *m_Y;
     TGate *m_gate1;
     TGate *m_gate2;
-    const float yMin=-500;
-    const float yMax = 500;
-    const float yRangeMin = 10;
-    const float yRangeMax = 2000;
+    const float yMin=0;
+    const float yMax = 100;
+    const float yRangeMin = 100;
+    const float yRangeMax = 100;
     const float xMin=0;
     float xMax = mTcpClient::DATA_SIZE/2/125e3;
     double m_vel = 5890.0;
@@ -112,7 +114,7 @@ private:
     float fs = 125e6;
     QPair<QString, int> m_xUnit;
     QPair<QString, int> m_yUnit;
-
+    float m_scale = 1.0;
 private:
     Ui::TChartViewForm *ui;
     void setXRange(const float &, const float &);
@@ -129,7 +131,7 @@ signals:
     void setRectifyCheck();
     void calculatedThickness(double);
     void sendThreshold(double);
-
+    void scaleSet(const float&);
     // QWidget interface
 protected:
     virtual void resizeEvent(QResizeEvent *event) override;

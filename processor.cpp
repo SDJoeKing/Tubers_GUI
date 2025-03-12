@@ -90,6 +90,11 @@ void Processor::updateGolaySetting(bool useGolay, const QString &seq, const floa
 
 }
 
+void Processor::updateScale(const float & newScale)
+{
+    m_scale = newScale;
+}
+
 
 void Processor::run()
 {
@@ -124,14 +129,16 @@ void Processor::process(const char *dataptr)
     // take into account of header data
     int j= mTcpClient::HEADER_SIZE;
     // get system information from the header data
-    quint8 _forward = static_cast<quint8>(serverData.at(5));
+    quint8 _forward = static_cast<quint8>(serverData.at(HEADER::encoderDirection));
     qDebug() << _forward;
-    temp1 =(serverData.at(8) << 8) & 0xFF00;
+    temp1 =(serverData.at(HEADER::systemTempHigh) << 8) & 0xFF00;
 
-    temp2 = (serverData.at(7)) & 0xFF;
+    temp2 = (serverData.at(HEADER::systemTempLow)) & 0xFF;
 
     float _temperature =  (static_cast<quint16>(temp2 | temp1));
-    int linkSpeed = (static_cast<quint8>(serverData.at(9)) * 10);
+    int linkSpeed = (static_cast<quint8>(serverData.at(HEADER::linkSpeed)) * 10);
+    bool golaySeq = static_cast<quint8>(serverData.at(HEADER::golayCode));
+
     // qDebug() << "------- " << _temperature / 2 / 125e6 *2293.0 << " ------- ";
     _temperature = ((_temperature/65536.0f)/0.00198421639f ) - 273.15f;
 
@@ -139,7 +146,7 @@ void Processor::process(const char *dataptr)
     {
         temp1 =(serverData.at(j + 1) << 8) & 0xFF00;
         temp2 = (serverData.at(j)) & 0xFF;
-        dataPoint[0][i] = static_cast<qint16>(temp2 | temp1)/ 32768.0  * 3.18 * 1.0 *1000.0;
+        dataPoint[0][i] = static_cast<qint16>(temp2 | temp1)/ 32768.0  * 3.18 * 1.0 * 1000.0;
 
         j += 2;
     }
@@ -147,16 +154,16 @@ void Processor::process(const char *dataptr)
     if(m_golay)
     {
         QMutexLocker lk(&mu);
-        if(m_golayASeq)
+        if(!golaySeq)
         {
 
             correlate(dataPoint[0], mTcpClient::DATA_SIZE/2,  m_sequenceA, m_golayData);
-            m_golayASeq = false;
+            // m_golayASeq = false;
 
         }else
         {
             correlate(dataPoint[0], mTcpClient::DATA_SIZE/2,  m_sequenceB, m_golayData);
-            m_golayASeq = true;
+            // m_golayASeq = true;
             for(auto &i : m_golayData)
             {
                 i/=2;
@@ -170,13 +177,28 @@ void Processor::process(const char *dataptr)
     else if(m_golay && m_golayReady)
         dataPoint[0] = m_golayData;
 
+    m_golayReady = false;
     if(filtering)
     {
         m_filter->process(mTcpClient::DATA_SIZE/2, dataPoint);
     }
 
     // rectified, envelope, depth?
+
+    m_maxValue = 0 ;
     for (int i = 0; i < mTcpClient::DATA_SIZE/2; i++)
+    {
+
+        if(rectify)
+            dataPoint[0][i] = MainWindow::envelope(dataPoint[0][i], MainWindow::_env, MainWindow::m_ga, MainWindow::m_gr);
+
+        if (dataPoint[0][i] > m_maxValue && i < firstPeakIndex)
+            m_maxValue = dataPoint[0][i];
+
+    }
+
+    // normalise data to (0, 1]
+    for(int i = 0; i < mTcpClient::DATA_SIZE/2; i++)
     {
 
         if(depthAxis)
@@ -184,9 +206,7 @@ void Processor::process(const char *dataptr)
         else
             xpoint = i / m_fs /1e6 *1000;
 
-        if(rectify)
-            dataPoint[0][i] = MainWindow::envelope(dataPoint[0][i], MainWindow::_env, MainWindow::m_ga, MainWindow::m_gr);
-
+        dataPoint[0][i] /= (m_maxValue / 100 / m_scale);
         calPoint[i] = QPointF(xpoint, dataPoint[0][i]);
         _temp[i] = dataPoint[0][i];
     }
@@ -202,8 +222,6 @@ void Processor::process(const char *dataptr)
         i = 0;
     }
 
-    m_golayReady = false;
-
     if(fpsTimer.hasExpired(1000))
     {
         emit plotRate(counter / (processTimer.elapsed() / 1000.0));
@@ -213,7 +231,7 @@ void Processor::process(const char *dataptr)
 #ifdef FRAMERATE_CONTROL
     if(processTimer.durationElapsed().count() > 1.0/FRAMERATE * 1e9 )
     {
-        emit dataProcessed(calPoint, _forward == 2 ? false : true);
+        emit dataProcessed(calPoint, _forward == 2 ? false : true );
 
         processTimer.restart();
         counter = 0;

@@ -11,6 +11,7 @@ mTcpClient::mTcpClient(QObject *parent)
     :QObject{parent}
 {
     shutdownLock = true;
+    acquisitionRunning = false;
 }
 
 mTcpClient::~mTcpClient()
@@ -146,6 +147,7 @@ bool mTcpClient::parseServerMsg(QByteArray &arr)
         QMessageBox::warning(nullptr, "Warning!", "Get error reading from server");
         this->stop();
         notifyServerDown();
+        acquisitionRunning = false;
         return 1;
     }
 
@@ -161,7 +163,9 @@ bool mTcpClient::parseServerMsg(QByteArray &arr)
     // Settings
     else if(msg.contains("settings ok"))
     {
-        QTimer::singleShot(500, this, [this](){emit settingReady(true);}); //Note that 500 ms delay is for the hardware to apply the setting;
+        if(!acquisitionRunning)
+            QTimer::singleShot(500, this, [this](){emit settingReady(true);}); //Note that 500 ms delay is for the hardware to apply the setting;
+
         emit tcpMessage(m_server + msg.sliced(0, 11));
         arr.slice(11);
         return -1;
@@ -174,6 +178,7 @@ bool mTcpClient::parseServerMsg(QByteArray &arr)
     // acquisition
     else if(msg.contains("starting acquisition"))
     {
+        acquisitionRunning = true;
         emit acquisitionReady();
         emit tcpMessage(m_server + msg.sliced(0, 20));
         arr.slice(20);
@@ -182,6 +187,7 @@ bool mTcpClient::parseServerMsg(QByteArray &arr)
     // stop acquisition
     else if(msg.contains("acquisition stopped"))
     {
+        acquisitionRunning = false;
         emit acquisitionStop();
         emit tcpMessage(m_server + msg.sliced(0, 19));
         arr.slice(19);

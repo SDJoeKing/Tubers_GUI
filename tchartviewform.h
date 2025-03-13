@@ -80,6 +80,8 @@ private slots:
 
     void on_btnConfig_clicked();
 
+    void on_spinGain_valueChanged(double arg1);
+
 private:
     QTimer m_timer;
     TChartView *m_chartView;
@@ -115,6 +117,7 @@ private:
     QPair<QString, int> m_xUnit;
     QPair<QString, int> m_yUnit;
     float m_scale = 1.0;
+    float m_spinGain;
 private:
     Ui::TChartViewForm *ui;
     void setXRange(const float &, const float &);

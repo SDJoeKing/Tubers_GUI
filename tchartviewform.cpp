@@ -2,6 +2,8 @@
 #include "qgraphicslayout.h"
 #include "qlegendmarker.h"
 #include "ui_tchartviewform.h"
+#include "cmath"
+
 QElapsedTimer timerV;
 
 QString lengthAxisTitle = "A-scan length [ms]";
@@ -20,8 +22,8 @@ TChartViewForm::TChartViewForm(QWidget *parent)
     m_series = new QLineSeries();
     m_ruler = new QLineSeries();
 
-    // m_series->setUseOpenGL(true);
-    // m_ruler->setUseOpenGL(true);
+    m_series->setUseOpenGL(true);
+    m_ruler->setUseOpenGL(true);
 
     // config m_ruler
     QBrush brush(Qt::red, Qt::SolidPattern);
@@ -109,8 +111,11 @@ TChartViewForm::TChartViewForm(QWidget *parent)
 
     // units
     setXUnit("ms");
-    setYUnit("mV");
-    ui->steps->setValue((m_X->max() - m_X->min()) * 0.05);
+    setYUnit("dB");
+    m_spinGain = 20 * std::log10(m_scale + 1e-9);
+    ui->spinGain->setValue(m_spinGain);
+    ui->comboAxis->setCurrentIndex(1);
+
 }
 
 TChartViewForm::~TChartViewForm()
@@ -331,47 +336,22 @@ bool TChartViewForm::eventFilter(QObject *watched, QEvent *event)
     // wheel event
     if(watched == m_chartView && event->type()==QEvent::Wheel)
     {
+
         float _min = m_Y->min();
         float _max = m_Y->max();
 
         QWheelEvent *wheel = static_cast<QWheelEvent *>(event);
         if(wheel->angleDelta().y()>0)
         {
-            // // qDebug() << wheel->angleDelta().y();
-            // if(_min < 0)
-            //     _min*=1.1;
-            // else
-            //     _min /= 1.1;
 
-            // if(_max < 0)
-            //     _max/=1.1;
-            // else
-            //     _max *=1.1;
-            m_scale += 0.1;
+            auto _tempV = ui->spinGain->value();
+            ui->spinGain->setValue(++_tempV);
         }
         else
         {
-            // // qDebug() << wheel->angleDelta().y();
-            // if(_min < 0)
-            //     _min/=1.1;
-            // else
-            //     _min *= 1.1;
-
-            // if(_max < 0)
-            //     _max*=1.1;
-            // else
-            //     _max /=1.1;
-            m_scale -= 0.1;
-            m_scale <0 ? m_scale = 0.01 : m_scale;
+            auto _tempV = ui->spinGain->value();
+            ui->spinGain->setValue(--_tempV);
         }
-        // if(_yAxisType == y_AXISTYPE::RECTIFY && _min<0)
-        //     _min = 0;
-        // auto vpp = _max - _min;
-
-        // if(vpp < yRangeMax*1.1 && vpp > yRangeMin*1.1)
-        //     m_Y->setRange(_min, _max);
-
-        emit scaleSet(m_scale);
         updateLabelPosition();
     }
 
@@ -704,9 +684,13 @@ void TChartViewForm::setYUnit(const QString &newYUnit)
         m_yUnit.second = 1;
     else if(newYUnit == QString("uV"))
         m_yUnit.second = 1e6;
+    else if(newYUnit == QString("dB"))
+        m_yUnit.second = 0;
     else
-        m_yUnit.second = 1000;
-
+    {
+        m_yUnit.first = QString("dB");
+        m_yUnit.second = 0;
+    }
     if(ui->comboAxis->currentIndex())
         ui->labelUnit->setText(m_yUnit.first);
     else
@@ -784,6 +768,12 @@ void TChartViewForm::on_btnIncr_clicked()
         if(ymin < 0.0 && _yAxisType==y_AXISTYPE::RECTIFY)
             ymin = 0.0;
         setYRange(ymin, m_Y->max() + step);
+
+        if(m_yUnit.first == QString("dB"))
+        {
+            auto _temp = ui->spinGain->value();
+            ui->spinGain->setValue(_temp-=step);
+        }
     }
 
     updateLabelPosition();
@@ -812,6 +802,11 @@ void TChartViewForm::on_btnDecr_clicked()
             setYRange(m_Y->min()+step, m_Y->max() - step);
         else
             setYRange(m_Y->min(), m_Y->max() - step);
+        if(m_yUnit.first == QString("dB"))
+        {
+            auto _temp = ui->spinGain->value();
+            ui->spinGain->setValue(_temp+=step);
+        }
     }
 
     updateLabelPosition();
@@ -850,8 +845,16 @@ void TChartViewForm::on_comboAxis_currentIndexChanged(int index)
     case 1: // Y seleceted
         ui->labelUnit->setText(m_yUnit.first);
         ui->steps->setMaximum(2000);
+
         if(m_Y)
+        {
             ui->steps->setValue((m_Y->max() - m_Y->min()) * 0.05);
+            if(m_yUnit.first == QString("dB"))
+            {
+                ui->steps->setValue(1);
+                ui->steps->setMaximum(5);
+            }
+        }
         break;
     default:
         break;
@@ -867,8 +870,18 @@ void TChartViewForm::on_btnConfig_clicked()
         qreal ind = maxInd(m_gate2->posRange(),false);
 
         if(ind  >= 0 )
-            m_scale = 80 / (m_series->at( maxInd(m_gate2->posRange(),false)).y() / m_scale);
+        {
+            ui->spinGain->setValue( 20 * std::log10(80 / (m_series->at( maxInd(m_gate2->posRange(),false)).y() / m_scale)));
+        }
     }
+
+}
+
+
+void TChartViewForm::on_spinGain_valueChanged(double arg1)
+{
+    m_spinGain = ui->spinGain->value();
+    m_scale = std::pow(10, m_spinGain / 20.0);
     emit scaleSet(m_scale);
 }
 

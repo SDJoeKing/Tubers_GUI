@@ -9,7 +9,7 @@
 #include <cmath>
 
 #ifdef FRAMERATE_CONTROL
-#define FRAMERATE 101
+#define FRAMERATE 120
 #endif
 
 

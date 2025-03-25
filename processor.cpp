@@ -215,7 +215,7 @@ void Processor::process(const char *dataptr)
     MainWindow::_env = 0;
 
     emit dataLogger(reinterpret_cast<const char *>(&_temp));
-    counter++;
+
     // empty m_golayData
     for(auto &i : m_golayData)
     {
@@ -224,20 +224,23 @@ void Processor::process(const char *dataptr)
 
     if(fpsTimer.hasExpired(1000))
     {
-        emit plotRate(counter / (processTimer.elapsed() / 1000.0));
+        emit plotRate(counter);
+        counter=0;
         fpsTimer.restart();
+
     }
 
 #ifdef FRAMERATE_CONTROL
-    if(processTimer.durationElapsed().count() > 1.0/FRAMERATE * 1e9 )
+    if(processTimer.durationElapsed().count() > (1e9 / FRAMERATE) )
     {
         emit dataProcessed(calPoint, _forward == 2 ? false : true );
-
         processTimer.restart();
-        counter = 0;
+        counter++;
     }
+
 #else
     emit dataProcessed(calPoint, _forward == 2 ? false : true);
+    counter++;
 #endif
     emit sendTemperatureNLinkSpeed(_temperature, linkSpeed);
 }

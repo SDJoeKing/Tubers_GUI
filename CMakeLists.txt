@@ -21,7 +21,7 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Widgets Charts Netwo
 ## frame rate control to limit the fps to 100
 add_definitions(-DFRAMERATE_CONTROL)
 ## testing server enabling - note the settings wont work for testing servers except prf
-## add_definitions(-DTEST_SERVER)
+add_definitions(-DTEST_SERVER)
 
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/source SOURCE_LIB)
 

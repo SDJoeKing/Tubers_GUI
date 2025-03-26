@@ -45,9 +45,8 @@ private:
     float m_golayData[mTcpClient::DATA_SIZE/2]{0};
     bool m_golayASeq = true;
     bool m_golayReady = false;
-    float m_maxValue = 0;
-    const int firstPeakIndex = 200;
     float m_scale = 1.0;
+    const float m_maxValue = 3180;
 signals:
     void dataProcessed(const QList<QPointF> &, bool );
     void dataLogger(const char *);

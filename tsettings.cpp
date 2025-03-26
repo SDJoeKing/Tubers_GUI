@@ -217,6 +217,7 @@ void TSettings::on_btnConfirm_clicked()
 #ifdef TEST_SERVER
     encoderTrigger = 0;
 #endif
+
     if(!encoderTrigger && ui->radioManual->isChecked())
         encoderTrigger = 0;
     else if(encoderTrigger && ui->radioManual->isChecked())

@@ -185,16 +185,11 @@ void Processor::process(const char *dataptr)
 
     // rectified, envelope, depth?
 
-    m_maxValue = 0 ;
     for (int i = 0; i < mTcpClient::DATA_SIZE/2; i++)
     {
 
         if(rectify)
             dataPoint[0][i] = MainWindow::envelope(dataPoint[0][i], MainWindow::_env, MainWindow::m_ga, MainWindow::m_gr);
-
-        if (dataPoint[0][i] > m_maxValue && i < firstPeakIndex)
-            m_maxValue = dataPoint[0][i];
-
     }
 
     // normalise data to (0, 1]

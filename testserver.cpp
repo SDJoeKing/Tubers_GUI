@@ -3,7 +3,7 @@ int sent = 0;
 
 #include <QHostInfo>
 
-static void dataGen(char * byteArr, uint8_t * arr)
+static void dataGen(char * byteArr, uint8_t * arr, float scale)
 {
 
     float *_df = reinterpret_cast<float *>(byteArr);
@@ -12,7 +12,8 @@ static void dataGen(char * byteArr, uint8_t * arr)
     {
         bool _t = (i < 1000 && QRandomGenerator::global()->bounded(0, 10000) > 9998) ? 1 : 0;
 
-        qint16 _temp = static_cast<qint16>( _t ?  32768*1.8 : _df[i] / 1000 / 3.18 * 32768 );
+
+        qint16 _temp = static_cast<qint16>( _t ?  32768*1.8 : _df[i]*scale / 1000 / 3.18 * 32768 );
         arr[j] = (_temp) & 0x00FF;
         arr[j+1] = (_temp >>8) &0x00FF;
         j+=2;
@@ -38,7 +39,7 @@ testServer::testServer(QWidget *parent) : QObject(parent)
      {
          m_arr =  m_file.readAll();
          char * _d = m_arr.data();
-         dataGen(_d, _data);
+         dataGen(_d, _data, m_scale);
      }else
      {
          qDebug()<< "Open file not successful";
@@ -125,7 +126,7 @@ void testServer::do_readyRead()
         m_socket->write("settings ok");
         QList list = msg.split(u';');
         m_timer->setInterval(1000.0/list[6].toInt());
-
+        m_scale = powf(10, (list[8].toInt() - 20) / 20.0);
 
     }else if(msg.contains("start"))
     {
@@ -154,7 +155,7 @@ void testServer::do_sendData()
     {
         data_release = false;
 
-        dataGen(m_arr.data(), _data);
+        dataGen(m_arr.data(), _data, m_scale);
         // datasending logic
         m_socket->write(reinterpret_cast<const char *>(_data), mTcpClient::DATA_SIZE_RECV);
         sent++;

@@ -95,6 +95,7 @@ private:
     TGate *m_gate2;
     const float yMin=0;
     const float yMax = 100;
+    const float yValueMax = 3180;
     const float yRangeMin = 100;
     const float yRangeMax = 100;
     const float xMin=0;

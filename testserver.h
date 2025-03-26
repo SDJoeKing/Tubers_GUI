@@ -29,6 +29,7 @@ private:
     bool data_release = false;
     QTimer *m_timer;
     QFile m_file;
+    float m_scale = 1.0;
 // public slots:
 public slots:
     void run();

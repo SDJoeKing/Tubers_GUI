@@ -213,8 +213,10 @@ void TSettings::on_btnConfirm_clicked()
 
     //encoder / bscan setting
     int encoderTrigger = ui->groupBscan->isChecked();
-    encoderTrigger = 0;
 
+#ifdef TEST_SERVER
+    encoderTrigger = 0;
+#endif
     if(!encoderTrigger && ui->radioManual->isChecked())
         encoderTrigger = 0;
     else if(encoderTrigger && ui->radioManual->isChecked())

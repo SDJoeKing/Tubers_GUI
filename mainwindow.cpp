@@ -292,18 +292,18 @@ void MainWindow::doSettingsConfirmed(QString str)
 
     auto list = str.split(";");
 
-    m_vel = list[TSettings::velocity].toDouble();
+    m_vel = list[SETTINGS::velocity].toDouble();
     emit velocitySet(m_vel);
 
-    m_order = list[TSettings::order].toInt();
-    m_fc = (list[TSettings::lowCut].toDouble() + list[TSettings::highCut].toDouble() )/ 2.0;
-    m_fw= qAbs(list[TSettings::highCut].toDouble() - list[TSettings::lowCut].toDouble());
+    m_order = list[SETTINGS::order].toInt();
+    m_fc = (list[SETTINGS::lowCut].toDouble() + list[SETTINGS::highCut].toDouble() )/ 2.0;
+    m_fw= qAbs(list[SETTINGS::highCut].toDouble() - list[SETTINGS::lowCut].toDouble());
 
     emit filterParam(m_order, m_fs, m_fc, m_fw);
 
 
     int _size = 0;
-    for(int i = TSettings::txChannel ; i< TSettings::motorAngle + 1; i++)
+    for(int i = SETTINGS::txChannel ; i< SETTINGS::motorAngle + 1; i++)
         _size+=list[i].size()+1; // including the separator size
 
     auto settings = str.sliced(0, _size );
@@ -316,7 +316,7 @@ void MainWindow::doSettingsConfirmed(QString str)
     }
 
     // encoder mode?
-    encoderTriggerMode = list[TSettings::encoderTriggering].toUInt();
+    encoderTriggerMode = list[SETTINGS::encoderTriggering].toUInt();
     m_settings->encoderTriggerMode(encoderTriggerMode);
 
     // for motor testing only
@@ -328,7 +328,7 @@ void MainWindow::doSettingsConfirmed(QString str)
         return;
     }
 
-    emit golayCoding(list[TSettings::golay].toInt(), list[TSettings::pulseSequence], list[TSettings::pulseFreq].toFloat(), m_settings->pulseLength());
+    emit golayCoding(list[SETTINGS::golay].toInt(), list[SETTINGS::pulseSequence], list[SETTINGS::pulseFreq].toFloat(), m_settings->pulseLength());
 
     emit mainSendSetting(settings);
 }
@@ -526,7 +526,7 @@ void MainWindow::on_ckRectify_clicked(bool checked)
 int findFrontWall(const QList<QPointF> &data, int start, int end)
 {
     int _max = start; // in water less than 2mm
-    int _end = mTcpClient::DATA_SIZE/2 < end ? mTcpClient::DATA_SIZE/2 : end;
+    int _end = DATA_SIZE/2 < end ? DATA_SIZE/2 : end;
 
     double value = 0;
     for(int i = _max; i<_end; i++)

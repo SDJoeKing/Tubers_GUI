@@ -9,7 +9,7 @@
 #include <QMessageBox>
 #include <QMutex>
 #include <QMutexLocker>
-
+#include "config.h"
 
 
 class mTcpClient : public QObject
@@ -19,10 +19,6 @@ class mTcpClient : public QObject
 public:
     explicit mTcpClient(QObject *parent=nullptr);
     ~mTcpClient();
-
-    static const quint16 DATA_SIZE = 16000*2 ;
-    static const quint8 HEADER_SIZE = 10;
-    static const quint16 DATA_SIZE_RECV = DATA_SIZE + HEADER_SIZE;
 
     bool start(const QString &address, const quint16 port);
     void stop();

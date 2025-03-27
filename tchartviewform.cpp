@@ -300,7 +300,7 @@ bool TChartViewForm::eventFilter(QObject *watched, QEvent *event)
 
                 auto value = m_chart->mapToValue(mouse->pos(), m_series);
                 auto xposition = _xAxisType == x_AXISTYPE::TIME ? value.x() : depthToTime(value.x());  // this should be time
-                int index = static_cast<int>(xposition / xMax * mTcpClient::DATA_SIZE/2);
+                int index = static_cast<int>(xposition / xMax * DATA_SIZE/2);
                 qreal _Yvalue = m_series->at(index).y();
 
                 if(qAbs(value.y() - _Yvalue)<0.05*(m_Y->max() - m_Y->min()))
@@ -541,7 +541,7 @@ void TChartViewForm::updateXMax(const float &newFs)
     // reset paint
     m_series->clear();
     qDebug() << newFs;
-    xMax = mTcpClient::DATA_SIZE/2/newFs * 1e3;
+    xMax = DATA_SIZE/2/newFs * 1e3;
     m_X->setRange(xMin, xMax);
 }
 
@@ -648,8 +648,8 @@ qreal TChartViewForm::maxInd(const QRectF &rect, bool thres)
         _right = depthToTime(value_right.x());
     }
 
-    int leftInd = (_left / xMax) * mTcpClient::DATA_SIZE /2;
-    int rightInd = (_right/ xMax) * mTcpClient::DATA_SIZE /2;
+    int leftInd = (_left / xMax) *  DATA_SIZE /2;
+    int rightInd = (_right/ xMax) *  DATA_SIZE /2;
     double threshold = qAbs(value_left.y() + value_right.y()) / 2; // absolute thres
 
     if(thres)
@@ -657,8 +657,8 @@ qreal TChartViewForm::maxInd(const QRectF &rect, bool thres)
 
     leftInd < 0 ? leftInd =0 : leftInd;
     rightInd < 0 ? rightInd =0 : rightInd;
-    leftInd = leftInd > mTcpClient::DATA_SIZE/2 ? mTcpClient::DATA_SIZE/2 : leftInd;
-    rightInd = rightInd > mTcpClient::DATA_SIZE/2 ? mTcpClient::DATA_SIZE/2 : rightInd;
+    leftInd = leftInd > DATA_SIZE/2 ?  DATA_SIZE/2 : leftInd;
+    rightInd = rightInd >  DATA_SIZE/2 ?  DATA_SIZE/2 : rightInd;
 
     int _tempMax = leftInd;
 

@@ -5,6 +5,7 @@ QElapsedTimer processTimer;
 QElapsedTimer fpsTimer;
 QMutex mu;
 int counter = 0;
+int golayTrack = 0;
 
 float lerp(int a, int b, float t);
 void correlate(const float * dataArr, quint16 len, std::shared_ptr<std::vector<float>> SEQ, float *);
@@ -112,14 +113,14 @@ void Processor::close()
 void Processor::process(const char *dataptr)
 {
 
-    auto serverData = QByteArray::fromRawData(dataptr, mTcpClient::DATA_SIZE_RECV );
+    auto serverData = QByteArray::fromRawData(dataptr,  DATA_SIZE_RECV );
 
     double xpoint=0;
-    QList<QPointF> calPoint(mTcpClient::DATA_SIZE/2);
+    QList<QPointF> calPoint( DATA_SIZE/2);
     quint16 temp1;
     quint16 temp2;
     float *dataPoint[1];
-    float _temp[mTcpClient::DATA_SIZE/2]{0};
+    float _temp[ DATA_SIZE/2]{0};
 
 
     dataPoint[0] = _temp;
@@ -127,7 +128,7 @@ void Processor::process(const char *dataptr)
     // QByteArray _arr(mTcpClient::DATA_SIZE/2, Qt::Uninitialized);
 
     // take into account of header data
-    int j= mTcpClient::HEADER_SIZE;
+    int j=  HEADER_SIZE;
     // get system information from the header data
     quint8 _forward = static_cast<quint8>(serverData.at(HEADER::encoderDirection));
     qDebug() << _forward;
@@ -137,12 +138,13 @@ void Processor::process(const char *dataptr)
 
     float _temperature =  (static_cast<quint16>(temp2 | temp1));
     int linkSpeed = (static_cast<quint8>(serverData.at(HEADER::linkSpeed)) * 10);
-    bool golaySeq = static_cast<quint8>(serverData.at(HEADER::golayCode));
+    // bool golaySeq = static_cast<quint8>(serverData.at(HEADER::golayCode));
+    bool golaySeq = m_golayASeq;
 
     // qDebug() << "------- " << _temperature / 2 / 125e6 *2293.0 << " ------- ";
     _temperature = ((_temperature/65536.0f)/0.00198421639f ) - 273.15f;
 
-    for (int i = 0; i < mTcpClient::DATA_SIZE/2; i++)
+    for (int i = 0; i <  DATA_SIZE/2; i++)
     {
         temp1 =(serverData.at(j + 1) << 8) & 0xFF00;
         temp2 = (serverData.at(j)) & 0xFF;
@@ -154,21 +156,22 @@ void Processor::process(const char *dataptr)
     if(m_golay)
     {
         QMutexLocker lk(&mu);
-        if(!golaySeq)
+        if(golaySeq)
         {
 
-            correlate(dataPoint[0], mTcpClient::DATA_SIZE/2,  m_sequenceA, m_golayData);
-            // m_golayASeq = false;
+            correlate(dataPoint[0], DATA_SIZE/2,  m_sequenceA, m_golayData);
+            m_golayASeq = false;
 
         }else
         {
-            correlate(dataPoint[0], mTcpClient::DATA_SIZE/2,  m_sequenceB, m_golayData);
-            // m_golayASeq = true;
+            correlate(dataPoint[0],  DATA_SIZE/2,  m_sequenceB, m_golayData);
+            m_golayASeq = true;
             for(auto &i : m_golayData)
             {
                 i/=2;
             }
             m_golayReady = true;
+
         }
     }
 
@@ -180,12 +183,12 @@ void Processor::process(const char *dataptr)
     m_golayReady = false;
     if(filtering)
     {
-        m_filter->process(mTcpClient::DATA_SIZE/2, dataPoint);
+        m_filter->process( DATA_SIZE/2, dataPoint);
     }
 
     // rectified, envelope, depth?
 
-    for (int i = 0; i < mTcpClient::DATA_SIZE/2; i++)
+    for (int i = 0; i < DATA_SIZE/2; i++)
     {
 
         if(rectify)
@@ -193,7 +196,7 @@ void Processor::process(const char *dataptr)
     }
 
     // normalise data to (0, 1]
-    for(int i = 0; i < mTcpClient::DATA_SIZE/2; i++)
+    for(int i = 0; i < DATA_SIZE/2; i++)
     {
 
         if(depthAxis)

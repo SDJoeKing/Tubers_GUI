@@ -20,32 +20,6 @@ public:
     explicit TSettings(QWidget *parent = nullptr);
     ~TSettings();
 
-    enum GOLAY
-    {
-        TWO_BIT, FOUR_BIT, EIGHT_BIT, TEN_BIT
-    };
-    enum settingParams
-    {
-        txChannel = 0,
-        rxChannel,
-        pulseDelayNs,
-        pulseSequence,
-        pulseFreq,
-        prf,
-        pulsingPower,
-        gain,
-        requestedAverages,
-        encoderTriggering,
-        encoderSkips,
-        motorSpeed,
-        motorAngle,
-        velocity,
-        order,
-        lowCut,
-        highCut,
-        golay
-    };
-
 public slots:
 
     void updateVel(double);

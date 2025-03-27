@@ -7,8 +7,8 @@ static void dataGen(char * byteArr, uint8_t * arr, float scale)
 {
 
     float *_df = reinterpret_cast<float *>(byteArr);
-    quint16 j = mTcpClient::HEADER_SIZE;
-    for(size_t i=0; i<mTcpClient::DATA_SIZE/2;i++)
+    quint16 j =  HEADER_SIZE;
+    for(size_t i=0; i< DATA_SIZE/2;i++)
     {
         bool _t = (i < 1000 && QRandomGenerator::global()->bounded(0, 10000) > 9998) ? 1 : 0;
 
@@ -157,7 +157,7 @@ void testServer::do_sendData()
 
         dataGen(m_arr.data(), _data, m_scale);
         // datasending logic
-        m_socket->write(reinterpret_cast<const char *>(_data), mTcpClient::DATA_SIZE_RECV);
+        m_socket->write(reinterpret_cast<const char *>(_data), DATA_SIZE_RECV);
         sent++;
     }
 }

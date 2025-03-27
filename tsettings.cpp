@@ -21,7 +21,7 @@ TSettings::TSettings(QWidget *parent)
 
     ui->comboLength->clear();
     for(quint8 i=1;i<9; i++)
-        comboLength<< QString("%1 ms").arg(mTcpClient::DATA_SIZE/2/125e3 * i, 3,'f', 3);
+        comboLength<< QString("%1 ms").arg( DATA_SIZE/2/125e3 * i, 3,'f', 3);
 
     ui->comboLength->addItems(comboLength);
     ui->btnConfirm->setVisible(false);

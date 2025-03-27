@@ -17,6 +17,8 @@
 #include "mtcpclient.h"
 #include "tgate.h"
 #include "tchartview.h"
+#include "config.h"
+
 namespace Ui {
 class TChartViewForm;
 }
@@ -99,7 +101,7 @@ private:
     const float yRangeMin = 100;
     const float yRangeMax = 100;
     const float xMin=0;
-    float xMax = mTcpClient::DATA_SIZE/2/125e3;
+    float xMax =  DATA_SIZE/2/125e3;
     double m_vel = 5890.0;
     bool _dataTipOn=false;
     bool _zoomOn=false;

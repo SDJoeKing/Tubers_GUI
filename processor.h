@@ -22,14 +22,6 @@ public:
     void setParam(const float &vel, const bool &depth, const bool &rect, const bool &filt);
     void run();
     void close();
-    enum HEADER {
-        acqMode = 4,
-        encoderDirection,
-        golayCode,
-        systemTempLow,
-        systemTempHigh,
-        linkSpeed
-    };
 
 private:
     Dsp::Filter *m_filter = new Dsp::FilterDesign<Dsp::Butterworth::Design::BandPass<50>, 1>;
@@ -42,7 +34,7 @@ private:
     std::shared_ptr<std::vector<float>> m_sequenceA;
     std::shared_ptr<std::vector<float>> m_sequenceB;
     bool m_golay;
-    float m_golayData[mTcpClient::DATA_SIZE/2]{0};
+    float m_golayData[DATA_SIZE/2]{0};
     bool m_golayASeq = true;
     bool m_golayReady = false;
     float m_scale = 1.0;

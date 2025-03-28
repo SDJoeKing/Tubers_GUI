@@ -42,7 +42,7 @@ private:
 signals:
     void dataProcessed(const QList<QPointF> &, bool );
     void dataLogger(const char *);
-    void sendTemperatureNLinkSpeed(const float &, const float &); // temp. speed
+    void sendHeaderInfo(const float &, const float &, const quint8 &); // temp. speed
     void plotRate(const float &);
 public slots:
     void process(const char *);

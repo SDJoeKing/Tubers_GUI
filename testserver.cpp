@@ -32,6 +32,8 @@ testServer::testServer(QWidget *parent) : QObject(parent)
      _data[1] = 0x00FF;
      _data[2] = 0;
      _data[3] = 0x00FF;
+     _data[6] = 5;
+
 
      m_file.setFileName("../../test_data");
 

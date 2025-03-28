@@ -7,6 +7,8 @@ double MainWindow::m_gr = 0;
 static int bscanUpdateOnce = 0;
 QElapsedTimer timer;
 
+
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
@@ -94,7 +96,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(this, &MainWindow::velocitySet, m_processor, &Processor::setVel, Qt::QueuedConnection);
     connect(m_processor, &Processor::dataProcessed, this, &MainWindow::updateBScan, Qt::QueuedConnection);
     connect(m_processor, &Processor::dataProcessed, m_Ascan, &TChartViewForm::plot, Qt::QueuedConnection);
-    connect(m_processor, &Processor::sendTemperatureNLinkSpeed, this, &MainWindow::updateTempNLinkSpeed, Qt::QueuedConnection);
+    connect(m_processor, &Processor::sendHeaderInfo, this, &MainWindow::updateHeaderInfo, Qt::QueuedConnection);
     connect(this, &MainWindow::golayCoding, m_processor, &Processor::updateGolaySetting, Qt::QueuedConnection);
 
     connect(&processorThread, &QThread::finished, this, &MainWindow::threadFinished);
@@ -152,6 +154,7 @@ MainWindow::MainWindow(QWidget *parent)
     setConnectionIndicator();
     ui->spinEnvLevel->setValue(0);
     ui->radioTemp->setText(QString::asprintf("Temperature: %.1f \u2103", 0.0));
+    ui->radioError->setText(QString("Error Status"));
     resetUI();
 
 }
@@ -197,6 +200,8 @@ void MainWindow::resetUI()
     m_Ascan->reset();
 
     ui->labelSpeed->setText("Ethernet Speed:");
+    ui->radioTemp->setText(QString::asprintf("Temperature: %.1f \u2103", 0.0));
+    ui->radioError->setText(QString("Error Status"));
 }
 
 void MainWindow::toggleOff(QCheckBox *widget)
@@ -207,37 +212,11 @@ void MainWindow::toggleOff(QCheckBox *widget)
 
 void MainWindow::setConnectionIndicator()
 {
-    ui->radioStatus->setStyleSheet(
-        "QRadioButton::indicator {"
-        "width:                  10px;"
-        "height:                 10px;"
-        "        border-radius:          7px;"
-        "}"
-        "QRadioButton::indicator:checked {"
-        "background-color:       green;"
-        "border:                 2px solid white;"
-        "}"
-        "QRadioButton::indicator:unchecked {"
-        "background-color:       red;"
-        "border:                 2px solid white;"
-        "}"
-        );
+    ui->radioStatus->setStyleSheet(LED_NETCONNECTED_STYLE);
 
-    ui->radioTemp->setStyleSheet(
-        "QRadioButton::indicator {"
-        "width:                  10px;"
-        "height:                 10px;"
-        "        border-radius:          7px;"
-        "}"
-        "QRadioButton::indicator:checked {"
-        "background-color:       red;"
-        "border:                 2px solid white;"
-        "}"
-        "QRadioButton::indicator:unchecked {"
-        "background-color:       grey;"
-        "border:                 2px solid white;"
-        "}"
-        );
+    ui->radioTemp->setStyleSheet(LED_NONCONNECT_STYLE);
+
+    ui->radioError->setStyleSheet(LED_NONCONNECT_STYLE);
 }
 
 MainWindow::~MainWindow()
@@ -417,10 +396,14 @@ void MainWindow::toggleStatus(bool arg)
     {
         connected=true;
         ui->btnConnect->setText("Disconnect");
+        ui->radioError->setStyleSheet(LED_CONNECTED_STYLE);
+        ui->radioTemp->setStyleSheet(LED_CONNECTED_STYLE);
     }else
     {
         connected=false;
         ui->btnConnect->setText("Connect");
+        ui->radioError->setStyleSheet(LED_NONCONNECT_STYLE);
+        ui->radioTemp->setStyleSheet(LED_NONCONNECT_STYLE);
         socketThread.quit();
     }
 }
@@ -733,14 +716,52 @@ void MainWindow::setThreshold(double thres)
     m_thres = thres;
 }
 
-void MainWindow::updateTempNLinkSpeed(const float &temp, const float &speed)
+
+QString ErrorMsg(quint8 code)
+{
+    QString msg = "";
+    QMap<quint8, QString> checkTable
+        {
+            {0, "PLSR_TEMP"},
+            {1, "FPGA_TMP"},
+            {2, "MTR_FLT"},
+            {3, "OVERPRF"},
+            {4, "TX_ERR"},
+            {5, "RESERVED"},
+            {6, "RESERVED"},
+            {7, "RESERVED"}
+        };
+
+    if(code != 0)
+    {
+        for(quint8 i = 0; i<8; i++)
+        {
+            if( ((code>>i) & 1) )
+            {
+                msg+=checkTable[i] + "|";
+            }
+        }
+
+        return msg.slice(0, msg.size()-1);
+    }
+    return "";
+}
+
+void MainWindow::updateHeaderInfo(const float &temp, const float &speed, const quint8  &errorCode)
 {
     ui->radioTemp->setText(QString::asprintf("Temperature: %.1f \u2103", temp));
     ui->labelSpeed->setText(QString("Ethernet Speed: %1 Mbits/s").arg(speed));
-    if(temp > 70.0)
+    ui->radioError->setText(QString("Error: %1").arg(ErrorMsg(errorCode)));
+
+    if(temp > 70.0 )
         ui->radioTemp->setChecked(true);
     else
         ui->radioTemp->setChecked(false);
+
+    if(errorCode != 0)
+        ui->radioError->setChecked(true);
+    else
+        ui->radioError->setText(QString("No Error"));
 }
 
 void MainWindow::do_badSettings()

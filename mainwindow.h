@@ -85,7 +85,7 @@ private slots:
     // processing
     void threadFinished();
     void setThreshold(double);
-    void updateTempNLinkSpeed(const float&, const float &);
+    void updateHeaderInfo(const float&, const float &, const quint8 &);
 
     // badsettings
     void do_badSettings();

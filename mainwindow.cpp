@@ -202,6 +202,9 @@ void MainWindow::resetUI()
     ui->labelSpeed->setText("Ethernet Speed:");
     ui->radioTemp->setText(QString::asprintf("Temperature: %.1f \u2103", 0.0));
     ui->radioError->setText(QString("Error Status"));
+    ui->radioError->setChecked(false);
+    ui->radioStatus->setText("Not Connected");
+
 }
 
 void MainWindow::toggleOff(QCheckBox *widget)
@@ -398,12 +401,14 @@ void MainWindow::toggleStatus(bool arg)
         ui->btnConnect->setText("Disconnect");
         ui->radioError->setStyleSheet(LED_CONNECTED_STYLE);
         ui->radioTemp->setStyleSheet(LED_CONNECTED_STYLE);
+        ui->radioStatus->setText("Connected");
     }else
     {
         connected=false;
         ui->btnConnect->setText("Connect");
         ui->radioError->setStyleSheet(LED_NONCONNECT_STYLE);
         ui->radioTemp->setStyleSheet(LED_NONCONNECT_STYLE);
+        ui->radioStatus->setText("Not Connected");
         socketThread.quit();
     }
 }
@@ -761,7 +766,10 @@ void MainWindow::updateHeaderInfo(const float &temp, const float &speed, const q
     if(errorCode != 0)
         ui->radioError->setChecked(true);
     else
+    {
+        ui->radioError->setChecked(false);
         ui->radioError->setText(QString("No Error"));
+    }
 }
 
 void MainWindow::do_badSettings()

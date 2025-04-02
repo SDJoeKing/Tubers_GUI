@@ -350,7 +350,7 @@ void MainWindow::on_btnConnect_clicked(bool checked)
         connect(this, &MainWindow::mainSendSetting, m_client, &mTcpClient::sendSetting, Qt::QueuedConnection);
         // connect fps
         connect(m_client, &mTcpClient::fps, this, &MainWindow::do_fps, Qt::QueuedConnection);
-        connect(m_client, &mTcpClient::settingReady, m_client, &mTcpClient::startAcquisition);
+        connect(m_client, &mTcpClient::settingReady, this, &MainWindow::do_settingReady);
         connect(m_processor, &Processor::plotRate, this, &MainWindow::do_plotRate, Qt::QueuedConnection);
         // connect error handling
         connect(m_client, &mTcpClient::errorOccured, this, &MainWindow::do_ConnectLost, Qt::QueuedConnection);
@@ -418,7 +418,7 @@ void MainWindow::runAcquisition()
     emit acquisitionRun(true);
     acquisitionRunning = true;
     // m_settings->disableScroll(true);
-    ui->btnRun->setChecked(true);
+
     ui->btnRun->setText("Stop");
 
 }
@@ -427,7 +427,7 @@ void MainWindow::stopAcquisition()
 {
     emit acquisitionRun(false);
     acquisitionRunning = false;
-    m_settings->disableScroll(false);
+
     ui->btnRun->setText("Run");
     ui->btnRun->setChecked(false);
 }
@@ -441,15 +441,20 @@ double MainWindow::envelope(double sample, double &value, double ga, double gr)
 
 void MainWindow::on_btnRun_clicked(bool checked)
 {
+
+    ui->btnRun->setChecked(false);
+
     if(connected)
     {
         if(checked && !acquisitionRunning)
         {
             // send current settings to hardware
+            ui->btnRun->setChecked(true);
             m_settings->sendSetting();
 
         }else
         {
+
             if(encoderTriggerMode)
             {
                 QTimer::singleShot(10, m_client, [&](){m_client->writeData("stop");});
@@ -458,8 +463,8 @@ void MainWindow::on_btnRun_clicked(bool checked)
             emit stopAcqSig();
             QTimer::singleShot(0, m_client, [&](){m_client->flush();});
         }
-    }else
-        ui->btnRun->setChecked(false);
+    }
+
 }
 
 
@@ -775,6 +780,13 @@ void MainWindow::updateHeaderInfo(const float &temp, const float &speed, const q
 void MainWindow::do_badSettings()
 {
     stopAcquisition();
+}
+
+void MainWindow::do_settingReady()
+{
+    qDebug() << ui->btnRun->isChecked() << acquisitionRunning;
+    if(ui->btnRun->isChecked() && !acquisitionRunning)
+        QTimer::singleShot(0, m_client, [&](){m_client->startAcquisition();});
 }
 
 

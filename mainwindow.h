@@ -90,6 +90,9 @@ private slots:
     // badsettings
     void do_badSettings();
 
+    // setting ready
+    void do_settingReady();
+
 
 private:
     QThread socketThread;

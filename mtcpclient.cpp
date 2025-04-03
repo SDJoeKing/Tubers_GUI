@@ -3,7 +3,10 @@
 
 static int counter = 0;
 static int old_counter = 0;
-QElapsedTimer elapTimer;
+static int dataEmitCounter = 0;
+static int dataEmitTracker = 0;
+
+
 QByteArray ack = QString("data acknowledged").toUtf8();
 QByteArray stopAcq = QString("stop").toUtf8();
 
@@ -12,6 +15,7 @@ mTcpClient::mTcpClient(QObject *parent)
 {
     shutdownLock = true;
     acquisitionRunning = false;
+
 }
 
 mTcpClient::~mTcpClient()
@@ -20,6 +24,7 @@ mTcpClient::~mTcpClient()
     qDebug() << "client is open ? " << isOpen();
     qDebug() << counter << " acquisitions received";
     delete m_socket;
+
 }
 
 bool mTcpClient::start(const QString &address, const quint16 port)
@@ -78,6 +83,29 @@ void mTcpClient::flush()
 void mTcpClient::setStopAcq()
 {
     m_stopAcq = 1;
+}
+
+void mTcpClient::timerOn(bool on)
+{
+    if(on)
+    {
+        m_timer->start();
+#ifdef FRAMERATE_CONTROL
+        m_frameControlTimer->start();
+#endif
+    }
+    else
+    {
+        m_timer->stop();
+#ifdef FRAMERATE_CONTROL
+        m_frameControlTimer->stop();
+#endif
+    }
+}
+
+void mTcpClient::setPrf(const int newPrf)
+{
+    prf = newPrf;
 }
 
 bool mTcpClient::isOpen()
@@ -205,9 +233,46 @@ bool mTcpClient::parseServerMsg(QByteArray &arr)
     }
 }
 
+void mTcpClient::do_timeout()
+{
+    if(m_timer->isActive())
+    {
+        emit fps(static_cast<float>(counter-old_counter) / m_timer->interval() * 1000.0);
+        old_counter = counter;
+
+        emit plotRate(static_cast<float>(dataEmitCounter-dataEmitTracker) / m_timer->interval() * 1000.0);
+        dataEmitTracker = dataEmitCounter;
+
+    }
+}
+
+void mTcpClient::do_frameRateControl()
+{
+#ifdef FRAMERATE_CONTROL
+    if(m_frameControlTimer->isActive())
+    {
+        if(prf > FRAMERATE)
+        {
+            emit dataReady(m_readyData.constData());
+            dataEmitCounter++;
+        }
+    }
+#endif
+}
+
 void mTcpClient::run()
 {
     m_loop = new QEventLoop(this);
+    m_timer = new QTimer(this);
+
+#ifdef FRAMERATE_CONTROL
+    m_frameControlTimer = new QTimer(this);
+    m_frameControlTimer->setInterval(1000.0/FRAMERATE);
+    connect(m_frameControlTimer, &QTimer::timeout, this, &mTcpClient::do_frameRateControl);
+#endif
+
+    m_timer->setInterval(1000);
+    m_timer->start();
 
     m_socket = new QTcpSocket(this);
     m_socket->setReadBufferSize(32768);
@@ -220,6 +285,8 @@ void mTcpClient::run()
     connect(m_socket, &QTcpSocket::readyRead, this, &mTcpClient::readMessage );
     connect(m_socket, &QTcpSocket::errorOccurred, this, &mTcpClient::errorOccurred );
     connect(m_socket, &QTcpSocket::stateChanged, this, &mTcpClient::updateState);
+    connect(m_timer, &QTimer::timeout, this, &mTcpClient::do_timeout);
+
     m_data = QByteArray(DATA_SIZE, Qt::Uninitialized);
 
     bool success = start(m_address, m_port);
@@ -259,8 +326,6 @@ void mTcpClient::readMessage()
         m_readSize = tempData.size();
 
     }
-    // if(tempData.size() > 3)
-        // qDebug() << "S: " << m_readSize << tempData.at(0)<<tempData.at(1)<<tempData.at(2)<<tempData.at(3);
 
     if(m_commence)
     {
@@ -290,16 +355,18 @@ void mTcpClient::readMessage()
                 // send data acknowledgement
                 writeData(ack);
             }
-
+#ifndef FRAMERATE_CONTROL
             emit dataReady(m_readyData.constData());
-
-            counter++;
-            if(elapTimer.hasExpired(1000))
+            dataEmitCounter++;
+#else
+            if(prf <= FRAMERATE)
             {
-                emit fps(static_cast<float>(counter-old_counter) / elapTimer.elapsed() * 1000.0);
-                old_counter = counter;
-                elapTimer.restart();
+                emit dataReady(m_readyData.constData());
+                dataEmitCounter++;
+
             }
+#endif
+            counter++;
             counter_data = 0;
             m_readSize = 0;
         }

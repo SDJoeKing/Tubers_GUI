@@ -34,6 +34,8 @@ public slots:
     void clearData();
     void flush();
     void setStopAcq();
+    void timerOn(bool);
+    void setPrf(const int);
 private:
     QMutex mu;
     QTcpSocket *m_socket;
@@ -53,6 +55,12 @@ private:
     quint16 m_port;
     bool shutdownLock;
     bool acquisitionRunning;
+    QTimer *m_timer;
+    int prf;
+#ifdef FRAMERATE_CONTROL
+    QTimer *m_frameControlTimer;
+#endif
+
 private slots:
     void readMessage(); //  signal readyRead, slot readMessage
     void errorOccurred(QAbstractSocket::SocketError socketError);
@@ -61,7 +69,8 @@ private slots:
     void notifyServerDown();
     void updateState(QTcpSocket::SocketState);
     bool parseServerMsg(QByteArray &);
-
+    void do_timeout();
+    void do_frameRateControl();
 signals:
     void clientMessage(const QString &msg);
     void tcpMessage(const QString &msg);
@@ -72,6 +81,7 @@ signals:
     void acquisitionStop();
     void dataReady(const char*);
     void fps(float rate);
+    void plotRate(float rate);
     void connectFail();
     void errorOccured();
     void badSettings();

@@ -8,6 +8,10 @@ static const quint16 DATA_SIZE = 16000*2 ;
 static const quint8 HEADER_SIZE = 10;
 static const quint16 DATA_SIZE_RECV = DATA_SIZE + HEADER_SIZE;
 
+#ifdef FRAMERATE_CONTROL
+#define FRAMERATE 120
+#endif
+
 enum HEADER {
     acqMode = 4,
     encoderDirection,

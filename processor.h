@@ -8,11 +8,6 @@
 #include "mtcpclient.h"
 #include <cmath>
 
-#ifdef FRAMERATE_CONTROL
-#define FRAMERATE 120
-#endif
-
-
 class Processor : public QObject
 {
     Q_OBJECT
@@ -43,7 +38,7 @@ signals:
     void dataProcessed(const QList<QPointF> &, bool );
     void dataLogger(const char *);
     void sendHeaderInfo(const float &, const float &, const quint8 &); // temp. speed
-    void plotRate(const float &);
+
 public slots:
     void process(const char *);
     void setVel(const float &vel);

@@ -64,7 +64,7 @@ signals:
     void settingHide();
     void fsChanged(const float);
     void badSettings();
-
+    void prf(const int);
 private:
     Ui::TSettings *ui;
     void installFilter(QObject *);

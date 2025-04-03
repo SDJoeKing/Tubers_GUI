@@ -2,9 +2,8 @@
 #include "mainwindow.h"
 
 QElapsedTimer processTimer;
-QElapsedTimer fpsTimer;
+
 QMutex mu;
-int counter = 0;
 int golayTrack = 0;
 
 float lerp(int a, int b, float t);
@@ -21,7 +20,7 @@ Processor::Processor(QObject *parent)
     filtering = false;
 
     processTimer.start();
-    fpsTimer.start();
+
 
     m_sequenceA = genPulse(std::make_unique<std::vector<int>>(std::vector<int>{1,1,-1,1,1,1,-1,1,1,1,-1,1,1,1,-1,1}), 10);
 
@@ -221,26 +220,8 @@ void Processor::process(const char *dataptr)
         i = 0;
     }
 
-    if(fpsTimer.hasExpired(1000))
-    {
-        emit plotRate(counter);
-        counter=0;
-        fpsTimer.restart();
-
-    }
-
-#ifdef FRAMERATE_CONTROL
-    if(processTimer.durationElapsed().count() > (1e9 / FRAMERATE) )
-    {
-        emit dataProcessed(calPoint, _forward == 2 ? false : true );
-        processTimer.restart();
-        counter++;
-    }
-
-#else
     emit dataProcessed(calPoint, _forward == 2 ? false : true);
-    counter++;
-#endif
+
     emit sendHeaderInfo(_temperature, linkSpeed, errorCode);
 }
 

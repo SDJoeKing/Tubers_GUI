@@ -256,7 +256,7 @@ void TSettings::on_btnConfirm_clicked()
     setting+= QString::number( (ui->radioManual->isChecked() ? 0 : 1) ) + ";";
 
     emit settingConfirm(setting);
-
+    emit prf(ui->prf->value());
     QList<double> bscanSetting;
     bscanSetting.emplaceBack(thick);
     bscanSetting.emplaceBack(length);

@@ -740,8 +740,8 @@ QString ErrorMsg(quint8 code)
             {2, "MTR_FLT"},
             {3, "OVERPRF"},
             {4, "TX_ERR"},
-            {5, "RESERVED"},
-            {6, "RESERVED"},
+            {5, "SETUP_ERR_FLAG"},
+            {6, "ACQ_ERR_FLAG"},
             {7, "RESERVED"}
         };
 
@@ -757,14 +757,22 @@ QString ErrorMsg(quint8 code)
 
         return msg.slice(0, msg.size()-1);
     }
-    return "";
+    return "No Error";
 }
 
 void MainWindow::updateHeaderInfo(const float &temp, const float &speed, const quint8  &errorCode)
 {
     ui->radioTemp->setText(QString::asprintf("Temperature: %.1f \u2103", temp));
     ui->labelSpeed->setText(QString("Ethernet Speed: %1 Mbits/s").arg(speed));
-    ui->radioError->setText(QString("Error: %1").arg(ErrorMsg(errorCode)));
+
+    QString errMessage = ErrorMsg(errorCode);
+    ui->radioError->setText(QString("Error: %1").arg(errMessage));
+
+    if(m_err!=errMessage)
+    {
+        logMsg(QString("Error Status: ") + errMessage);
+        m_err = errMessage;
+    }
 
     if(temp > 70.0 )
         ui->radioTemp->setChecked(true);

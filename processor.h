@@ -34,6 +34,7 @@ private:
     bool m_golayReady = false;
     float m_scale = 1.0;
     const float m_maxValue = 3180;
+    quint8 m_errorCode;
 signals:
     void dataProcessed(const QList<QPointF> &, bool );
     void dataLogger(const char *);
@@ -48,6 +49,7 @@ public slots:
     void updateFilter(const quint8 & order, const float &fs, const float &fc, const float &fw);
     void updateGolaySetting(bool useGolay, const QString &seq, const float &freq, quint8);
     void updateScale(const float &);
+
 };
 
 #endif // PROCESSOR_H

@@ -130,6 +130,7 @@ private:
     // status
     bool acquisitionRunning = false;
     bool connected = false;
+    QString m_err {"No Error"};
 // private functions
 private:
     void resetUI();

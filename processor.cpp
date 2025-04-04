@@ -137,7 +137,7 @@ void Processor::process(const char *dataptr)
 
     float _temperature =  (static_cast<quint16>(temp2 | temp1));
     int linkSpeed = (static_cast<quint8>(serverData.at(HEADER::linkSpeed)) * 10);
-    quint8 errorCode = static_cast<quint8>(serverData.at(HEADER::errorFlags));
+    m_errorCode = static_cast<quint8>(serverData.at(HEADER::errorFlags));
 
     bool golaySeq = m_golayASeq;
 
@@ -222,7 +222,7 @@ void Processor::process(const char *dataptr)
 
     emit dataProcessed(calPoint, _forward == 2 ? false : true);
 
-    emit sendHeaderInfo(_temperature, linkSpeed, errorCode);
+    emit sendHeaderInfo(_temperature, linkSpeed, m_errorCode);
 }
 
 void Processor::setVel(const float &vel)

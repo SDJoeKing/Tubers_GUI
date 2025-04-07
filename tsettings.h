@@ -69,7 +69,7 @@ private:
     Ui::TSettings *ui;
     void installFilter(QObject *);
     bool encoderMode = false;
-    QString m_pulse;
+    QString m_pulse = "PN";
     quint8 m_pulseLength = 32;
 
     // QObject interface

@@ -130,7 +130,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_Ascan, &TChartViewForm::sendThreshold, this, &MainWindow::setThreshold);
 
     // setting/logging related
-    connect(m_settings,  &TSettings::badSettings, this, &MainWindow::do_badSettings);
+    connect(m_settings,  &TSettings::badSettings, this, [&](){emit stopAcqSig(); });
     connect(this, &MainWindow::velocitySet, m_settings, &TSettings::updateVel);
     // tcpclient
     m_client = nullptr;

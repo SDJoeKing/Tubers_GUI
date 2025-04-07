@@ -111,7 +111,13 @@ void TSettings::on_btnConfirm_clicked()
     if(ui->radioManual->isChecked())
     {
         _input = ui->pulseSequence->text();
-        while(_input.size() != m_pulseLength / 2)
+        if(_input.size() > m_pulseLength / 2)
+        {
+            errorInSettings("Invalid pulse length, please double check.");
+            ui->pulseSequence->setText(m_pulse);
+            return;
+        }
+        while(_input.size() < m_pulseLength / 2)
         {
             _input += 'C';
         }
@@ -161,7 +167,8 @@ void TSettings::on_btnConfirm_clicked()
             ui->lineGolayB->setText(m_pulse.sliced(m_pulseLength/2));
         }
 
-        errorInSettings("Invalid pulse sequence, please double check.");
+        errorInSettings(QString("Invalid pulse length, please double check.") + _input);
+        ui->pulseSequence->setText(m_pulse);
         return;
 
     }else{
@@ -177,11 +184,13 @@ void TSettings::on_btnConfirm_clicked()
                     ui->lineGolayB->setText(m_pulse.sliced(m_pulseLength/2));
                 }
                 errorInSettings("Invalid pulse sequence, please double check.");
+                ui->pulseSequence->setText(m_pulse);
                 return;
             }
         }
     }
-    m_pulse = _input;
+
+
     setting+= QString(_input) + ";"; // pulseSequence
     setting+= QString::number(ui->spinFrequency->value()) + ";"; // pulse freq
     setting+= QString::number(ui->prf->value()) + ";"; // prf
@@ -345,8 +354,6 @@ void TSettings::errorInSettings(const QString &msg)
 void TSettings::on_radioManual_toggled(bool checked)
 {
     manualSeqVisible(checked);
-    m_pulse = ui->pulseSequence->text();
-
 }
 
 

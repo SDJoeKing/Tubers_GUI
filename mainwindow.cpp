@@ -190,6 +190,8 @@ void MainWindow::resetUI()
 
     toggleOff(ui->ckRectify);// so that by default rectify
     ui->ckRectify->click();
+    toggleOff(ui->ckFilter);// so that by default rectify
+    ui->ckFilter->click();
 
     toggleOff(ui->ckDepthAxis);
     toggleOff(ui->ckGates);

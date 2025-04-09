@@ -17,6 +17,7 @@
 #include <QSizePolicy>
 #include <QFutureWatcher>
 #include <QtConcurrent>
+#include <thread>
 
 #include "tsettings.h"
 #include "tlogging.h"

@@ -48,7 +48,7 @@ MainWindow::MainWindow(QWidget *parent)
     m_Ascan = new TChartViewForm(_splitter);
     m_Bscan = new QCustomPlot(_splitter);
     // B-scan uses openGL support
-    m_Bscan->setOpenGl(true);
+    // m_Bscan->setOpenGl(true);
 
     // configure B-scan
     // m_Bscan->addGraph()
@@ -611,7 +611,11 @@ void MainWindow::updateBScan(const QList<QPointF> &data, bool forward)
     }
     _colorMap->rescaleAxes();
     _colorMap->setGradient(QCPColorGradient::gpJet);
-    m_Bscan->replot(QCustomPlot::rpQueuedRefresh);
+
+    m_Bscan->setUpdatesEnabled(false);
+    auto f = QtConcurrent::run(QThreadPool::globalInstance(), &QCustomPlot::replot, m_Bscan, QCustomPlot::rpQueuedRefresh );
+    f.waitForFinished();
+    m_Bscan->setUpdatesEnabled(true);
 }
 
 
@@ -737,14 +741,14 @@ QString ErrorMsg(quint8 code)
     QString msg = "";
     QMap<quint8, QString> checkTable
         {
-            {0, "PLSR_TEMP"},
-            {1, "FPGA_TMP"},
-            {2, "MTR_FLT"},
-            {3, "OVERPRF"},
-            {4, "TX_ERR"},
-            {5, "SETUP_ERR_FLAG"},
-            {6, "ACQ_ERR_FLAG"},
-            {7, "RESERVED"}
+            {0, "Pulser OverTemp"},
+            {1, "FPGA OverTemp"},
+            {2, "Motor Fault"},
+            {3, "Over PRF"},
+            {4, "Comm Err"},
+            {5, "Setup Err"},
+            {6, "Acquisition Err"},
+            {7, "HV supply Err"}
         };
 
     if(code != 0)

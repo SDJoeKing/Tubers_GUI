@@ -86,7 +86,7 @@ private slots:
     // processing
     void threadFinished();
     void setThreshold(double);
-    void updateHeaderInfo(const float&, const float &, const quint8 &);
+    void updateHeaderInfo(const float&, const float &, const quint8 &, const QVector<qint16> &imus);
 
     // badsettings
     void do_badSettings();

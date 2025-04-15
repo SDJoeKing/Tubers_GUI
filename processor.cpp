@@ -109,6 +109,12 @@ void Processor::close()
     m_loop->quit();
 }
 
+template <class T>
+static void dataConversion(T& dest,const QByteArray& src, int lowIndex, int highIndex)
+{
+    dest = static_cast<T>(((src.at(highIndex) << 8) & 0xFF00 ) | ( (src.at(lowIndex)  & 0xFF )));
+}
+
 void Processor::process(const char *dataptr)
 {
 
@@ -124,25 +130,26 @@ void Processor::process(const char *dataptr)
 
     dataPoint[0] = _temp;
 
-    // QByteArray _arr(mTcpClient::DATA_SIZE/2, Qt::Uninitialized);
-
     // take into account of header data
     int j=  HEADER_SIZE;
+
     // get system information from the header data
     quint8 _forward = static_cast<quint8>(serverData.at(HEADER::encoderDirection));
     qDebug() << _forward;
-    temp1 =(serverData.at(HEADER::systemTempHigh) << 8) & 0xFF00;
 
-    temp2 = (serverData.at(HEADER::systemTempLow)) & 0xFF;
-
-    float _temperature =  (static_cast<quint16>(temp2 | temp1));
     int linkSpeed = (static_cast<quint8>(serverData.at(HEADER::linkSpeed)) * 10);
     m_errorCode = static_cast<quint8>(serverData.at(HEADER::errorFlags));
 
     bool golaySeq = m_golayASeq;
 
-    // qDebug() << "------- " << _temperature / 2 / 125e6 *2293.0 << " ------- ";
-    _temperature = ((_temperature/65536.0f)/0.00198421639f ) - 273.15f;
+    dataConversion<decltype(temp1)>(temp1, serverData, HEADER::systemTempLow, HEADER::systemTempHigh);
+    float _temperature = ((temp1/65536.0f)/0.00198421639f ) - 273.15f;
+
+    // IMU reading;
+    qint16 _imu_x, _imu_y, _imu_z;
+    dataConversion<decltype(_imu_x)>(_imu_x, serverData, HEADER::imuXLow, HEADER::imuXHigh);
+    dataConversion<decltype(_imu_x)>(_imu_y, serverData, HEADER::imuYLow, HEADER::imuYHigh);
+    dataConversion<decltype(_imu_x)>(_imu_z, serverData, HEADER::imuZLow, HEADER::imuZHigh);
 
     for (int i = 0; i <  DATA_SIZE/2; i++)
     {
@@ -221,8 +228,7 @@ void Processor::process(const char *dataptr)
     }
 
     emit dataProcessed(calPoint, _forward == 2 ? false : true);
-
-    emit sendHeaderInfo(_temperature, linkSpeed, m_errorCode);
+    emit sendHeaderInfo(_temperature, linkSpeed, m_errorCode,  QVector<qint16>{_imu_x, _imu_y, _imu_z});
 }
 
 void Processor::setVel(const float &vel)

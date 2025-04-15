@@ -38,7 +38,7 @@ private:
 signals:
     void dataProcessed(const QList<QPointF> &, bool );
     void dataLogger(const char *);
-    void sendHeaderInfo(const float &, const float &, const quint8 &); // temp. speed
+    void sendHeaderInfo(const float &, const float &, const quint8 &, const QVector<qint16> &imus); // temp. speed
 
 public slots:
     void process(const char *);

@@ -5,7 +5,7 @@
 #include <QString>
 #include <QMap>
 static const quint16 DATA_SIZE = 16000*2 ;
-static const quint8 HEADER_SIZE = 10;
+static const quint8 HEADER_SIZE = 16;
 static const quint16 DATA_SIZE_RECV = DATA_SIZE + HEADER_SIZE;
 
 #ifdef FRAMERATE_CONTROL
@@ -18,7 +18,13 @@ enum HEADER {
     errorFlags,
     systemTempLow,
     systemTempHigh,
-    linkSpeed
+    linkSpeed,
+    imuXLow,
+    imuXHigh,
+    imuYLow,
+    imuYHigh,
+    imuZLow,
+    imuZHigh
 };
 enum GOLAY
 {
@@ -87,6 +93,8 @@ static const QString LED_NONCONNECT_STYLE {"QRadioButton::indicator {"
                              "background-color:       grey;"
                              "border:                 2px solid white;"
                              "}"};
+
+static const QString getImuLabel(const QString &axis)  {return QString("IMU - %1: ").arg(axis);}
 
 #endif // CONFIG_H
 

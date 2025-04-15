@@ -208,6 +208,11 @@ void MainWindow::resetUI()
     ui->radioError->setChecked(false);
     ui->radioStatus->setText("Not Connected");
 
+    // IMU label:
+    ui->label_IMU_X->setText(getImuLabel("X"));
+    ui->label_IMU_Y->setText(getImuLabel("Y"));
+    ui->label_IMU_Z->setText(getImuLabel("Z"));
+
 }
 
 void MainWindow::toggleOff(QCheckBox *widget)
@@ -766,10 +771,13 @@ QString ErrorMsg(quint8 code)
     return "No Error";
 }
 
-void MainWindow::updateHeaderInfo(const float &temp, const float &speed, const quint8  &errorCode)
+void MainWindow::updateHeaderInfo(const float &temp, const float &speed, const quint8  &errorCode, const QVector<qint16>& imus)
 {
     ui->radioTemp->setText(QString::asprintf("Temperature: %.1f \u2103", temp));
     ui->labelSpeed->setText(QString("Ethernet Speed: %1 Mbits/s").arg(speed));
+    ui->label_IMU_X->setText(getImuLabel("X") + QString::number(imus.at(0)));
+    ui->label_IMU_Y->setText(getImuLabel("Y") + QString::number(imus.at(1)));
+    ui->label_IMU_Z->setText(getImuLabel("Z") + QString::number(imus.at(2)));
 
     QString errMessage = ErrorMsg(errorCode);
     ui->radioError->setText(QString("Error: %1").arg(errMessage));

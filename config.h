@@ -5,7 +5,7 @@
 #include <QString>
 #include <QMap>
 static const quint16 DATA_SIZE = 16000*2 ;
-static const quint8 HEADER_SIZE = 16;
+static const quint8 HEADER_SIZE = 24;
 static const quint16 DATA_SIZE_RECV = DATA_SIZE + HEADER_SIZE;
 
 #ifdef FRAMERATE_CONTROL
@@ -19,12 +19,12 @@ enum HEADER {
     systemTempLow,
     systemTempHigh,
     linkSpeed,
-    imuXLow,
-    imuXHigh,
-    imuYLow,
-    imuYHigh,
-    imuZLow,
-    imuZHigh
+    maxLow, maxHigh,
+    minLow, minHigh,
+    meanLow, meanHigh,
+    rmsLow, rmsHigh,
+    stdLow, stdHigh,
+    thick1, thick2, thick3, thick4
 };
 enum GOLAY
 {
@@ -45,7 +45,15 @@ enum SETTINGS
     encoderSkips,
     motorSpeed,
     motorAngle,
+    adcClkDiv,
+
+    pulseWidth,
+    postLock,
+    ID,
     velocity,
+    threshold,
+    ratedThickness,
+
     order,
     lowCut,
     highCut,

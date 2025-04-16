@@ -158,7 +158,7 @@
        <item row="5" column="0" colspan="2">
         <widget class="QFrame" name="frame_2">
          <property name="accessibleName">
-          <string> </string>
+          <string/>
          </property>
          <property name="frameShape">
           <enum>QFrame::Shape::StyledPanel</enum>
@@ -193,9 +193,9 @@
            </widget>
           </item>
           <item row="1" column="0">
-           <widget class="QLabel" name="label_IMU_X">
+           <widget class="QLabel" name="labelMax">
             <property name="text">
-             <string>IMU - X:</string>
+             <string>Max:</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
@@ -203,9 +203,9 @@
            </widget>
           </item>
           <item row="2" column="0">
-           <widget class="QLabel" name="label_IMU_Y">
+           <widget class="QLabel" name="labelMean">
             <property name="text">
-             <string>IMU - Y:</string>
+             <string>Mean:</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
@@ -213,9 +213,29 @@
            </widget>
           </item>
           <item row="3" column="0">
-           <widget class="QLabel" name="label_IMU_Z">
+           <widget class="QLabel" name="labelRMS">
             <property name="text">
-             <string>IMU - Z:</string>
+             <string>RMS:</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="0">
+           <widget class="QLabel" name="labelSTD">
+            <property name="text">
+             <string>STD:</string>
+            </property>
+            <property name="alignment">
+             <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="0">
+           <widget class="QLabel" name="labelThick">
+            <property name="text">
+             <string>Thickness:</string>
             </property>
             <property name="alignment">
              <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignVCenter</set>

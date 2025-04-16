@@ -69,14 +69,14 @@ private slots:
     void on_ckDepthAxis_clicked(bool checked);
 
     void on_ckRectify_clicked(bool checked);
-    void updateBScan(const QList<QPointF> &data, bool);
+    void updateCScan(const float &);
     void on_actionReset_triggered(bool);
     void setRectifyChecked();
 
     void bScanCustomContext(const QPoint &pos);
     void on_btnCal_clicked();
 
-    void do_bScanSetting(bool, const QList<double> &);
+    void do_cScanSetting(bool, const QList<double> &);
 
     void updateFs(double);
     // debugging fps
@@ -122,8 +122,9 @@ private:
     double m_fw = 8;
     float m_fs = 125;
 
-    bool use_bscan = 0;
+    bool use_cscan = 0;
     double m_thres = 0.0;
+    float maxThick = 5.0;
     // processor
     Processor *m_processor;
     QEventLoop m_quitEvent;
@@ -149,5 +150,6 @@ signals:
     void stopAcqSig();
     void filterParam(const quint8 & order, const float &fs, const float &fc, const float &fw);
     void golayCoding(bool, const QString &, const float&, quint8);
+    void cScan(bool);
 };
 #endif // MAINWINDOW_H

@@ -38,9 +38,9 @@
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>0</y>
+        <y>-297</y>
         <width>411</width>
-        <height>1046</height>
+        <height>1176</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -65,10 +65,89 @@
           <property name="bottomMargin">
            <number>2</number>
           </property>
-          <item row="0" column="0">
-           <widget class="QLabel" name="label_9">
+          <item row="11" column="0">
+           <widget class="QLabel" name="label_21">
             <property name="text">
-             <string>A-scan Length</string>
+             <string>Motor Speed</string>
+            </property>
+           </widget>
+          </item>
+          <item row="11" column="1">
+           <widget class="QSpinBox" name="motorSpeed">
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>20</height>
+             </size>
+            </property>
+            <property name="focusPolicy">
+             <enum>Qt::FocusPolicy::ClickFocus</enum>
+            </property>
+            <property name="buttonSymbols">
+             <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+            </property>
+            <property name="prefix">
+             <string/>
+            </property>
+            <property name="minimum">
+             <number>0</number>
+            </property>
+            <property name="maximum">
+             <number>100</number>
+            </property>
+            <property name="value">
+             <number>0</number>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="0">
+           <widget class="QLabel" name="label_6">
+            <property name="text">
+             <string>PRF</string>
+            </property>
+           </widget>
+          </item>
+          <item row="7" column="1">
+           <widget class="QComboBox" name="powerOutput">
+            <property name="focusPolicy">
+             <enum>Qt::FocusPolicy::ClickFocus</enum>
+            </property>
+            <property name="currentIndex">
+             <number>3</number>
+            </property>
+            <item>
+             <property name="text">
+              <string>25%</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>50%</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>75%</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>100%</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+          <item row="12" column="0">
+           <widget class="QLabel" name="label_20">
+            <property name="text">
+             <string>Motor Angle</string>
+            </property>
+           </widget>
+          </item>
+          <item row="16" column="0">
+           <widget class="QLabel" name="label_24">
+            <property name="text">
+             <string>Inner Diameter [mm]</string>
             </property>
            </widget>
           </item>
@@ -119,62 +198,24 @@
             </item>
            </widget>
           </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="label_10">
+          <item row="10" column="0">
+           <widget class="QLabel" name="label_19">
             <property name="text">
-             <string>Sampling Rate</string>
+             <string>Sound Velocity</string>
             </property>
            </widget>
           </item>
-          <item row="1" column="1">
-           <widget class="QLabel" name="label_fs">
+          <item row="4" column="0">
+           <widget class="QLabel" name="label_8">
             <property name="text">
-             <string>125 MHz</string>
+             <string>Pulse Delay</string>
             </property>
            </widget>
           </item>
-          <item row="2" column="0">
-           <widget class="QLabel" name="label_7">
+          <item row="5" column="0">
+           <widget class="QLabel" name="label_4">
             <property name="text">
-             <string>Tx Channel</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="1">
-           <widget class="QSpinBox" name="spinTx">
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>20</height>
-             </size>
-            </property>
-            <property name="focusPolicy">
-             <enum>Qt::FocusPolicy::StrongFocus</enum>
-            </property>
-            <property name="buttonSymbols">
-             <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
-            </property>
-            <property name="suffix">
-             <string/>
-            </property>
-            <property name="prefix">
-             <string/>
-            </property>
-            <property name="minimum">
-             <number>1</number>
-            </property>
-            <property name="maximum">
-             <number>16</number>
-            </property>
-            <property name="value">
-             <number>16</number>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="0">
-           <widget class="QLabel" name="label_3">
-            <property name="text">
-             <string>Rx Channel</string>
+             <string>Pulsing Frequency</string>
             </property>
            </widget>
           </item>
@@ -209,15 +250,81 @@
             </property>
            </widget>
           </item>
-          <item row="4" column="0">
-           <widget class="QLabel" name="label_8">
+          <item row="15" column="0">
+           <widget class="QLabel" name="label_23">
             <property name="text">
-             <string>Pulse Delay</string>
+             <string>PostLockSample</string>
             </property>
            </widget>
           </item>
-          <item row="4" column="1">
-           <widget class="QSpinBox" name="spinPulseDelay">
+          <item row="8" column="0">
+           <widget class="QLabel" name="label_11">
+            <property name="text">
+             <string>Gain</string>
+            </property>
+           </widget>
+          </item>
+          <item row="13" column="0">
+           <widget class="QLabel" name="label_22">
+            <property name="text">
+             <string>PulseWidth [mm]</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLabel" name="label_fs">
+            <property name="text">
+             <string>125 MHz</string>
+            </property>
+           </widget>
+          </item>
+          <item row="9" column="0">
+           <widget class="QLabel" name="label_18">
+            <property name="text">
+             <string>Averages</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_10">
+            <property name="text">
+             <string>Sampling Rate</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1">
+           <widget class="QSpinBox" name="spinTx">
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>20</height>
+             </size>
+            </property>
+            <property name="focusPolicy">
+             <enum>Qt::FocusPolicy::StrongFocus</enum>
+            </property>
+            <property name="buttonSymbols">
+             <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+            </property>
+            <property name="suffix">
+             <string/>
+            </property>
+            <property name="prefix">
+             <string/>
+            </property>
+            <property name="minimum">
+             <number>1</number>
+            </property>
+            <property name="maximum">
+             <number>16</number>
+            </property>
+            <property name="value">
+             <number>16</number>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="1">
+           <widget class="QSpinBox" name="prf">
             <property name="maximumSize">
              <size>
               <width>16777215</width>
@@ -231,26 +338,79 @@
              <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
             </property>
             <property name="suffix">
-             <string> ns</string>
+             <string> Hz</string>
             </property>
             <property name="prefix">
              <string/>
             </property>
             <property name="minimum">
-             <number>0</number>
+             <number>1</number>
             </property>
             <property name="maximum">
-             <number>1600</number>
+             <number>1000</number>
             </property>
             <property name="value">
-             <number>0</number>
+             <number>100</number>
             </property>
            </widget>
           </item>
-          <item row="5" column="0">
-           <widget class="QLabel" name="label_4">
+          <item row="10" column="1">
+           <widget class="QDoubleSpinBox" name="spinVel">
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>20</height>
+             </size>
+            </property>
+            <property name="focusPolicy">
+             <enum>Qt::FocusPolicy::ClickFocus</enum>
+            </property>
+            <property name="buttonSymbols">
+             <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+            </property>
+            <property name="suffix">
+             <string> m/s</string>
+            </property>
+            <property name="maximum">
+             <double>9999.989999999999782</double>
+            </property>
+            <property name="value">
+             <double>5890.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="9" column="1">
+           <widget class="QSpinBox" name="spinAvg">
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>20</height>
+             </size>
+            </property>
+            <property name="focusPolicy">
+             <enum>Qt::FocusPolicy::ClickFocus</enum>
+            </property>
+            <property name="buttonSymbols">
+             <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+            </property>
+            <property name="prefix">
+             <string/>
+            </property>
+            <property name="minimum">
+             <number>1</number>
+            </property>
+            <property name="maximum">
+             <number>100</number>
+            </property>
+            <property name="value">
+             <number>1</number>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="QLabel" name="label_9">
             <property name="text">
-             <string>Pulsing Frequency</string>
+             <string>A-scan Length</string>
             </property>
            </widget>
           </item>
@@ -291,15 +451,8 @@
             </property>
            </widget>
           </item>
-          <item row="6" column="0">
-           <widget class="QLabel" name="label_6">
-            <property name="text">
-             <string>PRF</string>
-            </property>
-           </widget>
-          </item>
-          <item row="6" column="1">
-           <widget class="QSpinBox" name="prf">
+          <item row="12" column="1">
+           <widget class="QSpinBox" name="motorAngle">
             <property name="maximumSize">
              <size>
               <width>16777215</width>
@@ -313,63 +466,57 @@
              <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
             </property>
             <property name="suffix">
-             <string> Hz</string>
+             <string/>
             </property>
             <property name="prefix">
              <string/>
             </property>
             <property name="minimum">
-             <number>1</number>
+             <number>0</number>
             </property>
             <property name="maximum">
-             <number>1000</number>
+             <number>3600</number>
             </property>
             <property name="value">
-             <number>100</number>
+             <number>0</number>
             </property>
            </widget>
           </item>
-          <item row="7" column="0">
-           <widget class="QLabel" name="label_5">
-            <property name="text">
-             <string>Power Output</string>
+          <item row="13" column="1">
+           <widget class="QDoubleSpinBox" name="pulseWidth">
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>20</height>
+             </size>
             </property>
-           </widget>
-          </item>
-          <item row="7" column="1">
-           <widget class="QComboBox" name="powerOutput">
             <property name="focusPolicy">
              <enum>Qt::FocusPolicy::ClickFocus</enum>
             </property>
-            <property name="currentIndex">
-             <number>3</number>
+            <property name="buttonSymbols">
+             <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
             </property>
-            <item>
-             <property name="text">
-              <string>25%</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>50%</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>75%</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>100%</string>
-             </property>
-            </item>
+            <property name="value">
+             <double>2.000000000000000</double>
+            </property>
            </widget>
           </item>
-          <item row="8" column="0">
-           <widget class="QLabel" name="label_11">
-            <property name="text">
-             <string>Gain</string>
+          <item row="18" column="1">
+           <widget class="QDoubleSpinBox" name="ratedThickness">
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>20</height>
+             </size>
+            </property>
+            <property name="focusPolicy">
+             <enum>Qt::FocusPolicy::ClickFocus</enum>
+            </property>
+            <property name="buttonSymbols">
+             <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+            </property>
+            <property name="value">
+             <double>5.000000000000000</double>
             </property>
            </widget>
           </item>
@@ -401,15 +548,15 @@
             </property>
            </widget>
           </item>
-          <item row="9" column="0">
-           <widget class="QLabel" name="label_18">
+          <item row="3" column="0">
+           <widget class="QLabel" name="label_3">
             <property name="text">
-             <string>Averages</string>
+             <string>Rx Channel</string>
             </property>
            </widget>
           </item>
-          <item row="9" column="1">
-           <widget class="QSpinBox" name="spinAvg">
+          <item row="16" column="1">
+           <widget class="QDoubleSpinBox" name="ID">
             <property name="maximumSize">
              <size>
               <width>16777215</width>
@@ -422,96 +569,23 @@
             <property name="buttonSymbols">
              <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
             </property>
-            <property name="prefix">
-             <string/>
-            </property>
-            <property name="minimum">
-             <number>1</number>
-            </property>
             <property name="maximum">
-             <number>100</number>
+             <double>9999.000000000000000</double>
             </property>
             <property name="value">
-             <number>1</number>
+             <double>150.000000000000000</double>
             </property>
            </widget>
           </item>
-          <item row="10" column="0">
-           <widget class="QLabel" name="label_19">
+          <item row="18" column="0">
+           <widget class="QLabel" name="label_26">
             <property name="text">
-             <string>Sound Velocity</string>
+             <string>Nominal Thickness [mm]</string>
             </property>
            </widget>
           </item>
-          <item row="10" column="1">
-           <widget class="QDoubleSpinBox" name="spinVel">
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>20</height>
-             </size>
-            </property>
-            <property name="focusPolicy">
-             <enum>Qt::FocusPolicy::ClickFocus</enum>
-            </property>
-            <property name="buttonSymbols">
-             <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
-            </property>
-            <property name="suffix">
-             <string> m/s</string>
-            </property>
-            <property name="maximum">
-             <double>9999.989999999999782</double>
-            </property>
-            <property name="value">
-             <double>5890.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="11" column="0">
-           <widget class="QLabel" name="label_21">
-            <property name="text">
-             <string>Motor Speed</string>
-            </property>
-           </widget>
-          </item>
-          <item row="11" column="1">
-           <widget class="QSpinBox" name="motorSpeed">
-            <property name="maximumSize">
-             <size>
-              <width>16777215</width>
-              <height>20</height>
-             </size>
-            </property>
-            <property name="focusPolicy">
-             <enum>Qt::FocusPolicy::ClickFocus</enum>
-            </property>
-            <property name="buttonSymbols">
-             <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
-            </property>
-            <property name="prefix">
-             <string/>
-            </property>
-            <property name="minimum">
-             <number>0</number>
-            </property>
-            <property name="maximum">
-             <number>100</number>
-            </property>
-            <property name="value">
-             <number>0</number>
-            </property>
-           </widget>
-          </item>
-          <item row="12" column="0">
-           <widget class="QLabel" name="label_20">
-            <property name="text">
-             <string>Motor Angle</string>
-            </property>
-           </widget>
-          </item>
-          <item row="12" column="1">
-           <widget class="QSpinBox" name="motorAngle">
+          <item row="4" column="1">
+           <widget class="QSpinBox" name="spinPulseDelay">
             <property name="maximumSize">
              <size>
               <width>16777215</width>
@@ -525,7 +599,7 @@
              <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
             </property>
             <property name="suffix">
-             <string/>
+             <string> ns</string>
             </property>
             <property name="prefix">
              <string/>
@@ -534,10 +608,69 @@
              <number>0</number>
             </property>
             <property name="maximum">
-             <number>3600</number>
+             <number>1600</number>
             </property>
             <property name="value">
              <number>0</number>
+            </property>
+           </widget>
+          </item>
+          <item row="7" column="0">
+           <widget class="QLabel" name="label_5">
+            <property name="text">
+             <string>Power Output</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_7">
+            <property name="text">
+             <string>Tx Channel</string>
+            </property>
+           </widget>
+          </item>
+          <item row="17" column="1">
+           <widget class="QDoubleSpinBox" name="threshold">
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>20</height>
+             </size>
+            </property>
+            <property name="focusPolicy">
+             <enum>Qt::FocusPolicy::ClickFocus</enum>
+            </property>
+            <property name="buttonSymbols">
+             <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+            </property>
+            <property name="value">
+             <double>10.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="17" column="0">
+           <widget class="QLabel" name="label_25">
+            <property name="text">
+             <string>Cscan threshold [% peak]</string>
+            </property>
+           </widget>
+          </item>
+          <item row="15" column="1">
+           <widget class="QSpinBox" name="lockSample">
+            <property name="maximumSize">
+             <size>
+              <width>16777215</width>
+              <height>20</height>
+             </size>
+            </property>
+            <property name="focusPolicy">
+             <enum>Qt::FocusPolicy::ClickFocus</enum>
+            </property>
+            <property name="buttonSymbols">
+             <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+            </property>
+            <property name="value">
+             <number>3</number>
             </property>
            </widget>
           </item>
@@ -935,7 +1068,7 @@
        <item>
         <widget class="QGroupBox" name="groupBscan">
          <property name="title">
-          <string>Include B-Scan ?</string>
+          <string>Include C-Scan ?</string>
          </property>
          <property name="checkable">
           <bool>true</bool>
@@ -962,7 +1095,7 @@
           <item row="0" column="0">
            <widget class="QLabel" name="labelHz_9">
             <property name="text">
-             <string>Part Thickness</string>
+             <string>Scan Length Vert</string>
             </property>
            </widget>
           </item>
@@ -988,7 +1121,7 @@
           <item row="1" column="0">
            <widget class="QLabel" name="labelHz_10">
             <property name="text">
-             <string>Scan Length</string>
+             <string>Scan Length Hori</string>
             </property>
            </widget>
           </item>
@@ -1014,7 +1147,7 @@
           <item row="2" column="0">
            <widget class="QLabel" name="labelHz_5">
             <property name="text">
-             <string>Encoder Resolution</string>
+             <string>Resolution - X:</string>
             </property>
            </widget>
           </item>
@@ -1037,23 +1170,23 @@
           <item row="3" column="0">
            <widget class="QLabel" name="labelHz_6">
             <property name="text">
-             <string>Encoder Skip Step</string>
+             <string>Resolution - Y:</string>
             </property>
            </widget>
           </item>
           <item row="3" column="1">
-           <widget class="QSpinBox" name="spinEncoderStep">
+           <widget class="QDoubleSpinBox" name="spinEncoderStep">
             <property name="focusPolicy">
              <enum>Qt::FocusPolicy::ClickFocus</enum>
             </property>
             <property name="buttonSymbols">
              <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
             </property>
-            <property name="maximum">
-             <number>5000</number>
+            <property name="suffix">
+             <string> mm/Step</string>
             </property>
             <property name="value">
-             <number>4</number>
+             <double>1.000000000000000</double>
             </property>
            </widget>
           </item>

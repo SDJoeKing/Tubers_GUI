@@ -9,6 +9,9 @@ static int dataEmitTracker = 0;
 
 QByteArray ack = QString("data acknowledged").toUtf8();
 QByteArray stopAcq = QString("stop").toUtf8();
+QTimer * ackTimer;
+static int ackCounter = 0;
+static int ackCounterMax = 20;
 
 mTcpClient::mTcpClient(QObject *parent)
     :QObject{parent}
@@ -24,6 +27,8 @@ mTcpClient::~mTcpClient()
     qDebug() << "client is open ? " << isOpen();
     qDebug() << counter << " acquisitions received";
     delete m_socket;
+    if(m_serial->isOpen())
+        m_serial->close();
 
 }
 
@@ -108,11 +113,14 @@ void mTcpClient::setPrf(const int newPrf)
     prf = newPrf;
 }
 
+void mTcpClient::setC_scan(bool ok)
+{
+    c_scan = ok;
+}
+
 bool mTcpClient::isOpen()
 {
-
     return m_state == QTcpSocket::ConnectedState;
-
 }
 
 
@@ -287,6 +295,32 @@ void mTcpClient::run()
     connect(m_socket, &QTcpSocket::stateChanged, this, &mTcpClient::updateState);
     connect(m_timer, &QTimer::timeout, this, &mTcpClient::do_timeout);
 
+    m_serial = new QSerialPort(this);
+    m_serial->setPortName(QSerialPortInfo::availablePorts().at(0).portName());
+    m_serial->setBaudRate(9600);
+
+    if(!m_serial->open(QIODevice::WriteOnly))
+    {
+        qDebug() << "Not able to connect to serial port";
+        delete this;
+    }
+
+    ackTimer = new QTimer(this);
+    ackTimer->setInterval(100);
+
+    connect(ackTimer, &QTimer::timeout, this,  [&]() {
+        if(c_scan)
+        {
+            ackTimer->stop();
+            const char * step = "-1000";
+            m_serial->write(reinterpret_cast<const char*>(step));
+            ackCounter++;
+            if(ackCounter > ackCounterMax)
+                this->stop();
+            QTimer::singleShot(1500, this, [this](){emit pleaseSendSettings();});
+        }
+    });
+
     m_data = QByteArray(DATA_SIZE, Qt::Uninitialized);
 
     bool success = start(m_address, m_port);
@@ -366,6 +400,10 @@ void mTcpClient::readMessage()
 
             }
 #endif
+            if(c_scan)
+            {
+                ackTimer->start();
+            }
             counter++;
             counter_data = 0;
             m_readSize = 0;

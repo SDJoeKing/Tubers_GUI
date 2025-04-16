@@ -39,7 +39,7 @@ signals:
     void dataProcessed(const QList<QPointF> &, bool );
     void dataLogger(const char *);
     void sendHeaderInfo(const float &, const float &, const quint8 &, const QVector<qint16> &imus); // temp. speed
-
+    void sendThickness(const float &);
 public slots:
     void process(const char *);
     void setVel(const float &vel);

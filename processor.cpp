@@ -115,6 +115,13 @@ static void dataConversion(T& dest,const QByteArray& src, int lowIndex, int high
     dest = static_cast<T>(((src.at(highIndex) << 8) & 0xFF00 ) | ( (src.at(lowIndex)  & 0xFF )));
 }
 
+
+static void dataConversion(quint32 & dest,const QByteArray& src, int ind1, int ind2, int ind3, int ind4)
+{
+    dest = static_cast<quint32>(((src.at(ind4) << 24) & 0xFF000000 ) | ( (src.at(ind3) << 16)  & 0x00FF0000 ) |
+                                ((src.at(ind2) << 8)  & 0x0000FF00) | ((src.at(ind1)  )  & 0xFF));
+}
+
 void Processor::process(const char *dataptr)
 {
 
@@ -146,10 +153,16 @@ void Processor::process(const char *dataptr)
     float _temperature = ((temp1/65536.0f)/0.00198421639f ) - 273.15f;
 
     // IMU reading;
-    qint16 _imu_x, _imu_y, _imu_z;
-    dataConversion<decltype(_imu_x)>(_imu_x, serverData, HEADER::imuXLow, HEADER::imuXHigh);
-    dataConversion<decltype(_imu_x)>(_imu_y, serverData, HEADER::imuYLow, HEADER::imuYHigh);
-    dataConversion<decltype(_imu_x)>(_imu_z, serverData, HEADER::imuZLow, HEADER::imuZHigh);
+    qint16 _max, _mean, _rms, _std;
+    dataConversion<decltype(_max)>(_max, serverData, HEADER::maxLow, HEADER::maxHigh);
+    dataConversion<decltype(_max)>(_mean, serverData, HEADER::meanLow, HEADER::meanHigh);
+    dataConversion<decltype(_max)>(_rms, serverData, HEADER::rmsLow, HEADER::rmsHigh);
+    dataConversion<decltype(_max)>(_std, serverData, HEADER::stdLow, HEADER::stdHigh);
+
+    quint32 _thick;
+    dataConversion(_thick, serverData, HEADER::thick1, HEADER::thick2, HEADER::thick3, HEADER::thick4);
+
+    float thick = *(reinterpret_cast<float *>(&_thick));
 
     for (int i = 0; i <  DATA_SIZE/2; i++)
     {
@@ -228,7 +241,11 @@ void Processor::process(const char *dataptr)
     }
 
     emit dataProcessed(calPoint, _forward == 2 ? false : true);
-    emit sendHeaderInfo(_temperature, linkSpeed, m_errorCode,  QVector<qint16>{_imu_x, _imu_y, _imu_z});
+    emit sendHeaderInfo(_temperature, linkSpeed, m_errorCode,  QVector<qint16>{_max, _mean, _rms, _std});
+    emit sendThickness(thick);
+
+    qDebug() << " Ahh hhh h-------------- ----------------- " << _max << thick;
+
 }
 
 void Processor::setVel(const float &vel)

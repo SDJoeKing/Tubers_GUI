@@ -4,10 +4,15 @@
 double MainWindow::_env=0;
 double MainWindow::m_ga = 0;
 double MainWindow::m_gr = 0;
-static int bscanUpdateOnce = 0;
+static int cscanUpdateOnce = 0;
 QElapsedTimer timer;
+int rowCount = 0;
 
-
+template <class T>
+static void updateLabel(QLabel * label, const T& v)
+{
+    label->setText(label->text().split(":").at(0) + ": " + QString::number(v));
+}
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -94,7 +99,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_processor, &Processor::dataLogger, m_logging, &Tlogging::setData, Qt::QueuedConnection);
     connect(this, &MainWindow::filterParam, m_processor, &Processor::updateFilter, Qt::QueuedConnection);
     connect(this, &MainWindow::velocitySet, m_processor, &Processor::setVel, Qt::QueuedConnection);
-    connect(m_processor, &Processor::dataProcessed, this, &MainWindow::updateBScan, Qt::QueuedConnection);
+    connect(m_processor, &Processor::sendThickness, this, &MainWindow::updateCScan, Qt::QueuedConnection);
     connect(m_processor, &Processor::dataProcessed, m_Ascan, &TChartViewForm::plot, Qt::QueuedConnection);
     connect(m_processor, &Processor::sendHeaderInfo, this, &MainWindow::updateHeaderInfo, Qt::QueuedConnection);
     connect(this, &MainWindow::golayCoding, m_processor, &Processor::updateGolaySetting, Qt::QueuedConnection);
@@ -125,7 +130,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_Ascan, &TChartViewForm::setRectifyCheck, this, &MainWindow::setRectifyChecked);
     connect(m_Ascan, &TChartViewForm::calculatedThickness, ui->spinDepth, &QDoubleSpinBox::setValue);
     connect(m_Bscan, &QCustomPlot::customContextMenuRequested, this, &MainWindow::bScanCustomContext);
-    connect(m_settings, &TSettings::bScanSetting, this, &MainWindow::do_bScanSetting);
+    connect(m_settings, &TSettings::bScanSetting, this, &MainWindow::do_cScanSetting);
 
     connect(m_Ascan, &TChartViewForm::sendThreshold, this, &MainWindow::setThreshold);
 
@@ -162,7 +167,8 @@ MainWindow::MainWindow(QWidget *parent)
 
 void MainWindow::resetUI()
 {
-
+    rowCount = 0;
+    cscanUpdateOnce = 0;
     ui->log->setEnabled(false);
     ui->btnCal->setEnabled(false);
 
@@ -208,11 +214,11 @@ void MainWindow::resetUI()
     ui->radioError->setChecked(false);
     ui->radioStatus->setText("Not Connected");
 
-    // IMU label:
-    ui->label_IMU_X->setText(getImuLabel("X"));
-    ui->label_IMU_Y->setText(getImuLabel("Y"));
-    ui->label_IMU_Z->setText(getImuLabel("Z"));
-
+    ui->labelMax->setText("Max: ");
+    ui->labelMean->setText("Mean: ");
+    ui->labelRMS->setText("RMS: ");
+    ui->labelSTD->setText("STD: ");
+    ui->labelThick->setText("Thickness: ");
 }
 
 void MainWindow::toggleOff(QCheckBox *widget)
@@ -291,13 +297,12 @@ void MainWindow::doSettingsConfirmed(QString str)
 
     emit filterParam(m_order, m_fs, m_fc, m_fw);
 
-
     int _size = 0;
-    for(int i = SETTINGS::txChannel ; i< SETTINGS::motorAngle + 1; i++)
+    for(int i = SETTINGS::txChannel ; i< SETTINGS::ratedThickness + 1; i++)
         _size+=list[i].size()+1; // including the separator size
 
     auto settings = str.sliced(0, _size );
-    settings += QString::number(m_settings->getAscanIndex()) + ";";
+
     qDebug() << settings;
     auto _status = ui->statusBar->findChild<QLabel *>("m_status");
     if(_status)
@@ -321,6 +326,7 @@ void MainWindow::doSettingsConfirmed(QString str)
     emit golayCoding(list[SETTINGS::golay].toInt(), list[SETTINGS::pulseSequence], list[SETTINGS::pulseFreq].toFloat(), m_settings->pulseLength());
 
     emit mainSendSetting(settings);
+
 }
 
 void MainWindow::on_actionLogging_triggered(bool checked)
@@ -332,6 +338,7 @@ void MainWindow::on_actionLogging_triggered(bool checked)
 void MainWindow::on_ckBscan_clicked(bool checked)
 {
     m_Bscan->setVisible(checked);
+    use_cscan = checked;
 }
 
 void MainWindow::on_btnConnect_clicked(bool checked)
@@ -366,6 +373,9 @@ void MainWindow::on_btnConnect_clicked(bool checked)
         connect(m_client, &mTcpClient::errorOccured, this, &MainWindow::do_ConnectLost, Qt::QueuedConnection);
         connect(m_client,  &mTcpClient::badSettings, this, &MainWindow::do_badSettings);
 
+        // setting
+        connect(m_client, &mTcpClient::pleaseSendSettings, m_settings, &TSettings::sendSetting, Qt::QueuedConnection);
+        connect(this, &MainWindow::cScan, m_client, &mTcpClient::setC_scan);
         QString address = ui->ipAddress->text().simplified().replace(" ", "");
         quint16 port = ui->port->text().toInt();
 
@@ -545,12 +555,12 @@ int findFrontWall(const QList<QPointF> &data, int start, int end)
 }
 
 
-void MainWindow::updateBScan(const QList<QPointF> &data, bool forward)
+void MainWindow::updateCScan(const float& thick)
 {
-    if(!use_bscan)
+    updateLabel(ui->labelThick, thick);
+
+    if(!use_cscan)
         return;
-
-
 
     auto _colorMap = static_cast<QCPColorMap *>(m_Bscan->plottable());
     int valueSize = _colorMap->data()->valueSize();
@@ -558,62 +568,37 @@ void MainWindow::updateBScan(const QList<QPointF> &data, bool forward)
 
     int _start = 0;
 
-    if(m_Ascan->gatesToggled())
-    {
-        _start = m_Ascan->gatePeak(); // gate 1 peak
-        _start < 0 ? _start = 0 : _start;
+    // if(m_Ascan->gatesToggled())
+    // {
+    //     _start = m_Ascan->gatePeak(); // gate 1 peak
+    //     _start < 0 ? _start = 0 : _start;
 
-    }else
-    {
-        _start = findFrontWall(data, _start, _start + 200);
-    }
+    // }else
+    // {
+    //     _start = findFrontWall(data, _start, _start + 200);
+    // }
 
-    if((valueSize + _start) > data.size())
-        valueSize = data.size() - _start;
+    // if((valueSize + _start) > data.size())
+    //     valueSize = data.size() - _start;
 
     // _start = 0;
 
-    if(forward)
+
     {
         m_currentLine >= _colorMap->data()->keySize() ? m_currentLine=0: m_currentLine++;
 
         // configure the colormap
-        for(int i=_start; i<valueSize + _start; i++)
-        {
-            auto value = data[i].y() > m_thres ? data[i].y() : 0;
-            auto plotValue = value > 0 ?  value / data[_start].y() : 0;
 
-            // conditions to mitigate extraneous point
-            if(plotValue > 1.0)
-                plotValue = 1;
+        auto plotValue = thick > 0 ?  thick/maxThick : 0;
 
-            _colorMap->data()->setCell(m_currentLine, i - _start, plotValue);
+        // conditions to mitigate extraneous point
+        if(plotValue > maxThick * 1.1)
+            plotValue = 1;
 
-        }
-    }else
-    {
-        //  remove current front line
-
-        m_currentLine <= 0 ? m_currentLine=0 : m_currentLine--;
-        for(int i=_start; i<valueSize + _start; i++)
-        {
-            auto value = data[i].y() > m_thres ? data[i].y() : 0;
-            auto plotValue = value > 0 ? value / data[_start].y() : 0;
-
-            // conditions to mitigate extraneous point
-            if(plotValue > 1.0)
-                plotValue = 1;
-
-            _colorMap->data()->setCell(m_currentLine+1, i - _start, 0);
-            _colorMap->data()->setCell(m_currentLine, i - _start, plotValue);
-        }
+        _colorMap->data()->setCell(m_currentLine, rowCount, plotValue);
+        qDebug() << " ---------------- cscan -------- " << plotValue << m_currentLine << rowCount;
     }
 
-    // if(bscanUpdateOnce == 0)
-    {
-        _colorMap->rescaleDataRange();
-        bscanUpdateOnce++;
-    }
     _colorMap->rescaleAxes();
     _colorMap->setGradient(QCPColorGradient::gpJet);
 
@@ -685,11 +670,13 @@ void MainWindow::on_btnCal_clicked()
     }
 }
 
-void MainWindow::do_bScanSetting(bool arg, const QList<double> &settings)
+void MainWindow::do_cScanSetting(bool arg, const QList<double> &settings)
 {
-    use_bscan = arg;
-    ui->ckBscan->setEnabled(use_bscan);
-    if(use_bscan)
+    use_cscan = arg;
+    emit cScan(use_cscan);
+
+    ui->ckBscan->setEnabled(use_cscan);
+    if(use_cscan)
     {
         m_Bscan->setVisible(true);
         ui->ckBscan->setCheckState(Qt::Checked);
@@ -699,34 +686,32 @@ void MainWindow::do_bScanSetting(bool arg, const QList<double> &settings)
         ui->ckBscan->setCheckState(Qt::Unchecked);
     }
 
-    if(use_bscan)
+    if(use_cscan && !cscanUpdateOnce)
     {
 
 
-        m_Bscan->xAxis->setLabel("Scan Length [mm]");
-        m_Bscan->yAxis->setLabel("Depth [mm]");
+        m_Bscan->xAxis->setLabel("Horizontal Scan Length [mm]");
+        m_Bscan->yAxis->setLabel("Vertical Scan Length [mm]");
 
         QCPColorMap * _map = static_cast<QCPColorMap *>(m_Bscan->plottable());
 
-        // clear graph for replot;
-        _map->data()->fill(0);
-        bscanUpdateOnce = 0;
+        cscanUpdateOnce = 1;
         // reset front head to -1
         m_currentLine = -1;
         if(_map)
         {
             float thick = settings[0];
             float length = settings[1];
-            // int step = settings[2];
-            float encoder_res = settings[3];
+            float y_res = settings[2];
+            float x_res = settings[3];
             // x/y axis array size
 
-            int nx = length / (encoder_res)+1;
-            int ny = 2 * thick / 1000.0 / m_vel * 125e6;
+            int nx = length / (x_res) * 1.1;
+            int ny = thick / y_res;
 
-
+            qDebug() << nx << ny;
             _map->data()->setSize(nx, ny); // we want the color map to have nx * ny data points
-            _map->data()->setRange(QCPRange(0, length), QCPRange(0, thick));
+            _map->data()->setRange(QCPRange(0, length * 1.1), QCPRange(0, 1.5));
             _map->setGradient(QCPColorGradient::gpJet);
             _map->rescaleDataRange();
             _map->rescaleAxes();
@@ -771,13 +756,19 @@ QString ErrorMsg(quint8 code)
     return "No Error";
 }
 
-void MainWindow::updateHeaderInfo(const float &temp, const float &speed, const quint8  &errorCode, const QVector<qint16>& imus)
+
+void MainWindow::updateHeaderInfo(const float &temp, const float &speed, const quint8  &errorCode, const QVector<qint16>& params)
 {
+
     ui->radioTemp->setText(QString::asprintf("Temperature: %.1f \u2103", temp));
     ui->labelSpeed->setText(QString("Ethernet Speed: %1 Mbits/s").arg(speed));
-    ui->label_IMU_X->setText(getImuLabel("X") + QString::number(imus.at(0)));
-    ui->label_IMU_Y->setText(getImuLabel("Y") + QString::number(imus.at(1)));
-    ui->label_IMU_Z->setText(getImuLabel("Z") + QString::number(imus.at(2)));
+
+    {
+        updateLabel(ui->labelMax, params.at(0));
+        updateLabel(ui->labelMean, params.at(1));
+        updateLabel(ui->labelRMS, params.at(2));
+        updateLabel(ui->labelSTD, params.at(3));
+    }
 
     QString errMessage = ErrorMsg(errorCode);
     ui->radioError->setText(QString("Error: %1").arg(errMessage));
@@ -811,7 +802,11 @@ void MainWindow::do_settingReady()
 {
     qDebug() << ui->btnRun->isChecked() << acquisitionRunning;
     if(ui->btnRun->isChecked() && !acquisitionRunning)
+    {
         QTimer::singleShot(0, m_client, [&](){m_client->startAcquisition();});
+        if(use_cscan)
+            rowCount++;
+    }
 }
 
 

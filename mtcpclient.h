@@ -9,6 +9,8 @@
 #include <QMessageBox>
 #include <QMutex>
 #include <QMutexLocker>
+#include <QSerialPort>
+#include <QSerialPortInfo>
 #include "config.h"
 
 
@@ -36,6 +38,7 @@ public slots:
     void setStopAcq();
     void timerOn(bool);
     void setPrf(const int);
+    void setC_scan(bool);
 private:
     QMutex mu;
     QTcpSocket *m_socket;
@@ -60,6 +63,8 @@ private:
 #ifdef FRAMERATE_CONTROL
     QTimer *m_frameControlTimer;
 #endif
+    QSerialPort *m_serial;
+    bool c_scan = false;
 
 private slots:
     void readMessage(); //  signal readyRead, slot readMessage
@@ -85,6 +90,7 @@ signals:
     void connectFail();
     void errorOccured();
     void badSettings();
+    void pleaseSendSettings();
     // QRunnable interface
 public:
     void run();

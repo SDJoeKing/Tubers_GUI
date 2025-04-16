@@ -297,7 +297,7 @@ void MainWindow::doSettingsConfirmed(QString str)
         _size+=list[i].size()+1; // including the separator size
 
     auto settings = str.sliced(0, _size );
-    settings += QString::number(m_settings->getAscanIndex()) + ";";
+
     qDebug() << settings;
     auto _status = ui->statusBar->findChild<QLabel *>("m_status");
     if(_status)
@@ -775,9 +775,9 @@ void MainWindow::updateHeaderInfo(const float &temp, const float &speed, const q
 {
     ui->radioTemp->setText(QString::asprintf("Temperature: %.1f \u2103", temp));
     ui->labelSpeed->setText(QString("Ethernet Speed: %1 Mbits/s").arg(speed));
-    ui->label_IMU_X->setText(getImuLabel("X") + QString::number(imus.at(0)));
-    ui->label_IMU_Y->setText(getImuLabel("Y") + QString::number(imus.at(1)));
-    ui->label_IMU_Z->setText(getImuLabel("Z") + QString::number(imus.at(2)));
+    ui->label_IMU_X->setText(getImuLabel("X", imus.at(0)));
+    ui->label_IMU_Y->setText(getImuLabel("Y", imus.at(1)));
+    ui->label_IMU_Z->setText(getImuLabel("Z", imus.at(2)));
 
     QString errMessage = ErrorMsg(errorCode);
     ui->radioError->setText(QString("Error: %1").arg(errMessage));

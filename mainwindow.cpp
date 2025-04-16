@@ -209,9 +209,10 @@ void MainWindow::resetUI()
     ui->radioStatus->setText("Not Connected");
 
     // IMU label:
-    ui->label_IMU_X->setText(getImuLabel("X"));
-    ui->label_IMU_Y->setText(getImuLabel("Y"));
-    ui->label_IMU_Z->setText(getImuLabel("Z"));
+
+    ui->label_IMU_X->setText(getImuLabel("X", 0));
+    ui->label_IMU_Y->setText(getImuLabel("Y", 0));
+    ui->label_IMU_Z->setText(getImuLabel("Z", 0));
 
 }
 

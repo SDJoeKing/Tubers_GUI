@@ -1,6 +1,6 @@
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H
-
+#include <QVector>
 #include <QMainWindow>
 #include <QMainWindow>
 #include <QStyleFactory>
@@ -95,12 +95,14 @@ private slots:
     void do_settingReady();
 
 
+    void on_btnImuBase_toggled(bool checked);
+
 private:
     QThread socketThread;
     QThread *m_serverThread;
     testServer *m_server;
     QThread processorThread;
-    QTimer _tempTimer;
+    QTimer m_updateTimer;
     Ui::MainWindow *ui;
     mTcpClient *m_client;
     TSettings *m_settings;
@@ -132,6 +134,13 @@ private:
     bool acquisitionRunning = false;
     bool connected = false;
     QString m_err {"No Error"};
+
+
+    // imu
+    QVector<qint16 > m_imus{0,0,0};
+    qint16 m_imu_x = 0;
+    qint16 m_imu_y = 0;
+    qint16 m_imu_z = 0;
 // private functions
 private:
     void resetUI();

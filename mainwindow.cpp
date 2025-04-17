@@ -5,9 +5,6 @@ double MainWindow::_env=0;
 double MainWindow::m_ga = 0;
 double MainWindow::m_gr = 0;
 static int bscanUpdateOnce = 0;
-QElapsedTimer timer;
-
-
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -150,6 +147,9 @@ MainWindow::MainWindow(QWidget *parent)
     m_server = nullptr;
 #endif
 
+    // timer for updating info
+    m_updateTimer.setInterval(500);
+
 
     // final finish
     setConnectionIndicator();
@@ -209,11 +209,14 @@ void MainWindow::resetUI()
     ui->radioStatus->setText("Not Connected");
 
     // IMU label:
-
+    ui->btnImuBase->setChecked(false);
+    ui->btnImuBase->setEnabled(false);
     ui->label_IMU_X->setText(getImuLabel("X", 0));
     ui->label_IMU_Y->setText(getImuLabel("Y", 0));
     ui->label_IMU_Z->setText(getImuLabel("Z", 0));
 
+    // update timer
+    m_updateTimer.stop();
 }
 
 void MainWindow::toggleOff(QCheckBox *widget)
@@ -381,12 +384,18 @@ void MainWindow::on_btnConnect_clicked(bool checked)
         qDebug() << "m_client thread: "<< m_client->thread();
         connect(&socketThread, &QThread::started, m_client, &mTcpClient::run);
         socketThread.start();
+        ui->btnImuBase->setEnabled(true);
+
+        //UPDATE TIMER
+        m_updateTimer.start();
+        connect(&m_updateTimer, &QTimer::timeout, m_client, &mTcpClient::requestStatus, Qt::QueuedConnection);
 
     }
     else
     {
 
         // disconnect
+
         ui->radioStatus->setChecked(false);
         QTimer::singleShot(0, m_client, &mTcpClient::stopAcquisition);
         QTimer::singleShot(100, m_client, &mTcpClient::stop);
@@ -776,9 +785,12 @@ void MainWindow::updateHeaderInfo(const float &temp, const float &speed, const q
 {
     ui->radioTemp->setText(QString::asprintf("Temperature: %.1f \u2103", temp));
     ui->labelSpeed->setText(QString("Ethernet Speed: %1 Mbits/s").arg(speed));
-    ui->label_IMU_X->setText(getImuLabel("X", imus.at(0)));
-    ui->label_IMU_Y->setText(getImuLabel("Y", imus.at(1)));
-    ui->label_IMU_Z->setText(getImuLabel("Z", imus.at(2)));
+
+    m_imus = imus;
+
+    ui->label_IMU_X->setText(getImuLabel("X", imus.at(0) - m_imu_x));
+    ui->label_IMU_Y->setText(getImuLabel("Y", imus.at(1) - m_imu_y));
+    ui->label_IMU_Z->setText(getImuLabel("Z", imus.at(2) - m_imu_z));
 
     QString errMessage = ErrorMsg(errorCode);
     ui->radioError->setText(QString("Error: %1").arg(errMessage));
@@ -854,7 +866,21 @@ void MainWindow::threadFinished()
 }
 
 
-
-
-
+void MainWindow::on_btnImuBase_toggled(bool checked)
+{
+    if(checked)
+    {
+        ui->btnImuBase->setText("Reset");
+        m_imu_x = m_imus.at(0);
+        m_imu_y = m_imus.at(1);
+        m_imu_z = m_imus.at(2);
+    }
+    else
+    {
+        ui->btnImuBase->setText("Set Baseline");
+        m_imu_x = 0;
+        m_imu_y = 0;
+        m_imu_z = 0;
+    }
+}
 

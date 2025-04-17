@@ -115,10 +115,13 @@ static void dataConversion(T& dest,const QByteArray& src, int lowIndex, int high
     dest = static_cast<T>(((src.at(highIndex) << 8) & 0xFF00 ) | ( (src.at(lowIndex)  & 0xFF )));
 }
 
-void Processor::process(const char *dataptr)
+void Processor::process(const char *dataptr, bool headerOnly)
 {
 
-    auto serverData = QByteArray::fromRawData(dataptr,  DATA_SIZE_RECV );
+    auto serverData = QByteArray::fromRawData(dataptr, HEADER_SIZE);
+
+    if(!headerOnly)
+        serverData = QByteArray::fromRawData(dataptr,  DATA_SIZE_RECV );
 
     double xpoint=0;
     QList<QPointF> calPoint( DATA_SIZE/2);
@@ -150,6 +153,12 @@ void Processor::process(const char *dataptr)
     dataConversion<decltype(_imu_x)>(_imu_x, serverData, HEADER::imuXLow, HEADER::imuXHigh);
     dataConversion<decltype(_imu_x)>(_imu_y, serverData, HEADER::imuYLow, HEADER::imuYHigh);
     dataConversion<decltype(_imu_x)>(_imu_z, serverData, HEADER::imuZLow, HEADER::imuZHigh);
+
+    if(headerOnly)
+    {
+        emit sendHeaderInfo(_temperature, linkSpeed, m_errorCode,  QVector<qint16>{_imu_x, _imu_y, _imu_z});
+        return;
+    }
 
     for (int i = 0; i <  DATA_SIZE/2; i++)
     {
@@ -228,7 +237,12 @@ void Processor::process(const char *dataptr)
     }
 
     emit dataProcessed(calPoint, _forward == 2 ? false : true);
-    emit sendHeaderInfo(_temperature, linkSpeed, m_errorCode,  QVector<qint16>{_imu_x, _imu_y, _imu_z});
+
+    if(processTimer.elapsed() > 500)
+    {
+        processTimer.restart();
+        emit sendHeaderInfo(_temperature, linkSpeed, m_errorCode,  QVector<qint16>{_imu_x, _imu_y, _imu_z});
+    }
 }
 
 void Processor::setVel(const float &vel)

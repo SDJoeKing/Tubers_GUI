@@ -36,6 +36,7 @@ public slots:
     void setStopAcq();
     void timerOn(bool);
     void setPrf(const int);
+    void requestStatus();
 private:
     QMutex mu;
     QTcpSocket *m_socket;
@@ -79,7 +80,7 @@ signals:
     void settingReady(bool);
     void acquisitionReady();
     void acquisitionStop();
-    void dataReady(const char*);
+    void dataReady(const char*, bool headerOnly = false);
     void fps(float rate);
     void plotRate(float rate);
     void connectFail();

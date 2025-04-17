@@ -108,6 +108,15 @@ void mTcpClient::setPrf(const int newPrf)
     prf = newPrf;
 }
 
+void mTcpClient::requestStatus()
+{
+    if(!acquisitionRunning)
+    {
+        writeData(QString("status").toUtf8());
+        qDebug() << "request status";
+    }
+}
+
 bool mTcpClient::isOpen()
 {
 
@@ -322,6 +331,13 @@ void mTcpClient::readMessage()
 
     if(headerFound(tempData) && !m_commence)
     {
+        if(!acquisitionRunning) // header only
+        {
+            emit dataReady(tempData, true);
+            qDebug() << "Status Updated";
+            return;
+        }
+
         m_commence = 1;
         counter_data = 0;
         m_readSize = tempData.size();

@@ -45,6 +45,7 @@ enum SETTINGS
     encoderSkips,
     motorSpeed,
     motorAngle,
+    adcClkDiv,
     velocity,
     order,
     lowCut,

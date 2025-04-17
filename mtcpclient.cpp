@@ -201,6 +201,7 @@ bool mTcpClient::parseServerMsg(QByteArray &arr)
     else if(msg.contains("bad settings"))
     {
         emit badSettings();
+        emit tcpMessage(m_server + "bad settings");
         return 1;
     }
     // acquisition

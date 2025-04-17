@@ -294,7 +294,7 @@ void MainWindow::doSettingsConfirmed(QString str)
 
 
     int _size = 0;
-    for(int i = SETTINGS::txChannel ; i< SETTINGS::motorAngle + 1; i++)
+    for(int i = SETTINGS::txChannel ; i< SETTINGS::adcClkDiv + 1; i++)
         _size+=list[i].size()+1; // including the separator size
 
     auto settings = str.sliced(0, _size );

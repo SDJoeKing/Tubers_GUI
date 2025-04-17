@@ -253,12 +253,12 @@ void TSettings::on_btnConfirm_clicked()
     setting+= QString::number(getAscanIndex()) + ";";
 
     // cscan settings
-    setting+= QString::number(ui->pulseWidth->value() * 2) + ";";
+    setting+= QString::number(ui->pulseWidth->value()) + ";";
     setting+= QString::number(ui->lockSample->value()) + ";";
     setting+= QString::number(ui->ID->value()) + ";";
     // velocity refreshrate
     setting+= QString::number(ui->spinVel->value()) + ";";
-    setting+= QString::number(ui->threshold->value()/100) + ";";
+    setting+= QString::number(ui->threshold->value()) + ";";
     setting+= QString::number(ui->ratedThickness->value()) + ";";
 
     //filter setting

@@ -7,6 +7,7 @@ double MainWindow::m_gr = 0;
 static int cscanUpdateOnce = 0;
 QElapsedTimer timer;
 int rowCount = 0;
+int m_currentLine = -1;
 
 template <class T>
 static void updateLabel(QLabel * label, const T& v)
@@ -215,6 +216,7 @@ void MainWindow::resetUI()
     ui->radioStatus->setText("Not Connected");
 
     ui->labelMax->setText("Max: ");
+    ui->labelNoise->setText("Noise: ");
     ui->labelMean->setText("Mean: ");
     ui->labelRMS->setText("RMS: ");
     ui->labelSTD->setText("STD: ");
@@ -451,7 +453,7 @@ void MainWindow::stopAcquisition()
     ui->btnRun->setText("Run");
     ui->btnRun->setChecked(false);
 }
-
+// data  = MainWindow::envelope(data, MainWindow::_env, MainWindow::m_ga, MainWindow::m_gr);
 double MainWindow::envelope(double sample, double &value, double ga, double gr)
 {
     auto s = qAbs(sample);
@@ -491,8 +493,8 @@ void MainWindow::on_btnRun_clicked(bool checked)
 
 void MainWindow::set_envelope(float attack, float release)
 {
-    m_ga = attack < 1e-20 ? 0 :1 - qExp(-1.0 / (attack * 125e6));
-    m_gr = attack < 1e-20 ? 0 :1 - qExp(-1.0 / (release * 125e6));
+    m_ga = attack < 1e-20 ? 0 :1 - qExp(-1.0 / (attack * 125e6 / m_settings->getAscanIndex()));
+    m_gr = attack < 1e-20 ? 0 :1 - qExp(-1.0 / (release * 125e6 / m_settings->getAscanIndex()));
 }
 
 void MainWindow::on_spinEnvLevel_valueChanged(int arg1)
@@ -585,6 +587,8 @@ void MainWindow::updateCScan(const float& thick)
 
 
     {
+
+
         m_currentLine >= _colorMap->data()->keySize() ? m_currentLine=0: m_currentLine++;
 
         // configure the colormap
@@ -706,12 +710,12 @@ void MainWindow::do_cScanSetting(bool arg, const QList<double> &settings)
             float x_res = settings[3];
             // x/y axis array size
 
-            int nx = length / (x_res) * 1.1;
-            int ny = thick / y_res;
+            int nx = length / (x_res) * 1.2;
+            int ny = thick / y_res * 1.2;
 
             qDebug() << nx << ny;
             _map->data()->setSize(nx, ny); // we want the color map to have nx * ny data points
-            _map->data()->setRange(QCPRange(0, length * 1.1), QCPRange(0, 1.5));
+            _map->data()->setRange(QCPRange(0, length * 1.2), QCPRange(0, thick * 1.2));
             _map->setGradient(QCPColorGradient::gpJet);
             _map->rescaleDataRange();
             _map->rescaleAxes();
@@ -765,9 +769,10 @@ void MainWindow::updateHeaderInfo(const float &temp, const float &speed, const q
 
     {
         updateLabel(ui->labelMax, params.at(0));
-        updateLabel(ui->labelMean, params.at(1));
-        updateLabel(ui->labelRMS, params.at(2));
-        updateLabel(ui->labelSTD, params.at(3));
+        updateLabel(ui->labelNoise, params.at(1));
+        updateLabel(ui->labelMean, params.at(2));
+        updateLabel(ui->labelRMS, params.at(3));
+        updateLabel(ui->labelSTD, params.at(4));
     }
 
     QString errMessage = ErrorMsg(errorCode);
@@ -804,8 +809,7 @@ void MainWindow::do_settingReady()
     if(ui->btnRun->isChecked() && !acquisitionRunning)
     {
         QTimer::singleShot(0, m_client, [&](){m_client->startAcquisition();});
-        if(use_cscan)
-            rowCount++;
+
     }
 }
 

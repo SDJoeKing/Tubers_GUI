@@ -153,8 +153,9 @@ void Processor::process(const char *dataptr)
     float _temperature = ((temp1/65536.0f)/0.00198421639f ) - 273.15f;
 
     // IMU reading;
-    qint16 _max, _mean, _rms, _std;
+    qint16 _max, _noise, _mean, _rms, _std;
     dataConversion<decltype(_max)>(_max, serverData, HEADER::maxLow, HEADER::maxHigh);
+    dataConversion<decltype(_max)>(_noise, serverData, HEADER::noiseLow, HEADER::noiseHigh);
     dataConversion<decltype(_max)>(_mean, serverData, HEADER::meanLow, HEADER::meanHigh);
     dataConversion<decltype(_max)>(_rms, serverData, HEADER::rmsLow, HEADER::rmsHigh);
     dataConversion<decltype(_max)>(_std, serverData, HEADER::stdLow, HEADER::stdHigh);
@@ -168,7 +169,7 @@ void Processor::process(const char *dataptr)
     {
         temp1 =(serverData.at(j + 1) << 8) & 0xFF00;
         temp2 = (serverData.at(j)) & 0xFF;
-        dataPoint[0][i] = static_cast<qint16>(temp2 | temp1)/ 32768.0  * 3.18 * 1.0 * 1000.0;
+        dataPoint[0][i] = static_cast<quint16>(temp2 | temp1)/ 32768.0  * 3.18 * 1.0 * 1000.0;
 
         j += 2;
     }
@@ -201,19 +202,19 @@ void Processor::process(const char *dataptr)
         dataPoint[0] = m_golayData;
 
     m_golayReady = false;
-    if(filtering)
-    {
-        m_filter->process( DATA_SIZE/2, dataPoint);
-    }
+    // if(filtering)
+    // {
+    //     m_filter->process( DATA_SIZE/2, dataPoint);
+    // }
 
     // rectified, envelope, depth?
 
-    for (int i = 0; i < DATA_SIZE/2; i++)
-    {
+    // for (int i = 0; i < DATA_SIZE/2; i++)
+    // {
 
-        if(rectify)
-            dataPoint[0][i] = MainWindow::envelope(dataPoint[0][i], MainWindow::_env, MainWindow::m_ga, MainWindow::m_gr);
-    }
+    //     if(rectify)
+    //         dataPoint[0][i] = MainWindow::envelope(dataPoint[0][i], MainWindow::_env, MainWindow::m_ga, MainWindow::m_gr);
+    // }
 
     // normalise data to (0, 1]
     for(int i = 0; i < DATA_SIZE/2; i++)
@@ -241,11 +242,8 @@ void Processor::process(const char *dataptr)
     }
 
     emit dataProcessed(calPoint, _forward == 2 ? false : true);
-    emit sendHeaderInfo(_temperature, linkSpeed, m_errorCode,  QVector<qint16>{_max, _mean, _rms, _std});
+    emit sendHeaderInfo(_temperature, linkSpeed, m_errorCode,  QVector<qint16>{_max, _noise, _mean, _rms, _std});
     emit sendThickness(thick);
-
-    qDebug() << " Ahh hhh h-------------- ----------------- " << _max << thick;
-
 }
 
 void Processor::setVel(const float &vel)

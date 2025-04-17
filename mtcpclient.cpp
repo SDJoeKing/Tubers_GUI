@@ -317,7 +317,7 @@ void mTcpClient::run()
             ackCounter++;
             if(ackCounter > ackCounterMax)
                 this->stop();
-            QTimer::singleShot(1500, this, [this](){emit pleaseSendSettings();});
+            QTimer::singleShot(1500, this, [this](){emit pleaseSendSettings();rowCount++; m_currentLine = -1;});
         }
     });
 

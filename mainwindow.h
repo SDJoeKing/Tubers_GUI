@@ -113,7 +113,6 @@ private:
     float m_vel=5890.0;
     bool encoderTriggerMode = false;
     static void resetEnv();
-    int m_currentLine=-1;
 
     // filter param
 

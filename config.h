@@ -20,7 +20,7 @@ enum HEADER {
     systemTempHigh,
     linkSpeed,
     maxLow, maxHigh,
-    minLow, minHigh,
+    noiseLow, noiseHigh,
     meanLow, meanHigh,
     rmsLow, rmsHigh,
     stdLow, stdHigh,
@@ -103,6 +103,7 @@ static const QString LED_NONCONNECT_STYLE {"QRadioButton::indicator {"
                              "}"};
 
 static const QString getImuLabel(const QString &axis)  {return QString("IMU - %1: ").arg(axis);}
-
+extern int rowCount;
+extern int m_currentLine;
 #endif // CONFIG_H
 

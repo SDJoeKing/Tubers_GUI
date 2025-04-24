@@ -138,9 +138,13 @@ void Processor::process(const char *dataptr, bool headerOnly)
 
     // get system information from the header data
     quint8 _forward = static_cast<quint8>(serverData.at(HEADER::encoderDirection));
-    qDebug() << _forward;
 
     int linkSpeed = (static_cast<quint8>(serverData.at(HEADER::linkSpeed)) * 10);
+    if(headerOnly)
+    {
+        qDebug() << serverData;
+        qDebug() << "linkspeed " << serverData.at(HEADER::linkSpeed);
+    }
     m_errorCode = static_cast<quint8>(serverData.at(HEADER::errorFlags));
 
     bool golaySeq = m_golayASeq;

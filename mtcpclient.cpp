@@ -169,9 +169,7 @@ static bool headerFound(const QByteArray &arr)
     if(arr.size() > 3)
         return ( (arr.at(0) == 0) && (static_cast<quint8>(arr.at(1)) == 0xFF) && (arr.at(2) == 0) && (static_cast<quint8>(arr.at(3)) == 0xFF) );
     else
-    {
         return false;
-    }
 }
 
 
@@ -185,7 +183,7 @@ bool mTcpClient::parseServerMsg(QByteArray &arr)
         this->stop();
         notifyServerDown();
         acquisitionRunning = false;
-        return 1;
+        return -1;
     }
 
     QString msg = QString::fromUtf8(arr, 20);
@@ -195,7 +193,7 @@ bool mTcpClient::parseServerMsg(QByteArray &arr)
         emit serverReady(true);
         emit tcpMessage(m_server + msg.sliced(0, 10));
         arr.slice(10);
-        return -1;
+        return 1;
     }
     // Settings
     else if(msg.contains("settings ok"))
@@ -205,12 +203,13 @@ bool mTcpClient::parseServerMsg(QByteArray &arr)
 
         emit tcpMessage(m_server + msg.sliced(0, 11));
         arr.slice(11);
-        return -1;
+        return 1;
     }
     else if(msg.contains("bad settings"))
     {
         emit badSettings();
         emit tcpMessage(m_server + "bad settings");
+        arr.slice(12);
         return 1;
     }
     // acquisition
@@ -220,7 +219,7 @@ bool mTcpClient::parseServerMsg(QByteArray &arr)
         emit acquisitionReady();
         emit tcpMessage(m_server + msg.sliced(0, 20));
         arr.slice(20);
-        return -1;
+        return 1;
     }
     // stop acquisition
     else if(msg.contains("acquisition stopped"))
@@ -230,12 +229,17 @@ bool mTcpClient::parseServerMsg(QByteArray &arr)
         emit tcpMessage(m_server + msg.sliced(0, 19));
         arr.slice(19);
         m_stopAcq = false;
-        return -1;
+        return 1;
     }
     else if(msg.contains("data acknowledged"))
     {
         arr.slice(17);
-        return -1;
+        return 1;
+    }
+    else if(msg.contains("status"))
+    {
+        arr.slice(6);
+        return 1;
     }
     else
     {
@@ -322,11 +326,12 @@ void mTcpClient::readMessage()
 {
 
 
-    QByteArray tempData = m_socket->readAll();
+    QByteArray tempData = m_socket->read(DATA_SIZE_RECV - counter_data);
 
     m_readSize = tempData.size();
 
-    if(!parseServerMsg(tempData) || m_readSize == 17)
+
+    if(!parseServerMsg(tempData) || tempData.isEmpty()) // deal with empty messages
         return;
 
     if(headerFound(tempData) && !m_commence)
@@ -353,8 +358,7 @@ void mTcpClient::readMessage()
             counter_data+=m_readSize;
         }
 
-
-        if(counter_data>=DATA_SIZE_RECV )
+        if(counter_data==DATA_SIZE_RECV )
         {
             m_commence = 0;
 
@@ -365,6 +369,7 @@ void mTcpClient::readMessage()
 
             if(m_stopAcq)
             {
+
                 writeData(stopAcq);
 
             }else
@@ -380,7 +385,6 @@ void mTcpClient::readMessage()
             {
                 emit dataReady(m_readyData.constData());
                 dataEmitCounter++;
-
             }
 #endif
             counter++;

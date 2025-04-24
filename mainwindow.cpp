@@ -329,6 +329,7 @@ void MainWindow::doSettingsConfirmed(QString str)
 
     emit mainSendSetting(settings);
 
+    maxThick = list[SETTINGS::ratedThickness].toFloat();
 }
 
 void MainWindow::on_actionLogging_triggered(bool checked)
@@ -588,7 +589,6 @@ void MainWindow::updateCScan(const float& thick)
 
     {
 
-
         m_currentLine >= _colorMap->data()->keySize() ? m_currentLine=0: m_currentLine++;
 
         // configure the colormap
@@ -604,6 +604,7 @@ void MainWindow::updateCScan(const float& thick)
     }
 
     _colorMap->rescaleAxes();
+    _colorMap->rescaleDataRange();
     _colorMap->setGradient(QCPColorGradient::gpJet);
 
     m_Bscan->setUpdatesEnabled(false);
@@ -627,6 +628,8 @@ void MainWindow::bScanCustomContext(const QPoint &pos)
 {
     QMenu _tempMenu(this);
     QAction _tempAction("Save B-Scan", this);
+    QAction _tempAction2("Save Data", this);
+    _tempMenu.addAction(&_tempAction2);
     _tempMenu.addAction(&_tempAction);
     connect(&_tempAction, &QAction::triggered, this, [this]()\
     {
@@ -638,6 +641,39 @@ void MainWindow::bScanCustomContext(const QPoint &pos)
             QMessageBox::warning(this, "Warning", "Not able to save the image");
     });
 
+    connect(&_tempAction2, &QAction::triggered, this, [this]()\
+            {
+                auto _colorMap = static_cast<QCPColorMap *>(m_Bscan->plottable());
+                if(_colorMap)
+                {
+                    QString path = QFileDialog::getSaveFileName(this, "Save Data", QApplication::applicationDirPath(), "Data (*.csv)");
+
+                    QFile file(path);
+
+                    bool ok = file.open(QIODevice::WriteOnly|QIODevice::NewOnly);
+                    if(!ok)
+                    {
+                        QMessageBox::warning(this, "Warning", "Cannot save!");
+                        return;
+                    }
+
+                    quint16 _x = _colorMap->data()->keySize(); // x len
+                    quint16 _y = _colorMap->data()->valueSize(); // y len
+
+                    float _data[_x];
+                    for(size_t i = 0; i <_y; i++)
+                    {
+                        for(size_t j = 0; j<_x; j++)
+                        {
+                            _data[j] = _colorMap->data()->cell(j, i);
+                        }
+                        file.write((QByteArray::fromRawData(reinterpret_cast<char *>(_data), sizeof(float)*_x)));
+                    }
+                    file.close();
+                    QMessageBox::information(this, "Done", "Saving complete");
+                }
+
+            });
     _tempMenu.exec(m_Bscan->mapToGlobal(pos));
 }
 
@@ -690,9 +726,8 @@ void MainWindow::do_cScanSetting(bool arg, const QList<double> &settings)
         ui->ckBscan->setCheckState(Qt::Unchecked);
     }
 
-    if(use_cscan && !cscanUpdateOnce)
+    if(use_cscan && !acquisitionRunning)
     {
-
 
         m_Bscan->xAxis->setLabel("Horizontal Scan Length [mm]");
         m_Bscan->yAxis->setLabel("Vertical Scan Length [mm]");

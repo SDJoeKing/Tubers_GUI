@@ -258,7 +258,7 @@ void TSettings::on_btnConfirm_clicked()
     setting+= QString::number(ui->ID->value()) + ";";
     // velocity refreshrate
     setting+= QString::number(ui->spinVel->value()) + ";";
-    setting+= QString::number(ui->threshold->value()) + ";";
+    setting+= QString::number(ui->threshold->value() / 100.0) + ";";
     setting+= QString::number(ui->ratedThickness->value()) + ";";
 
     //filter setting

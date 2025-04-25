@@ -9,9 +9,10 @@ static int dataEmitTracker = 0;
 
 QByteArray ack = QString("data acknowledged").toUtf8();
 QByteArray stopAcq = QString("stop").toUtf8();
+
 QTimer * ackTimer;
 static int ackCounter = 0;
-static int ackCounterMax = 20;
+static int ackCounterMax = 50;
 
 mTcpClient::mTcpClient(QObject *parent)
     :QObject{parent}
@@ -118,9 +119,20 @@ void mTcpClient::setC_scan(bool ok)
     c_scan = ok;
 }
 
+// void mTcpClient::requestStatus()
+// {
+//     // if(!acquisitionRunning)
+//     // {
+//     //     writeData(QString("status").toUtf8());
+//     //     qDebug() << "request status";
+//     // }
+// }
+
 bool mTcpClient::isOpen()
 {
+
     return m_state == QTcpSocket::ConnectedState;
+
 }
 
 
@@ -209,6 +221,7 @@ bool mTcpClient::parseServerMsg(QByteArray &arr)
     else if(msg.contains("bad settings"))
     {
         emit badSettings();
+        emit tcpMessage(m_server + "bad settings");
         return 1;
     }
     // acquisition
@@ -355,6 +368,13 @@ void mTcpClient::readMessage()
 
     if(headerFound(tempData) && !m_commence)
     {
+        // if(!acquisitionRunning) // header only
+        // {
+        //     emit dataReady(tempData, true);
+        //     qDebug() << "Status Updated";
+        //     return;
+        // }
+
         m_commence = 1;
         counter_data = 0;
         m_readSize = tempData.size();
@@ -404,6 +424,7 @@ void mTcpClient::readMessage()
             {
                 ackTimer->start();
             }
+
             counter++;
             counter_data = 0;
             m_readSize = 0;

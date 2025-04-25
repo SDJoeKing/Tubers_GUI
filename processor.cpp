@@ -169,7 +169,7 @@ void Processor::process(const char *dataptr)
     {
         temp1 =(serverData.at(j + 1) << 8) & 0xFF00;
         temp2 = (serverData.at(j)) & 0xFF;
-        dataPoint[0][i] = static_cast<quint16>(temp2 | temp1)/ 32768.0  * 3.18 * 1.0 * 1000.0;
+        dataPoint[0][i] = static_cast<qint16>(temp2 | temp1)/ 32768.0  * 3.18 * 1.0 * 1000.0;
 
         j += 2;
     }
@@ -207,7 +207,7 @@ void Processor::process(const char *dataptr)
     //     m_filter->process( DATA_SIZE/2, dataPoint);
     // }
 
-    // rectified, envelope, depth?
+    // // rectified, envelope, depth?
 
     // for (int i = 0; i < DATA_SIZE/2; i++)
     // {

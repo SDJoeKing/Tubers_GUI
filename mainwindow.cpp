@@ -599,12 +599,12 @@ void MainWindow::updateCScan(const float& thick)
         if(plotValue > maxThick * 1.1)
             plotValue = 1;
 
-        _colorMap->data()->setCell(m_currentLine, rowCount, plotValue);
-        qDebug() << " ---------------- cscan -------- " << plotValue << m_currentLine << rowCount;
+        _colorMap->data()->setCell(m_currentLine, rowCount, plotValue * 255);
+
     }
 
     _colorMap->rescaleAxes();
-    _colorMap->rescaleDataRange();
+    // _colorMap->rescaleDataRange();
     _colorMap->setGradient(QCPColorGradient::gpJet);
 
     m_Bscan->setUpdatesEnabled(false);

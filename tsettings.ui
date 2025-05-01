@@ -375,7 +375,7 @@
              <double>9999.989999999999782</double>
             </property>
             <property name="value">
-             <double>2293.000000000000000</double>
+             <double>5890.000000000000000</double>
             </property>
            </widget>
           </item>
@@ -516,7 +516,7 @@
              <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
             </property>
             <property name="value">
-             <double>5.000000000000000</double>
+             <double>13.000000000000000</double>
             </property>
            </widget>
           </item>
@@ -573,7 +573,7 @@
              <double>9999.000000000000000</double>
             </property>
             <property name="value">
-             <double>150.000000000000000</double>
+             <double>280.000000000000000</double>
             </property>
            </widget>
           </item>
@@ -676,7 +676,7 @@
              <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
             </property>
             <property name="value">
-             <number>3</number>
+             <number>5</number>
             </property>
            </widget>
           </item>

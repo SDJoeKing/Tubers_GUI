@@ -162,6 +162,9 @@ MainWindow::MainWindow(QWidget *parent)
     ui->spinEnvLevel->setValue(0);
     ui->radioTemp->setText(QString::asprintf("Temperature: %.1f \u2103", 0.0));
     ui->radioError->setText(QString("Error Status"));
+
+    timer.start();
+
     resetUI();
 
 }
@@ -593,7 +596,7 @@ void MainWindow::updateCScan(const float& thick)
 
         // configure the colormap
 
-        auto plotValue = thick > 0 ?  thick/maxThick : 0;
+        auto plotValue = thick > 0 ?  thick/maxThick : (thick > -3 ? 0 : 0.3);
 
         // conditions to mitigate extraneous point
         if(plotValue > maxThick * 1.1)
@@ -603,14 +606,18 @@ void MainWindow::updateCScan(const float& thick)
 
     }
 
-    _colorMap->rescaleAxes();
-    // _colorMap->rescaleDataRange();
+    // _colorMap->rescaleAxes();
+    _colorMap->rescaleDataRange();
     _colorMap->setGradient(QCPColorGradient::gpJet);
-
-    m_Bscan->setUpdatesEnabled(false);
-    auto f = QtConcurrent::run(QThreadPool::globalInstance(), &QCustomPlot::replot, m_Bscan, QCustomPlot::rpQueuedRefresh );
-    f.waitForFinished();
-    m_Bscan->setUpdatesEnabled(true);
+    if(timer.hasExpired(30))
+    {
+        timer.restart();
+        m_Bscan->replot(QCustomPlot::rpQueuedReplot);
+    }
+    // m_Bscan->setUpdatesEnabled(false);
+    // auto f = QtConcurrent::run(QThreadPool::globalInstance(), &QCustomPlot::replot, m_Bscan, QCustomPlot::rpQueuedReplot );
+    // f.waitForFinished();
+    // m_Bscan->setUpdatesEnabled(true);
 }
 
 

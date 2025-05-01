@@ -5,6 +5,7 @@ double MainWindow::_env=0;
 double MainWindow::m_ga = 0;
 double MainWindow::m_gr = 0;
 static int bscanUpdateOnce = 0;
+QElapsedTimer timer;
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -148,8 +149,8 @@ MainWindow::MainWindow(QWidget *parent)
 #endif
 
     // timer for updating info
-    m_updateTimer.setInterval(500);
-
+    m_updateTimer.setInterval(500); // this is the status request timer
+    timer.start(); // this is the bscan plot update timer
 
     // final finish
     setConnectionIndicator();
@@ -627,10 +628,17 @@ void MainWindow::updateBScan(const QList<QPointF> &data, bool forward)
     _colorMap->rescaleAxes();
     _colorMap->setGradient(QCPColorGradient::gpJet);
 
-    m_Bscan->setUpdatesEnabled(false);
-    auto f = QtConcurrent::run(QThreadPool::globalInstance(), &QCustomPlot::replot, m_Bscan, QCustomPlot::rpQueuedRefresh );
-    f.waitForFinished();
-    m_Bscan->setUpdatesEnabled(true);
+
+    if(timer.hasExpired(30))
+        {
+            timer.restart();
+            m_Bscan->replot(QCustomPlot::rpQueuedRefresh);
+        }
+
+    // m_Bscan->setUpdatesEnabled(false);
+    // auto f = QtConcurrent::run(QThreadPool::globalInstance(), &QCustomPlot::replot, m_Bscan, QCustomPlot::rpQueuedRefresh );
+    // f.waitForFinished();
+    // m_Bscan->setUpdatesEnabled(true);
 }
 
 

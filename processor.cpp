@@ -118,28 +118,40 @@ static void dataConversion(T& dest,const QByteArray& src, int lowIndex, int high
 void Processor::process(const char *dataptr, bool headerOnly)
 {
 
-    auto serverData = QByteArray::fromRawData(dataptr, HEADER_SIZE);
+    auto serverData = QByteArray();
+    serverData.reserve(DATA_SIZE_RECV);
 
     if(!headerOnly)
-        serverData = QByteArray::fromRawData(dataptr,  DATA_SIZE_RECV );
+        serverData = QByteArray::fromRawData(dataptr,  DATA_SIZE_RECV);
+    else
+        serverData = QByteArray::fromRawData(dataptr, HEADER_SIZE);
+
+    qDebug() << "From Processpr " << serverData;
 
     double xpoint=0;
-    QList<QPointF> calPoint( DATA_SIZE/2);
+    qDebug() << "From Processpr " << serverData;
+
     quint16 temp1;
     quint16 temp2;
+    qDebug() << "From Processpr " << serverData;
     float *dataPoint[1];
+    qDebug() << "From Processpr " << serverData;
     float _temp[ DATA_SIZE/2]{0};
 
 
     dataPoint[0] = _temp;
+    qDebug() << "From Processpr " << serverData;
+
+
 
     // take into account of header data
     int j=  HEADER_SIZE;
 
     // get system information from the header data
     quint8 _forward = static_cast<quint8>(serverData.at(HEADER::encoderDirection));
-
+    qDebug() << "From Processpr " << serverData;
     int linkSpeed = (static_cast<quint8>(serverData.at(HEADER::linkSpeed)) * 10);
+    qDebug() << "From Processpr " << serverData;
     if(headerOnly)
     {
         qDebug() << serverData;
@@ -216,6 +228,8 @@ void Processor::process(const char *dataptr, bool headerOnly)
     }
 
     // normalise data to (0, 1]
+    QList<QPointF> calPoint( DATA_SIZE/2, QPointF(0.0, 0.0));
+    qDebug() << "From Processpr " << serverData;
     for(int i = 0; i < DATA_SIZE/2; i++)
     {
 

@@ -338,7 +338,9 @@ void mTcpClient::readMessage()
     {
         if(!acquisitionRunning) // header only
         {
-            emit dataReady(tempData, true);
+            qDebug() << tempData;
+
+            emit dataReady(tempData.constData(), true);
             qDebug() << "Status Updated";
             return;
         }

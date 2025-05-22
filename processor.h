@@ -8,6 +8,7 @@
 #include "mtcpclient.h"
 #include <cmath>
 
+
 class Processor : public QObject
 {
     Q_OBJECT
@@ -35,6 +36,8 @@ private:
     float m_scale = 1.0;
     const float m_maxValue = 3180;
     quint8 m_errorCode;
+    // QList<QPointF> calPoint;
+
 signals:
     void dataProcessed(const QList<QPointF> &, bool );
     void dataLogger(const char *);

@@ -386,11 +386,6 @@ void MainWindow::on_btnConnect_clicked(bool checked)
         connect(&socketThread, &QThread::started, m_client, &mTcpClient::run);
         socketThread.start();
         ui->btnImuBase->setEnabled(true);
-
-        //UPDATE TIMER
-        m_updateTimer.start();
-        connect(&m_updateTimer, &QTimer::timeout, m_client, &mTcpClient::requestStatus, Qt::QueuedConnection);
-
     }
     else
     {
@@ -423,6 +418,10 @@ void MainWindow::toggleStatus(bool arg)
         ui->radioError->setStyleSheet(LED_CONNECTED_STYLE);
         ui->radioTemp->setStyleSheet(LED_CONNECTED_STYLE);
         ui->radioStatus->setText("Connected");
+        //UPDATE TIMER
+        m_updateTimer.start();
+        connect(&m_updateTimer, &QTimer::timeout, m_client, &mTcpClient::requestStatus, Qt::QueuedConnection);
+
     }else
     {
         connected=false;

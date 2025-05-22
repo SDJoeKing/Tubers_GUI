@@ -10,7 +10,7 @@
 #include <QMutex>
 #include <QMutexLocker>
 #include "config.h"
-
+#include <QReadWriteLock>
 
 class mTcpClient : public QObject
 {
@@ -62,6 +62,7 @@ private:
     QTimer *m_frameControlTimer;
 #endif
 
+    QReadWriteLock wrLock;
 private slots:
     void readMessage(); //  signal readyRead, slot readMessage
     void errorOccurred(QAbstractSocket::SocketError socketError);

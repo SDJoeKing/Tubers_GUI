@@ -23,6 +23,7 @@ Processor::Processor(QObject *parent)
 
 
     m_sequenceA = genPulse(std::make_unique<std::vector<int>>(std::vector<int>{1,1,-1,1,1,1,-1,1,1,1,-1,1,1,1,-1,1}), 10);
+    // calPoint.reserve( DATA_SIZE/2);
 
     qDebug() << "Processor on ";
 }
@@ -133,6 +134,10 @@ void Processor::process(const char *dataptr, bool headerOnly)
     quint16 temp2;
     float *dataPoint[1];
     float _temp[ DATA_SIZE/2]{0};
+    // normalise data to (0, 1]
+
+    // serverData
+    QList<QPointF>calPoint /*= QList<QPointF>(DATA_SIZE/2, QPointF(1.0f, 1.0f))*/;
 
     dataPoint[0] = _temp;
 
@@ -219,8 +224,7 @@ void Processor::process(const char *dataptr, bool headerOnly)
             dataPoint[0][i] = MainWindow::envelope(dataPoint[0][i], MainWindow::_env, MainWindow::m_ga, MainWindow::m_gr);
     }
 
-    // normalise data to (0, 1]
-    QList<QPointF> calPoint( DATA_SIZE/2, QPointF(0.0, 0.0));
+
 
     for(int i = 0; i < DATA_SIZE/2; i++)
     {

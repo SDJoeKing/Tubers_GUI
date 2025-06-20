@@ -18,6 +18,7 @@
 #include <QFutureWatcher>
 #include <QtConcurrent>
 #include <thread>
+#include <eigen3/Eigen/Dense>
 
 #include "tsettings.h"
 #include "tlogging.h"

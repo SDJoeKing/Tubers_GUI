@@ -7,6 +7,8 @@ double MainWindow::m_gr = 0;
 static int bscanUpdateOnce = 0;
 QElapsedTimer timer;
 
+using namespace Eigen;
+
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)

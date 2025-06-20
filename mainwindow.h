@@ -28,6 +28,7 @@
 #include "DspFilters/Dsp.h"
 #include "processor.h"
 #include "testserver.h"
+#include "tmath.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -70,7 +71,7 @@ private slots:
     void on_ckDepthAxis_clicked(bool checked);
 
     void on_ckRectify_clicked(bool checked);
-    void updateBScan(const QList<QPointF> &data, bool);
+    void updateBScan(bool);
     void on_actionReset_triggered(bool);
     void setRectifyChecked();
 
@@ -94,10 +95,11 @@ private slots:
 
     // setting ready
     void do_settingReady();
-
-
     void on_btnImuBase_toggled(bool checked);
 
+
+    // fmc tfm
+    void populateFMC(float *data, quint8, quint8);
 private:
     QThread socketThread;
     QThread *m_serverThread;
@@ -142,6 +144,11 @@ private:
     qint16 m_imu_x = 0;
     qint16 m_imu_y = 0;
     qint16 m_imu_z = 0;
+
+    // tfm lookTable
+    QList<ArrayXXf> lookUpTable;
+    QList<ArrayXXf> fmc_data;
+    quint8 m_chan = 0;
 // private functions
 private:
     void resetUI();
@@ -157,6 +164,7 @@ signals:
     void acquisitionRun(bool);
     void dataForLogger(const QByteArray &);
     void stopAcqSig();
+    void pauseAcqSig(bool );
     void filterParam(const quint8 & order, const float &fs, const float &fc, const float &fw);
     void golayCoding(bool, const QString &, const float&, quint8);
 };

@@ -5,7 +5,7 @@
 
 namespace MATH{
 
-void generateLookTable(std::vector<ArrayXXf> &arr, float speed, float pitch,
+void generateLookTable(QList<ArrayXXf> &arr, float speed, float pitch,
                        float offsetX, float offsetY, float resolution)
 {
     int channel = arr.size();
@@ -34,7 +34,7 @@ void generateLookTable(std::vector<ArrayXXf> &arr, float speed, float pitch,
 
 }
 
-void TFM(std::vector<ArrayXXf> &src, ArrayXXf &dest, std::vector<ArrayXXf> &lookUpTable, float fs)
+void TFM(QList<ArrayXXf> &src, ArrayXXf &dest, QList<ArrayXXf> &lookUpTable, float fs)
 {
     // src -> (128, 128, 10e3)
     // dest ->(height, length)
@@ -58,7 +58,7 @@ void TFM(std::vector<ArrayXXf> &src, ArrayXXf &dest, std::vector<ArrayXXf> &look
 }
 
 // This is used to read the FMC data in the format (tx, rx, samples). 
-bool populateMAT(std::vector<ArrayXXf> &dataArr, QString path)
+bool populateMAT(QList<ArrayXXf> &dataArr, QString path)
 {
 
     QFile file(path);

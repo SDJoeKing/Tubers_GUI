@@ -38,9 +38,9 @@
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>0</y>
+        <y>-295</y>
         <width>411</width>
-        <height>1046</height>
+        <height>1174</height>
        </rect>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_6">
@@ -167,7 +167,7 @@
              <number>16</number>
             </property>
             <property name="value">
-             <number>16</number>
+             <number>1</number>
             </property>
            </widget>
           </item>
@@ -205,7 +205,7 @@
              <number>16</number>
             </property>
             <property name="value">
-             <number>16</number>
+             <number>1</number>
             </property>
            </widget>
           </item>
@@ -935,7 +935,7 @@
        <item>
         <widget class="QGroupBox" name="groupBscan">
          <property name="title">
-          <string>Include B-Scan ?</string>
+          <string>TFM Function</string>
          </property>
          <property name="checkable">
           <bool>true</bool>
@@ -943,10 +943,7 @@
          <property name="checked">
           <bool>false</bool>
          </property>
-         <layout class="QFormLayout" name="formLayout_4">
-          <property name="horizontalSpacing">
-           <number>7</number>
-          </property>
+         <layout class="QGridLayout" name="gridLayout_4">
           <property name="leftMargin">
            <number>2</number>
           </property>
@@ -959,15 +956,11 @@
           <property name="bottomMargin">
            <number>2</number>
           </property>
-          <item row="0" column="0">
-           <widget class="QLabel" name="labelHz_9">
-            <property name="text">
-             <string>Part Thickness</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <widget class="QDoubleSpinBox" name="spinThick">
+          <property name="horizontalSpacing">
+           <number>7</number>
+          </property>
+          <item row="5" column="1">
+           <widget class="QDoubleSpinBox" name="spinTFMOffsetX">
             <property name="focusPolicy">
              <enum>Qt::FocusPolicy::ClickFocus</enum>
             </property>
@@ -977,49 +970,62 @@
             <property name="suffix">
              <string> mm</string>
             </property>
+            <property name="minimum">
+             <double>-1000.000000000000000</double>
+            </property>
             <property name="maximum">
              <double>9999.000000000000000</double>
             </property>
             <property name="value">
-             <double>50.000000000000000</double>
+             <double>0.000000000000000</double>
             </property>
            </widget>
           </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="labelHz_10">
+          <item row="5" column="0">
+           <widget class="QLabel" name="labelHz_12">
             <property name="text">
-             <string>Scan Length</string>
+             <string>Offset X:</string>
             </property>
            </widget>
           </item>
-          <item row="1" column="1">
-           <widget class="QDoubleSpinBox" name="spinScanLength">
-            <property name="focusPolicy">
-             <enum>Qt::FocusPolicy::ClickFocus</enum>
-            </property>
-            <property name="buttonSymbols">
-             <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
-            </property>
-            <property name="suffix">
-             <string> mm</string>
-            </property>
-            <property name="maximum">
-             <double>9999.000000000000000</double>
-            </property>
-            <property name="value">
-             <double>250.000000000000000</double>
+          <item row="7" column="0">
+           <widget class="QLabel" name="labelHz_13">
+            <property name="text">
+             <string>Offset Y:</string>
             </property>
            </widget>
           </item>
-          <item row="2" column="0">
+          <item row="8" column="0">
            <widget class="QLabel" name="labelHz_5">
             <property name="text">
-             <string>Encoder Resolution</string>
+             <string>Resolution</string>
+            </property>
+           </widget>
+          </item>
+          <item row="7" column="1">
+           <widget class="QDoubleSpinBox" name="spinTFMOffsetY">
+            <property name="focusPolicy">
+             <enum>Qt::FocusPolicy::ClickFocus</enum>
+            </property>
+            <property name="buttonSymbols">
+             <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+            </property>
+            <property name="suffix">
+             <string> mm</string>
+            </property>
+            <property name="minimum">
+             <double>-1000.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>9999.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>0.000000000000000</double>
             </property>
            </widget>
           </item>
           <item row="2" column="1">
-           <widget class="QDoubleSpinBox" name="spinEncoderRes">
+           <widget class="QDoubleSpinBox" name="spinPitch">
             <property name="focusPolicy">
              <enum>Qt::FocusPolicy::ClickFocus</enum>
             </property>
@@ -1027,22 +1033,25 @@
              <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
             </property>
             <property name="suffix">
-             <string> mm/Step</string>
+             <string> mm</string>
+            </property>
+            <property name="maximum">
+             <double>9999.000000000000000</double>
             </property>
             <property name="value">
-             <double>0.550000000000000</double>
+             <double>0.700000000000000</double>
             </property>
            </widget>
           </item>
           <item row="3" column="0">
-           <widget class="QLabel" name="labelHz_6">
+           <widget class="QLabel" name="labelHz_10">
             <property name="text">
-             <string>Encoder Skip Step</string>
+             <string>TFM Width</string>
             </property>
            </widget>
           </item>
-          <item row="3" column="1">
-           <widget class="QSpinBox" name="spinEncoderStep">
+          <item row="1" column="1">
+           <widget class="QSpinBox" name="spinTFMSamples">
             <property name="focusPolicy">
              <enum>Qt::FocusPolicy::ClickFocus</enum>
             </property>
@@ -1050,10 +1059,108 @@
              <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
             </property>
             <property name="maximum">
-             <number>5000</number>
+             <number>99999</number>
             </property>
             <property name="value">
-             <number>4</number>
+             <number>16000</number>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="1">
+           <widget class="QDoubleSpinBox" name="spinRes">
+            <property name="focusPolicy">
+             <enum>Qt::FocusPolicy::ClickFocus</enum>
+            </property>
+            <property name="buttonSymbols">
+             <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+            </property>
+            <property name="suffix">
+             <string> mm/pixel</string>
+            </property>
+            <property name="value">
+             <double>0.250000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="labelHz_6">
+            <property name="text">
+             <string>A-Scan samples</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="1">
+           <widget class="QDoubleSpinBox" name="spinTFMHeight">
+            <property name="focusPolicy">
+             <enum>Qt::FocusPolicy::ClickFocus</enum>
+            </property>
+            <property name="buttonSymbols">
+             <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+            </property>
+            <property name="suffix">
+             <string> mm</string>
+            </property>
+            <property name="maximum">
+             <double>9999.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>30.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="labelHz_9">
+            <property name="text">
+             <string>Pitch Size</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="0">
+           <widget class="QLabel" name="labelHz_11">
+            <property name="text">
+             <string>TFM Height</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="1">
+           <widget class="QDoubleSpinBox" name="spinTFMWidth">
+            <property name="focusPolicy">
+             <enum>Qt::FocusPolicy::ClickFocus</enum>
+            </property>
+            <property name="buttonSymbols">
+             <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+            </property>
+            <property name="suffix">
+             <string> mm</string>
+            </property>
+            <property name="maximum">
+             <double>9999.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>30.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0">
+           <widget class="QLabel" name="labelHz_7">
+            <property name="text">
+             <string>Channels</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QSpinBox" name="spinTFMChannel">
+            <property name="focusPolicy">
+             <enum>Qt::FocusPolicy::ClickFocus</enum>
+            </property>
+            <property name="buttonSymbols">
+             <enum>QAbstractSpinBox::ButtonSymbols::NoButtons</enum>
+            </property>
+            <property name="maximum">
+             <number>99999</number>
+            </property>
+            <property name="value">
+             <number>16</number>
             </property>
            </widget>
           </item>

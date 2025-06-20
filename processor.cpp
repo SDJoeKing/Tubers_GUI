@@ -144,6 +144,10 @@ void Processor::process(const char *dataptr, bool headerOnly)
     // take into account of header data
     int j=  HEADER_SIZE;
 
+    // get current tx rx
+    quint8 tx = static_cast<quint8>(serverData.at(HEADER::TxRx) >> 4);
+    quint8 rx = static_cast<quint8>(serverData.at(HEADER::TxRx) & 0x0F);
+
     // get system information from the header data
     quint8 _forward = static_cast<quint8>(serverData.at(HEADER::encoderDirection));
 
@@ -250,7 +254,8 @@ void Processor::process(const char *dataptr, bool headerOnly)
         i = 0;
     }
 
-    emit dataProcessed(calPoint, _forward == 2 ? false : true);
+    emit dataProcessed(calPoint);
+    emit dataProcessed(dataPoint[0], tx, rx);
 
     if(processTimer.elapsed() > 500)
     {

@@ -79,6 +79,11 @@ void mTcpClient::flush()
     m_readSize = 0;
 }
 
+void mTcpClient::setPauseAcq(bool pause)
+{
+    m_pauseAcq = pause;
+}
+
 
 void mTcpClient::setStopAcq()
 {
@@ -375,7 +380,11 @@ void mTcpClient::readMessage()
 
                 writeData(stopAcq);
 
-            }else
+            }else if(m_pauseAcq)
+            {
+                 // continue
+            }
+            else
             {
                 // send data acknowledgement
                 writeData(ack);

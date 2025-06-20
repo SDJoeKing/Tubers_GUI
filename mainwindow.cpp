@@ -94,8 +94,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_processor, &Processor::dataLogger, m_logging, &Tlogging::setData, Qt::QueuedConnection);
     connect(this, &MainWindow::filterParam, m_processor, &Processor::updateFilter, Qt::QueuedConnection);
     connect(this, &MainWindow::velocitySet, m_processor, &Processor::setVel, Qt::QueuedConnection);
-    connect(m_processor, &Processor::dataProcessed, this, &MainWindow::updateBScan, Qt::QueuedConnection);
-    connect(m_processor, &Processor::dataProcessed, m_Ascan, &TChartViewForm::plot, Qt::QueuedConnection);
+    connect(m_processor, qOverload<float *, quint8, quint8>(&Processor::dataProcessed) , this, &MainWindow::populateFMC, Qt::QueuedConnection);
+    connect(m_processor, qOverload<const QList<QPointF>&>(&Processor::dataProcessed), m_Ascan, &TChartViewForm::plot, Qt::QueuedConnection);
+    connect(this, &MainWindow::pauseAcqSig, this, &MainWindow::updateBScan);
     connect(m_processor, &Processor::sendHeaderInfo, this, &MainWindow::updateHeaderInfo, Qt::QueuedConnection);
     connect(this, &MainWindow::golayCoding, m_processor, &Processor::updateGolaySetting, Qt::QueuedConnection);
 
@@ -356,6 +357,7 @@ void MainWindow::on_btnConnect_clicked(bool checked)
         connect(m_client, &mTcpClient::serverReady, this, &MainWindow::toggleStatus, Qt::QueuedConnection);
         connect(m_client, &mTcpClient::serverReady, ui->radioStatus, &QRadioButton::setChecked, Qt::QueuedConnection);
         connect(this, &MainWindow::stopAcqSig, m_client, &mTcpClient::setStopAcq, Qt::QueuedConnection);
+        connect(this, &MainWindow::pauseAcqSig, m_client, &mTcpClient::setPauseAcq, Qt::QueuedConnection);
         connect(m_client, &mTcpClient::acquisitionReady, this, &MainWindow::runAcquisition, Qt::QueuedConnection);
         connect(m_client, &mTcpClient::acquisitionStop, this, &MainWindow::stopAcquisition, Qt::QueuedConnection);
         connect(this, &MainWindow::dataReceived, m_client, &mTcpClient::clearData, Qt::QueuedConnection);
@@ -557,8 +559,11 @@ int findFrontWall(const QList<QPointF> &data, int start, int end)
 }
 
 
-void MainWindow::updateBScan(const QList<QPointF> &data, bool forward)
+void MainWindow::updateBScan(bool ok)
 {
+
+    Q_UNUSED(ok);
+
     if(!use_bscan)
         return;
 
@@ -570,76 +575,47 @@ void MainWindow::updateBScan(const QList<QPointF> &data, bool forward)
 
     int _start = 0;
 
-    if(m_Ascan->gatesToggled())
-    {
-        _start = m_Ascan->gatePeak(); // gate 1 peak
-        _start < 0 ? _start = 0 : _start;
 
-    }else
-    {
-        _start = findFrontWall(data, _start, _start + 200);
-    }
 
-    if((valueSize + _start) > data.size())
-        valueSize = data.size() - _start;
-
-    // _start = 0;
-
-    if(forward)
-    {
-        m_currentLine >= _colorMap->data()->keySize() ? m_currentLine=0: m_currentLine++;
-
-        // configure the colormap
-        for(int i=_start; i<valueSize + _start; i++)
-        {
-            auto value = data[i].y() > m_thres ? data[i].y() : 0;
-            auto plotValue = value > 0 ?  value / data[_start].y() : 0;
-
-            // conditions to mitigate extraneous point
-            if(plotValue > 1.0)
-                plotValue = 1;
-
-            _colorMap->data()->setCell(m_currentLine, i - _start, plotValue);
-
-        }
-    }else
-    {
-        //  remove current front line
-
-        m_currentLine <= 0 ? m_currentLine=0 : m_currentLine--;
-        for(int i=_start; i<valueSize + _start; i++)
-        {
-            auto value = data[i].y() > m_thres ? data[i].y() : 0;
-            auto plotValue = value > 0 ? value / data[_start].y() : 0;
-
-            // conditions to mitigate extraneous point
-            if(plotValue > 1.0)
-                plotValue = 1;
-
-            _colorMap->data()->setCell(m_currentLine+1, i - _start, 0);
-            _colorMap->data()->setCell(m_currentLine, i - _start, plotValue);
-        }
-    }
-
-    // if(bscanUpdateOnce == 0)
-    {
-        _colorMap->rescaleDataRange();
-        bscanUpdateOnce++;
-    }
     _colorMap->rescaleAxes();
     _colorMap->setGradient(QCPColorGradient::gpJet);
 
+    auto nx = lookUpTable[0].cols();
+    auto ny = lookUpTable[0].rows();
 
-    if(timer.hasExpired(30))
-        {
-            timer.restart();
-            m_Bscan->replot(QCustomPlot::rpQueuedRefresh);
-        }
+    ArrayXXf tfm_result = ArrayXXf::Zero(ny, nx);
+
+    MATH::TFM(fmc_data, tfm_result, lookUpTable, m_fs);
+
+    QCPColorMap *_map = static_cast<QCPColorMap *>(m_Bscan->plottable());
+
+    auto key = _map->data()->keySize();
+    auto value = _map->data()->valueSize();
+
+    for(int row = 0; row< value; row++)
+    {
+        for(int col = 0; col < key; col++)
+            _map->data()->setCell(col, row, qAbs(tfm_result(row, col)));
+    }
+    _map->setGradient(QCPColorGradient::gpJet);
+    _map->rescaleDataRange();
+    _map->rescaleAxes();
+    m_Bscan->replot(QCustomPlot::rpQueuedRefresh);
+
+
+    // if(timer.hasExpired(30))
+    //     {
+    //         timer.restart();
+    //         m_Bscan->replot(QCustomPlot::rpQueuedRefresh);
+    //     }
+
 
     // m_Bscan->setUpdatesEnabled(false);
     // auto f = QtConcurrent::run(QThreadPool::globalInstance(), &QCustomPlot::replot, m_Bscan, QCustomPlot::rpQueuedRefresh );
     // f.waitForFinished();
     // m_Bscan->setUpdatesEnabled(true);
+
+        emit pauseAcqSig(0); // recover pausing
 }
 
 
@@ -708,6 +684,7 @@ void MainWindow::do_bScanSetting(bool arg, const QList<double> &settings)
 {
     use_bscan = arg;
     ui->ckBscan->setEnabled(use_bscan);
+
     if(use_bscan)
     {
         m_Bscan->setVisible(true);
@@ -722,8 +699,8 @@ void MainWindow::do_bScanSetting(bool arg, const QList<double> &settings)
     {
 
 
-        m_Bscan->xAxis->setLabel("Scan Length [mm]");
-        m_Bscan->yAxis->setLabel("Depth [mm]");
+        m_Bscan->xAxis->setLabel("TFM Width [mm]");
+        m_Bscan->yAxis->setLabel("TFM Height [mm]");
 
         QCPColorMap * _map = static_cast<QCPColorMap *>(m_Bscan->plottable());
 
@@ -734,22 +711,48 @@ void MainWindow::do_bScanSetting(bool arg, const QList<double> &settings)
         m_currentLine = -1;
         if(_map)
         {
-            float thick = settings[0];
-            float length = settings[1];
-            // int step = settings[2];
-            float encoder_res = settings[3];
+            // fmcSetting.emplaceBack(pitch);
+            // fmcSetting.emplaceBack(width);
+            // fmcSetting.emplaceBack(height);
+            // fmcSetting.emplaceBack(tfmOffsetX);
+            // fmcSetting.emplaceBack(tfmOffsetY);
+            // fmcSetting.emplaceBack(samples);
+            // fmcSetting.emplaceBack(res);
+            // channels
+
+            float pitch = settings[0];
+            float width = settings[1];
+            float height = settings[2];
+            float offsetX = settings[3];
+            float offsetY = settings[4];
+            int samples = static_cast<int>(settings[5]);
+            float resolution = settings[6];
+            int channels = settings[7];
+            m_chan = channels - 1;
             // x/y axis array size
 
-            int nx = length / (encoder_res)+1;
-            int ny = 2 * thick / 1000.0 / m_vel * 125e6;
+            int nx = width / resolution;
+            int ny = height/ resolution;
 
+            // initialise LookTable
+            lookUpTable.clear();
+            fmc_data.clear();
+
+            for(int i=0; i<channels; i++)
+            {
+                lookUpTable.emplace_back(ArrayXXf::Zero(nx, ny));
+                fmc_data.emplace_back(ArrayXXf::Zero(channels, samples));
+            }
 
             _map->data()->setSize(nx, ny); // we want the color map to have nx * ny data points
-            _map->data()->setRange(QCPRange(0, length), QCPRange(0, thick));
+            _map->data()->setRange(QCPRange(0, width), QCPRange(0, height));
             _map->setGradient(QCPColorGradient::gpJet);
             _map->rescaleDataRange();
             _map->rescaleAxes();
             m_Bscan->replot(QCustomPlot::rpImmediateRefresh);
+
+            // calculate the lookTable
+            MATH::generateLookTable(lookUpTable, m_vel, pitch, offsetX, offsetY, resolution);
         }
     }
 }
@@ -891,5 +894,16 @@ void MainWindow::on_btnImuBase_toggled(bool checked)
         m_imu_y = 0;
         m_imu_z = 0;
     }
+}
+
+void MainWindow::populateFMC(float * data, quint8 tx, quint8 rx)
+{
+    // test and optimise THIS !!!
+    fmc_data[tx].row(rx) = Map<VectorXf>(data, fmc_data[tx].cols()).transpose().segment(0, fmc_data[tx].cols());
+    if(tx == m_chan && rx== m_chan)
+        emit pauseAcqSig(1);
+
+    if(tx > m_chan || rx > m_chan)
+        throw std::runtime_error("Wrong tx/rx channels out of range");
 }
 

@@ -11,14 +11,14 @@
 using namespace Eigen;
 namespace MATH{
 
-bool populateMAT(std::vector<ArrayXXf> &dataArr, QString path);
+bool populateMAT(QList<ArrayXXf> &dataArr, QString path);
 
-void generateLookTable(std::vector<ArrayXXf> &arr,
+void generateLookTable(QList<ArrayXXf> &arr,
                        float speed, float pitch,
                        float offsetX, float offsetY, float resolution);
-void TFM(std::vector<ArrayXXf> &src,
+void TFM(QList<ArrayXXf> &src,
          ArrayXXf &dest,
-         std::vector<ArrayXXf> &lookUpTable, float fs);
+         QList<ArrayXXf> &lookUpTable, float fs);
 
 }
 

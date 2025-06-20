@@ -33,6 +33,7 @@ public slots:
     void sendSetting(const QString &);
     void clearData();
     void flush();
+    void setPauseAcq(bool);
     void setStopAcq();
     void timerOn(bool);
     void setPrf(const int);
@@ -50,6 +51,7 @@ private:
     quint16 counter_data=0;
     quint16 m_readSize = 0;
     bool m_commence = 0;
+    bool m_pauseAcq = 0;
     bool m_stopAcq = 0;
     QEventLoop *m_loop;
     QString m_address;

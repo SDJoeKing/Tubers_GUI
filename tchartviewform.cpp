@@ -124,9 +124,9 @@ TChartViewForm::~TChartViewForm()
 }
 
 
-void TChartViewForm::plot(const QList<QPointF> &dataptr, bool p)
+void TChartViewForm::plot(const QList<QPointF> &dataptr)
 {
-    Q_UNUSED(p);
+
     // const QSignalBlocker blocker(m_chartView);
 
     {
@@ -158,7 +158,7 @@ void TChartViewForm::changeXAxisType(const TChartViewForm::x_AXISTYPE &type)
                 _tempPoints.emplace_back(timeToDepth(point.x()) , point.y());
 
             m_X->setRange(timeToDepth(xMin), timeToDepth(xMax));
-            plot(_tempPoints, true);
+            plot(_tempPoints);
         }
 
         m_X->setRange( _tempMin, _tempMax);
@@ -181,7 +181,7 @@ void TChartViewForm::changeXAxisType(const TChartViewForm::x_AXISTYPE &type)
             for(auto &point : m_series->points())
                 _tempPoints.emplace_back(depthToTime(point.x()) , point.y());
             m_X->setRange(xMin, xMax);
-            plot(_tempPoints, true);
+            plot(_tempPoints);
         }
 
         m_X->setRange(_tempMin, _tempMax);

@@ -44,7 +44,7 @@ public:
     };
 
 public slots:
-    void plot(const QList<QPointF> &, bool);
+    void plot(const QList<QPointF> &  );
     void toggleGates(bool);
     void changeXAxisType(const TChartViewForm::x_AXISTYPE&);
     void changeYAxisType(const TChartViewForm::y_AXISTYPE&);

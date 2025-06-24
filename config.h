@@ -4,7 +4,7 @@
 #include "qtypes.h"
 #include <QString>
 #include <QMap>
-static const quint16 DATA_SIZE = 10000*2 ;
+static const quint16 DATA_SIZE = 16000*2 ;
 static const quint8 HEADER_SIZE = 17;
 static const quint16 DATA_SIZE_RECV = DATA_SIZE + HEADER_SIZE;
 

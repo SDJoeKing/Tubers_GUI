@@ -168,7 +168,7 @@ static bool headerFound(const QByteArray &arr)
 {
 
     if(arr.size() > 3)
-        return ( (arr.at(0) == 0) && (static_cast<quint8>(arr.at(1)) == 0xFF) && (arr.at(2) == 0) && (static_cast<quint8>(arr.at(3)) == 0xFF) );
+        return ( (arr.at(0) == 0x0F) && (static_cast<quint8>(arr.at(1)) == 0x0F) && (arr.at(2) == 0x0F) && (static_cast<quint8>(arr.at(3)) == 0x0F) );
     else
         return false;
 }

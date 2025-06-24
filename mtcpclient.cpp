@@ -77,7 +77,7 @@ void mTcpClient::flush()
 
 void mTcpClient::setChannel(int chan)
 {
-    m_channel = chan;
+    m_channel = TrueSeq(chan);
 }
 
 
@@ -367,6 +367,10 @@ void mTcpClient::readMessage()
 
             quint8 tx = static_cast<quint8>(m_data.at(HEADER::TxRx) >> 4 & 0x0F);
             quint8 rx = static_cast<quint8>(m_data.at(HEADER::TxRx) & 0x0F);
+            tx = TrueSeq(tx);
+            rx = TrueSeq(rx);
+
+            m_data[HEADER::TxRx] = (tx << 4 | rx) & 0x00FF;
             // qDebug() << "Received : tx " << tx << " rx " << rx;
             m_commence = 0;
 

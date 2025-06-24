@@ -37,6 +37,7 @@ private:
     const float m_maxValue = 3180;
     quint8 m_errorCode;
     quint8 m_chan;
+    bool tfm_required;
     // TFM FMC
     QList<Eigen::ArrayXXf> lookUpTable;
     QList<Eigen::ArrayXXf> fmc_data;

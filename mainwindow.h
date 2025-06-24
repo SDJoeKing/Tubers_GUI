@@ -160,6 +160,6 @@ signals:
     void channel(quint8 );
     void filterParam(const quint8 & order, const float &fs, const float &fc, const float &fw);
     void golayCoding(bool, const QString &, const float&, quint8);
-    void sendTfmSettings(quint8 channels, quint16 rows, quint16 cols, quint16 samples, float pitch, float offsetX, float offsetY, float resolution);
+    void sendTfmSettings(quint8 channels, quint16 rows, quint16 cols, quint16 samples, float pitch, float offsetX, float offsetY, float resolution, bool required);
 };
 #endif // MAINWINDOW_H

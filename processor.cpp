@@ -101,6 +101,7 @@ void Processor::updateTfmSetting(quint8 channels, quint16 rows, quint16 cols, qu
     tfm_required = required;
     m_chan = channels;
 
+
     // initialise LookTable
     lookUpTable.clear();
     fmc_data.clear();
@@ -110,6 +111,8 @@ void Processor::updateTfmSetting(quint8 channels, quint16 rows, quint16 cols, qu
         lookUpTable.emplace_back(ArrayXXf::Zero(rows, cols));
         fmc_data.emplace_back(ArrayXXf::Zero(m_chan+1, samples));
     }
+
+    m_chan = TrueSeq(m_chan);
     // calculate the lookTable
     MATH::generateLookTable(lookUpTable, m_vel, pitch, offsetX, offsetY, resolution);
 }

@@ -98,6 +98,48 @@ static const QString LED_NONCONNECT_STYLE {"QRadioButton::indicator {"
                              "background-color:       grey;"
                              "border:                 2px solid white;"
                              "}"};
+
+static int TrueSeq(int x)
+{
+    switch(x)
+    {
+    case 7:
+        return 0;
+    case 6:
+        return 1;
+    case 5:
+        return 2;
+    case 4:
+        return 3;
+    case 3:
+        return 4;
+    case 2:
+        return 5;
+    case 1:
+        return 6;
+    case 0:
+        return 7;
+    case 15:
+        return 8;
+    case 14:
+        return 9;
+    case 13:
+        return 10;
+    case 12:
+        return 11;
+    case 11:
+        return 12;
+    case 10:
+        return 13;
+    case 9:
+        return 14;
+    case 8:
+        return 15;
+    default:
+        return 0;
+    }
+};
+
 template <class T>
 static const QString getImuLabel(const QString &axis, const T &v)  {return QString("IMU - %1: %2 milli-G").arg(axis).arg(v);}
 

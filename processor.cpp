@@ -96,6 +96,32 @@ void Processor::updateScale(const float & newScale)
     m_scale = newScale;
 }
 
+void Processor::updateTfmSetting(quint8 channels, quint16 rows, quint16 cols, quint16 samples, float pitch, float offsetX, float offsetY, float resolution)
+{
+
+    m_chan = channels;
+
+    // initialise LookTable
+    lookUpTable.clear();
+    fmc_data.clear();
+
+    for(int i=0; i<m_chan+1; i++)
+    {
+        lookUpTable.emplace_back(ArrayXXf::Zero(rows, cols));
+        fmc_data.emplace_back(ArrayXXf::Zero(m_chan+1, samples));
+    }
+    // calculate the lookTable
+    MATH::generateLookTable(lookUpTable, m_vel, pitch, offsetX, offsetY, resolution);
+}
+
+void Processor::populateFMC(float * data, quint8 tx, quint8 rx)
+{
+    // test and optimise THIS !!!
+
+    fmc_data[tx].row(rx) = Map<VectorXf>(data, fmc_data[tx].cols()).transpose().segment(0, fmc_data[tx].cols());
+
+}
+
 
 void Processor::run()
 {
@@ -145,7 +171,7 @@ void Processor::process(const char *dataptr, bool headerOnly)
     int j=  HEADER_SIZE;
 
     // get current tx rx
-    quint8 tx = static_cast<quint8>(serverData.at(HEADER::TxRx) >> 4);
+    quint8 tx = static_cast<quint8>(serverData.at(HEADER::TxRx) >> 4 & 0x0F);
     quint8 rx = static_cast<quint8>(serverData.at(HEADER::TxRx) & 0x0F);
 
     // get system information from the header data
@@ -181,8 +207,8 @@ void Processor::process(const char *dataptr, bool headerOnly)
     {
         temp1 =(serverData.at(j + 1) << 8) & 0xFF00;
         temp2 = (serverData.at(j)) & 0xFF;
-        dataPoint[0][i] = static_cast<qint16>(temp2 | temp1)/ 32768.0  * 3.18 * 1.0 * 1000.0;
-
+        // dataPoint[0][i] = static_cast<qint16>(temp2 | temp1)/ 32768.0  * 3.18 * 1.0 * 1000.0;
+        dataPoint[0][i] = static_cast<qint16>(temp2 | temp1);
         j += 2;
     }
 
@@ -255,7 +281,22 @@ void Processor::process(const char *dataptr, bool headerOnly)
     }
 
     emit dataProcessed(calPoint);
-    emit dataProcessed(dataPoint[0], tx, rx);
+
+    // populate FMC array
+    populateFMC(_temp, tx, rx);
+
+    if(tx == m_chan && rx== m_chan)
+    {   qDebug() << m_chan;
+
+        ArrayXXf tfm_result = ArrayXXf::Zero(lookUpTable[0].rows(), lookUpTable[0].cols());
+        MATH::TFM(fmc_data, tfm_result, lookUpTable, 100*1e6);
+
+        emit tfmReady(tfm_result);
+    }
+
+    if(tx > m_chan || rx > m_chan)
+        throw std::runtime_error("Wrong tx/rx channels out of range");
+
 
     if(processTimer.elapsed() > 500)
     {

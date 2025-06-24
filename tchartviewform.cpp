@@ -131,10 +131,10 @@ void TChartViewForm::plot(const QList<QPointF> &dataptr)
 
     {
         timerV.restart();
-        qDebug() << "datasize: "<< dataptr.size();
+
         m_series->replace(dataptr);
     }
-    qDebug() << "paint " << timerV.durationElapsed();
+
 
     m_chartView->update();
 

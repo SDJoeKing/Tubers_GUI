@@ -18,7 +18,6 @@
 #include <QFutureWatcher>
 #include <QtConcurrent>
 #include <thread>
-#include <eigen3/Eigen/Dense>
 
 #include "tsettings.h"
 #include "tlogging.h"
@@ -71,7 +70,7 @@ private slots:
     void on_ckDepthAxis_clicked(bool checked);
 
     void on_ckRectify_clicked(bool checked);
-    void updateBScan(bool);
+    void updateBScan( const ArrayXXf &);
     void on_actionReset_triggered(bool);
     void setRectifyChecked();
 
@@ -97,9 +96,6 @@ private slots:
     void do_settingReady();
     void on_btnImuBase_toggled(bool checked);
 
-
-    // fmc tfm
-    void populateFMC(float *data, quint8, quint8);
 private:
     QThread socketThread;
     QThread *m_serverThread;
@@ -145,9 +141,6 @@ private:
     qint16 m_imu_y = 0;
     qint16 m_imu_z = 0;
 
-    // tfm lookTable
-    QList<ArrayXXf> lookUpTable;
-    QList<ArrayXXf> fmc_data;
     quint8 m_chan = 0;
 // private functions
 private:
@@ -164,8 +157,9 @@ signals:
     void acquisitionRun(bool);
     void dataForLogger(const QByteArray &);
     void stopAcqSig();
-    void pauseAcqSig(bool );
+    void channel(quint8 );
     void filterParam(const quint8 & order, const float &fs, const float &fc, const float &fw);
     void golayCoding(bool, const QString &, const float&, quint8);
+    void sendTfmSettings(quint8 channels, quint16 rows, quint16 cols, quint16 samples, float pitch, float offsetX, float offsetY, float resolution);
 };
 #endif // MAINWINDOW_H

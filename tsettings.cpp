@@ -35,6 +35,9 @@ TSettings::TSettings(QWidget *parent)
     ui->lineGolayA->setVisible(false);
     ui->lineGolayB->setVisible(false);
     ui->radioManualGolay->setVisible(false);
+    ui->spinTFMSamples->setMaximum(DATA_SIZE/2);
+    ui->spinTFMSamples->setValue(DATA_SIZE/2);
+
 
     // connections:
     connect(ui->powerOutput, &QComboBox::currentIndexChanged, this, &TSettings::sendSetting);

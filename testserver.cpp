@@ -1,6 +1,7 @@
 #include "testserver.h"
 int sent = 0;
-
+int tx = 0;
+int rx = 0;
 #include <QHostInfo>
 
 static void dataGen(char * byteArr, uint8_t * arr, float scale)
@@ -10,10 +11,11 @@ static void dataGen(char * byteArr, uint8_t * arr, float scale)
     quint16 j =  HEADER_SIZE;
     for(size_t i=0; i< DATA_SIZE/2;i++)
     {
-        bool _t = (i < 1000 && QRandomGenerator::global()->bounded(0, 10000) > 9998) ? 1 : 0;
+        // bool _t = (i < 1000 && QRandomGenerator::global()->bounded(0, 10000) > 9998) ? 1 : 0;
+        bool _t = 0;
 
-
-        qint16 _temp = static_cast<qint16>( _t ?  32768*1.8 : _df[i]*scale / 1000 / 3.18 * 32768 );
+        // qint16 _temp = static_cast<qint16>( _t ?  32768*1.8 : _df[i]*scale / 1000 / 3.18 * 32768 );
+        qint16 _temp = static_cast<qint16>( _t ?  32768*1.8 : _df[i]);
         arr[j] = (_temp) & 0x00FF;
         arr[j+1] = (_temp >>8) &0x00FF;
         j+=2;
@@ -35,18 +37,20 @@ testServer::testServer(QWidget *parent) : QObject(parent)
      _data[6] = 5;
 
 
-     m_file.setFileName("../../test_data");
+     m_file.setFileName("../../data_128_128_10000.dat");
 
      if(m_file.open(QIODevice::ReadOnly))
      {
-         m_arr =  m_file.readAll();
-         char * _d = m_arr.data();
-         dataGen(_d, _data, m_scale);
+         m_arr =  m_file.read(16*16*40000);
+         // char * _d = m_arr.data();
+         // dataGen(_d, _data, m_scale);
      }else
      {
          qDebug()<< "Open file not successful";
      }
 
+     // log_file.setFileName("log.dat");
+     // log_file.open(QIODevice::WriteOnly | QIODevice::Append);
 
 }
 
@@ -63,6 +67,7 @@ testServer::~testServer()
 
     if(m_file.isOpen())
         m_file.close();
+    log_file.close();
 }
 
 void testServer::run()
@@ -157,9 +162,27 @@ void testServer::do_sendData()
     {
         data_release = false;
 
-        dataGen(m_arr.data(), _data, m_scale);
+
+        QByteArray sec = m_arr.sliced((tx*16 + rx) * 40000, 40000);
+
+        _data[HEADER::TxRx] = (tx << 4 | rx ) & 0x00FF;
+
+        rx++;
+        if(rx > 15)
+        {
+            rx = 0;
+            tx++;
+            if(tx > 15)
+                tx=0;
+        }
+
+        dataGen(sec.data(), _data, m_scale);
+        // log_file.write(reinterpret_cast<const char *>(_data));
         // datasending logic
         m_socket->write(reinterpret_cast<const char *>(_data), DATA_SIZE_RECV);
+
+
+
         sent++;
     }
 }

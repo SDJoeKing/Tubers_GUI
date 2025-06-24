@@ -10,9 +10,9 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 set(CMAKE_CXX_FLAGS_DEBUG "-g")
-set(CMAKE_CXX_FLAGS_RELEASE "-O2")
+# set(CMAKE_CXX_FLAGS_RELEASE "-O2")
 set(CMAKE_CXX_FLAGS_DEBUG "-O2")
-
+set(CMAKE_BUILD_TYPE debug)
 find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Widgets Concurrent)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Widgets Charts Network Concurrent)
 
@@ -20,6 +20,7 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Widgets Charts Netwo
 # add_definitions(-DQCUSTOMPLOT_USE_OPENGL)
 ## frame rate control to limit the fps to 100
 add_definitions(-DFRAMERATE_CONTROL)
+
 # add_definitions(-DQCUSTOMPLOT_USE_OPENGL)
 ## testing server enabling - note the settings wont work for testing servers except prf
 # add_definitions(-DTEST_SERVER)
@@ -69,6 +70,7 @@ else()
 endif()
 
 string(TOLOWER ${CMAKE_BUILD_TYPE} build_type)
+
 if(build_type STREQUAL release)
     target_compile_definitions(Tubers_GUI PUBLIC QT_NO_DEBUG_OUTPUT)
 endif()

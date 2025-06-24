@@ -6,10 +6,6 @@ static int old_counter = 0;
 static int dataEmitCounter = 0;
 static int dataEmitTracker = 0;
 
-
-QByteArray ack = QString("data acknowledged").toUtf8();
-QByteArray stopAcq = QString("stop").toUtf8();
-
 mTcpClient::mTcpClient(QObject *parent)
     :QObject{parent}
 {
@@ -79,9 +75,9 @@ void mTcpClient::flush()
     m_readSize = 0;
 }
 
-void mTcpClient::setPauseAcq(bool pause)
+void mTcpClient::setChannel(int chan)
 {
-    m_pauseAcq = pause;
+    m_channel = chan;
 }
 
 
@@ -368,6 +364,10 @@ void mTcpClient::readMessage()
 
         if(counter_data==DATA_SIZE_RECV )
         {
+
+            quint8 tx = static_cast<quint8>(m_data.at(HEADER::TxRx) >> 4 & 0x0F);
+            quint8 rx = static_cast<quint8>(m_data.at(HEADER::TxRx) & 0x0F);
+            // qDebug() << "Received : tx " << tx << " rx " << rx;
             m_commence = 0;
 
             {
@@ -380,15 +380,17 @@ void mTcpClient::readMessage()
 
                 writeData(stopAcq);
 
-            }else if(m_pauseAcq)
+            }else if(tx == m_channel && rx == m_channel)
             {
                  // continue
+                qDebug() << tx << rx;
             }
             else
             {
                 // send data acknowledgement
                 writeData(ack);
             }
+
 #ifndef FRAMERATE_CONTROL
             emit dataReady(m_readyData.constData());
             dataEmitCounter++;

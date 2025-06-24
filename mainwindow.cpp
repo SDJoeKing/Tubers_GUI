@@ -52,7 +52,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // configure B-scan
     // m_Bscan->addGraph()
-    m_Bscan->yAxis->setRangeReversed(true);
+    // m_Bscan->yAxis->setRangeReversed(true);
     QCPColorMap *_colorMap = new QCPColorMap(m_Bscan->xAxis, m_Bscan->yAxis);
 
     m_Bscan->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -94,9 +94,12 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_processor, &Processor::dataLogger, m_logging, &Tlogging::setData, Qt::QueuedConnection);
     connect(this, &MainWindow::filterParam, m_processor, &Processor::updateFilter, Qt::QueuedConnection);
     connect(this, &MainWindow::velocitySet, m_processor, &Processor::setVel, Qt::QueuedConnection);
-    connect(m_processor, qOverload<float *, quint8, quint8>(&Processor::dataProcessed) , this, &MainWindow::populateFMC, Qt::QueuedConnection);
+
     connect(m_processor, qOverload<const QList<QPointF>&>(&Processor::dataProcessed), m_Ascan, &TChartViewForm::plot, Qt::QueuedConnection);
-    connect(this, &MainWindow::pauseAcqSig, this, &MainWindow::updateBScan);
+
+    connect(m_processor, &Processor::tfmReady, this, &MainWindow::updateBScan);
+    connect(this, &MainWindow::sendTfmSettings, m_processor, &Processor::updateTfmSetting);
+
     connect(m_processor, &Processor::sendHeaderInfo, this, &MainWindow::updateHeaderInfo, Qt::QueuedConnection);
     connect(this, &MainWindow::golayCoding, m_processor, &Processor::updateGolaySetting, Qt::QueuedConnection);
 
@@ -329,6 +332,8 @@ void MainWindow::doSettingsConfirmed(QString str)
     emit golayCoding(list[SETTINGS::golay].toInt(), list[SETTINGS::pulseSequence], list[SETTINGS::pulseFreq].toFloat(), m_settings->pulseLength());
 
     emit mainSendSetting(settings);
+
+
 }
 
 void MainWindow::on_actionLogging_triggered(bool checked)
@@ -357,7 +362,7 @@ void MainWindow::on_btnConnect_clicked(bool checked)
         connect(m_client, &mTcpClient::serverReady, this, &MainWindow::toggleStatus, Qt::QueuedConnection);
         connect(m_client, &mTcpClient::serverReady, ui->radioStatus, &QRadioButton::setChecked, Qt::QueuedConnection);
         connect(this, &MainWindow::stopAcqSig, m_client, &mTcpClient::setStopAcq, Qt::QueuedConnection);
-        connect(this, &MainWindow::pauseAcqSig, m_client, &mTcpClient::setPauseAcq, Qt::QueuedConnection);
+        connect(this, &MainWindow::channel, m_client, &mTcpClient::setChannel, Qt::QueuedConnection);
         connect(m_client, &mTcpClient::acquisitionReady, this, &MainWindow::runAcquisition, Qt::QueuedConnection);
         connect(m_client, &mTcpClient::acquisitionStop, this, &MainWindow::stopAcquisition, Qt::QueuedConnection);
         connect(this, &MainWindow::dataReceived, m_client, &mTcpClient::clearData, Qt::QueuedConnection);
@@ -559,10 +564,9 @@ int findFrontWall(const QList<QPointF> &data, int start, int end)
 }
 
 
-void MainWindow::updateBScan(bool ok)
+void MainWindow::updateBScan(const ArrayXXf &tfm_result)
 {
 
-    Q_UNUSED(ok);
 
     if(!use_bscan)
         return;
@@ -580,17 +584,19 @@ void MainWindow::updateBScan(bool ok)
     _colorMap->rescaleAxes();
     _colorMap->setGradient(QCPColorGradient::gpJet);
 
-    auto nx = lookUpTable[0].cols();
-    auto ny = lookUpTable[0].rows();
-
-    ArrayXXf tfm_result = ArrayXXf::Zero(ny, nx);
-
-    MATH::TFM(fmc_data, tfm_result, lookUpTable, m_fs);
+    auto nx = tfm_result.cols();
+    auto ny = tfm_result.rows();
 
     QCPColorMap *_map = static_cast<QCPColorMap *>(m_Bscan->plottable());
 
     auto key = _map->data()->keySize();
     auto value = _map->data()->valueSize();
+
+    if(key != nx || value != ny)
+    {
+        ui->btnConnect->click(); // disconnect
+        QMessageBox::critical(this,  "Critical Error", QString("The TFM array shape (%1, %2) does not match ColorMap (%3, %4)").arg(ny).arg(nx).arg(value).arg( key));
+    }
 
     for(int row = 0; row< value; row++)
     {
@@ -615,7 +621,8 @@ void MainWindow::updateBScan(bool ok)
     // f.waitForFinished();
     // m_Bscan->setUpdatesEnabled(true);
 
-        emit pauseAcqSig(0); // recover pausing
+    QTimer::singleShot(0, m_client, [&](){m_client->writeData(ack);}); // resume acquisition
+
 }
 
 
@@ -711,15 +718,6 @@ void MainWindow::do_bScanSetting(bool arg, const QList<double> &settings)
         m_currentLine = -1;
         if(_map)
         {
-            // fmcSetting.emplaceBack(pitch);
-            // fmcSetting.emplaceBack(width);
-            // fmcSetting.emplaceBack(height);
-            // fmcSetting.emplaceBack(tfmOffsetX);
-            // fmcSetting.emplaceBack(tfmOffsetY);
-            // fmcSetting.emplaceBack(samples);
-            // fmcSetting.emplaceBack(res);
-            // channels
-
             float pitch = settings[0];
             float width = settings[1];
             float height = settings[2];
@@ -729,20 +727,14 @@ void MainWindow::do_bScanSetting(bool arg, const QList<double> &settings)
             float resolution = settings[6];
             int channels = settings[7];
             m_chan = channels - 1;
+
+            emit channel(m_chan);
+
             // x/y axis array size
 
             int nx = width / resolution;
             int ny = height/ resolution;
-
-            // initialise LookTable
-            lookUpTable.clear();
-            fmc_data.clear();
-
-            for(int i=0; i<channels; i++)
-            {
-                lookUpTable.emplace_back(ArrayXXf::Zero(nx, ny));
-                fmc_data.emplace_back(ArrayXXf::Zero(channels, samples));
-            }
+            emit sendTfmSettings(m_chan, ny, nx, samples, pitch, offsetX, offsetY, resolution);
 
             _map->data()->setSize(nx, ny); // we want the color map to have nx * ny data points
             _map->data()->setRange(QCPRange(0, width), QCPRange(0, height));
@@ -751,8 +743,6 @@ void MainWindow::do_bScanSetting(bool arg, const QList<double> &settings)
             _map->rescaleAxes();
             m_Bscan->replot(QCustomPlot::rpImmediateRefresh);
 
-            // calculate the lookTable
-            MATH::generateLookTable(lookUpTable, m_vel, pitch, offsetX, offsetY, resolution);
         }
     }
 }
@@ -896,14 +886,5 @@ void MainWindow::on_btnImuBase_toggled(bool checked)
     }
 }
 
-void MainWindow::populateFMC(float * data, quint8 tx, quint8 rx)
-{
-    // test and optimise THIS !!!
-    fmc_data[tx].row(rx) = Map<VectorXf>(data, fmc_data[tx].cols()).transpose().segment(0, fmc_data[tx].cols());
-    if(tx == m_chan && rx== m_chan)
-        emit pauseAcqSig(1);
 
-    if(tx > m_chan || rx > m_chan)
-        throw std::runtime_error("Wrong tx/rx channels out of range");
-}
 

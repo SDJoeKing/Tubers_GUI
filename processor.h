@@ -57,7 +57,7 @@ public slots:
     void updateFilter(const quint8 & order, const float &fs, const float &fc, const float &fw);
     void updateGolaySetting(bool useGolay, const QString &seq, const float &freq, quint8);
     void updateScale(const float &);
-    void updateTfmSetting(quint8 channels, quint16 rows, quint16 cols, quint16 samples, float pitch, float offsetX, float offsetY, float resolution);
+    void updateTfmSetting(quint8 channels, quint16 rows, quint16 cols, quint16 samples, float pitch, float offsetX, float offsetY, float resolution, bool required);
 
 private:
     void populateFMC(float* data, quint8 tx, quint8 rx);

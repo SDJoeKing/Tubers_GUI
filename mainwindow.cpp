@@ -726,6 +726,7 @@ void MainWindow::do_bScanSetting(bool arg, const QList<double> &settings)
             int samples = static_cast<int>(settings[5]);
             float resolution = settings[6];
             int channels = settings[7];
+            bool required = static_cast<int>(settings[8]);
             m_chan = channels - 1;
 
             emit channel(m_chan);
@@ -734,7 +735,7 @@ void MainWindow::do_bScanSetting(bool arg, const QList<double> &settings)
 
             int nx = width / resolution;
             int ny = height/ resolution;
-            emit sendTfmSettings(m_chan, ny, nx, samples, pitch, offsetX, offsetY, resolution);
+            emit sendTfmSettings(m_chan, ny, nx, samples, pitch, offsetX, offsetY, resolution, required);
 
             _map->data()->setSize(nx, ny); // we want the color map to have nx * ny data points
             _map->data()->setRange(QCPRange(0, width), QCPRange(0, height));

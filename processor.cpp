@@ -96,9 +96,9 @@ void Processor::updateScale(const float & newScale)
     m_scale = newScale;
 }
 
-void Processor::updateTfmSetting(quint8 channels, quint16 rows, quint16 cols, quint16 samples, float pitch, float offsetX, float offsetY, float resolution)
+void Processor::updateTfmSetting(quint8 channels, quint16 rows, quint16 cols, quint16 samples, float pitch, float offsetX, float offsetY, float resolution, bool required)
 {
-
+    tfm_required = required;
     m_chan = channels;
 
     // initialise LookTable
@@ -283,20 +283,23 @@ void Processor::process(const char *dataptr, bool headerOnly)
     emit dataProcessed(calPoint);
 
     // populate FMC array
-    populateFMC(_temp, tx, rx);
 
-    if(tx == m_chan && rx== m_chan)
-    {   qDebug() << m_chan;
+    if(tfm_required)
+    {
+        populateFMC(_temp, tx, rx);
 
-        ArrayXXf tfm_result = ArrayXXf::Zero(lookUpTable[0].rows(), lookUpTable[0].cols());
-        MATH::TFM(fmc_data, tfm_result, lookUpTable, 100*1e6);
+        if(tx == m_chan && rx== m_chan)
+        {   qDebug() << m_chan;
 
-        emit tfmReady(tfm_result);
+            ArrayXXf tfm_result = ArrayXXf::Zero(lookUpTable[0].rows(), lookUpTable[0].cols());
+            MATH::TFM(fmc_data, tfm_result, lookUpTable, 100*1e6);
+
+            emit tfmReady(tfm_result);
+        }
+
+        if(tx > m_chan || rx > m_chan)
+            throw std::runtime_error("Wrong tx/rx channels out of range");
     }
-
-    if(tx > m_chan || rx > m_chan)
-        throw std::runtime_error("Wrong tx/rx channels out of range");
-
 
     if(processTimer.elapsed() > 500)
     {

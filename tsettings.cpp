@@ -289,6 +289,7 @@ void TSettings::on_btnConfirm_clicked()
     fmcSetting.emplaceBack(samples);
     fmcSetting.emplaceBack(res);
     fmcSetting.emplaceBack(ui->spinTFMChannel->value());
+    fmcSetting.emplaceBack(ui->groupBscan->isChecked());
     emit bScanSetting(ui->groupBscan->isChecked(), fmcSetting);
 
 

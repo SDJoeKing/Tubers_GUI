@@ -295,13 +295,13 @@ void Processor::process(const char *dataptr, bool headerOnly)
         {   qDebug() << m_chan;
 
             ArrayXXf tfm_result = ArrayXXf::Zero(lookUpTable[0].rows(), lookUpTable[0].cols());
-            MATH::TFM(fmc_data, tfm_result, lookUpTable, 100*1e6);
+            MATH::TFM(fmc_data, tfm_result, lookUpTable, m_fs*1e6);
 
             emit tfmReady(tfm_result);
         }
 
-        if(tx > m_chan || rx > m_chan)
-            throw std::runtime_error("Wrong tx/rx channels out of range");
+        // if(tx > m_chan || rx > m_chan)
+        //     throw std::runtime_error("Wrong tx/rx channels out of range");
     }
 
     if(processTimer.elapsed() > 500)

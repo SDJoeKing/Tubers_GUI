@@ -96,6 +96,8 @@ private slots:
     void do_settingReady();
     void on_btnImuBase_toggled(bool checked);
 
+    // tfm
+    void rescaleBscan();
 private:
     QThread socketThread;
     QThread *m_serverThread;
@@ -142,12 +144,19 @@ private:
     qint16 m_imu_z = 0;
 
     quint8 m_chan = 0;
+
+    // tfm
+    int tfmWidth;
+    int tfmHeight;
+    QHBoxLayout *tfmLayout;
 // private functions
 private:
     void resetUI();
     void setConnectionIndicator();
     void set_envelope(float, float);
     void toggleOff(QCheckBox *);
+    void _rescaleBscan(QCustomPlot *plot, const float &w, const float &h, const float &_w, const float _h);
+    void setBscanVisible(bool);
 signals:
     void velocitySet(double);
     void mainSendSetting(const QString &);

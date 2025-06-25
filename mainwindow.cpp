@@ -52,7 +52,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // configure B-scan
     // m_Bscan->addGraph()
-    // m_Bscan->yAxis->setRangeReversed(true);
+    m_Bscan->yAxis->setRangeReversed(true);
     QCPColorMap *_colorMap = new QCPColorMap(m_Bscan->xAxis, m_Bscan->yAxis);
 
     m_Bscan->setContextMenuPolicy(Qt::CustomContextMenu);
@@ -60,11 +60,19 @@ MainWindow::MainWindow(QWidget *parent)
     QCPColorScale *colorScale = new QCPColorScale(m_Bscan);
     // scale shall be vertical bar with tick/axis labels right (actually atRight is already the default)
     _colorMap->setColorScale(colorScale); // associate the color map with the color scale
+    _splitter->addWidget(m_Ascan);
 
+    QWidget *tfmArea = new QWidget(this);
+    tfmArea->setObjectName("tfmArea");
+    tfmLayout = new QHBoxLayout(this);
+    tfmArea->setLayout(tfmLayout);
+    tfmLayout->addWidget(m_Bscan);
 
     _splitter->addWidget(m_Ascan);
-    _splitter->addWidget(m_Bscan);
+    _splitter->addWidget(tfmArea);
     _splitter->setSizes(QList<int>(height()-30, height()));
+
+    connect(m_Bscan, &QCustomPlot::afterReplot, this, &MainWindow::rescaleBscan);
 
     // setting dock
     QDockWidget *settingDock = new QDockWidget(graphFrame,Qt::CustomizeWindowHint|Qt::FramelessWindowHint );
@@ -189,7 +197,7 @@ void MainWindow::resetUI()
     if(ui->btnRun->isChecked())
         ui->btnRun->setChecked(false);
 
-    m_Bscan->setVisible(false);
+    setBscanVisible(false);
     ui->log->clear();
     ui->btnConnect->setChecked(false);
     ui->spinEnvLevel->setMinimum(0);
@@ -344,7 +352,7 @@ void MainWindow::on_actionLogging_triggered(bool checked)
 
 void MainWindow::on_ckBscan_clicked(bool checked)
 {
-    m_Bscan->setVisible(checked);
+    setBscanVisible(checked);
 }
 
 void MainWindow::on_btnConnect_clicked(bool checked)
@@ -694,11 +702,11 @@ void MainWindow::do_bScanSetting(bool arg, const QList<double> &settings)
 
     if(use_bscan)
     {
-        m_Bscan->setVisible(true);
+        setBscanVisible(true);
         ui->ckBscan->setCheckState(Qt::Checked);
     }else
     {
-        m_Bscan->setVisible(false);
+        setBscanVisible(false);
         ui->ckBscan->setCheckState(Qt::Unchecked);
     }
 
@@ -735,6 +743,10 @@ void MainWindow::do_bScanSetting(bool arg, const QList<double> &settings)
 
             int nx = width / resolution;
             int ny = height/ resolution;
+
+            tfmHeight = ny;
+            tfmWidth = nx;
+
             emit sendTfmSettings(m_chan, ny, nx, samples, pitch, offsetX, offsetY, resolution, required);
 
             _map->data()->setSize(nx, ny); // we want the color map to have nx * ny data points
@@ -886,6 +898,58 @@ void MainWindow::on_btnImuBase_toggled(bool checked)
         m_imu_z = 0;
     }
 }
+
+void MainWindow::_rescaleBscan(QCustomPlot *plot, const float &w, const float &h, const float &_w, const float _h)
+{
+    // calculate bscan new area and move to center
+    float widthRatio = _w/w;
+    float heightRatio = _h/h;
+
+    if(int(heightRatio * 100) == int( widthRatio * 100))
+        return;
+
+    // prioritise y axis
+    if(heightRatio > widthRatio)
+    {
+
+        float targetWidth = h * _w / _h;
+        tfmLayout->setContentsMargins(w/2 - targetWidth / 2, 0, w/2 - targetWidth/2, 0);
+    }
+    // prioritise x axis
+    else
+    {
+        float targetHeight = w * _h / _w ;
+        tfmLayout->setContentsMargins(0, h/2 - targetHeight/2, 0, h/2 - targetHeight/2);
+    }
+
+    // m_Bscan->replot(QCustomPlot::rpQueuedReplot);
+}
+
+void MainWindow::setBscanVisible(bool visible)
+{
+    m_Bscan->setVisible(visible);
+    QWidget *widget = qobject_cast<QSplitter*>(m_Ascan->parent())->findChild<QWidget *>("tfmArea");
+    if(widget != nullptr)
+        widget->setVisible(visible);
+}
+
+void MainWindow::rescaleBscan()
+{
+
+    // compare if the bscan has already been rendered (size not 0)
+    auto totalRect = qobject_cast<QSplitter*>(m_Ascan->parent())->childrenRect();
+    auto ascanRect = m_Ascan->rect();
+
+    if(ascanRect.height() == totalRect.height()) // bscan has not been rendered yet
+        return;
+
+    float height = totalRect.height() - ascanRect.height();
+    float width  = totalRect.width();
+
+    _rescaleBscan(m_Bscan, width, height, tfmWidth, tfmHeight);
+
+}
+
 
 
 

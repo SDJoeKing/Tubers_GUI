@@ -45,10 +45,10 @@ private:
 
 signals:
     void dataProcessed(const QList<QPointF> &);
-    void dataProcessed(float *, quint8, quint8);
     void dataLogger(const char *);
     void sendHeaderInfo(const float &, const float &, const quint8 &, const QVector<qint16> &imus); // temp. speed
     void tfmReady(const ArrayXXf &);
+    void requestAcq();
 public slots:
     void process(const char *, bool headerOnly = false);
     void setVel(const float &vel);

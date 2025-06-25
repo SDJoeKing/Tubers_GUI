@@ -64,7 +64,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     QWidget *tfmArea = new QWidget(this);
     tfmArea->setObjectName("tfmArea");
-    tfmLayout = new QHBoxLayout(this);
+    tfmLayout = new QHBoxLayout;
     tfmArea->setLayout(tfmLayout);
     tfmLayout->addWidget(m_Bscan);
 
@@ -103,7 +103,7 @@ MainWindow::MainWindow(QWidget *parent)
     connect(this, &MainWindow::filterParam, m_processor, &Processor::updateFilter, Qt::QueuedConnection);
     connect(this, &MainWindow::velocitySet, m_processor, &Processor::setVel, Qt::QueuedConnection);
 
-    connect(m_processor, qOverload<const QList<QPointF>&>(&Processor::dataProcessed), m_Ascan, &TChartViewForm::plot, Qt::QueuedConnection);
+    connect(m_processor, &Processor::dataProcessed, m_Ascan, &TChartViewForm::plot, Qt::QueuedConnection);
 
     connect(m_processor, &Processor::tfmReady, this, &MainWindow::updateBScan);
     connect(this, &MainWindow::sendTfmSettings, m_processor, &Processor::updateTfmSetting);
@@ -375,6 +375,8 @@ void MainWindow::on_btnConnect_clicked(bool checked)
         connect(m_client, &mTcpClient::acquisitionStop, this, &MainWindow::stopAcquisition, Qt::QueuedConnection);
         connect(this, &MainWindow::dataReceived, m_client, &mTcpClient::clearData, Qt::QueuedConnection);
         connect(m_client, &mTcpClient::dataReady, m_processor, &Processor::process, Qt::QueuedConnection);
+        connect(  m_processor, &Processor::requestAcq, m_client, &mTcpClient::writeAcq, Qt::QueuedConnection);
+
         connect(m_client, &mTcpClient::connectFail, this, [this](){ui->btnConnect->setChecked(false); connected=false;
                 QMessageBox::information(this, "Error", "Unable to make connection to server. Please check connection.");}, Qt::QueuedConnection);
         connect(this, &MainWindow::mainSendSetting, m_client, &mTcpClient::sendSetting, Qt::QueuedConnection);

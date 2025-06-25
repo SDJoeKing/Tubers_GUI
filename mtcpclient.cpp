@@ -35,13 +35,15 @@ bool mTcpClient::start(const QString &address, const quint16 port)
 
 void mTcpClient::stop()
 {
+
     if(isOpen())
     {
 
         disconnected(); // send disconnect info first
         m_socket->disconnectFromHost();
-        while(shutdownLock){};
+        // while(shutdownLock){};
     }
+
     this->m_socket->readAll();
     emit acquisitionStop();
 
@@ -116,6 +118,11 @@ void mTcpClient::requestStatus()
         writeData(QString("status").toUtf8());
         qDebug() << "request status";
     }
+}
+
+void mTcpClient::writeAcq()
+{
+    writeData(ack);
 }
 
 bool mTcpClient::isOpen()
@@ -268,7 +275,7 @@ void mTcpClient::do_frameRateControl()
     {
         if(prf > FRAMERATE)
         {
-            emit dataReady(m_readyData.constData());
+            emit dataReady(m_data.constData());
             dataEmitCounter++;
         }
     }
@@ -374,14 +381,8 @@ void mTcpClient::readMessage()
             // qDebug() << "Received : tx " << tx << " rx " << rx;
             m_commence = 0;
 
-            {
-                QMutexLocker lk(&mu);
-                m_readyData.assign(m_data);
-            }
-
             if(m_stopAcq)
             {
-
                 writeData(stopAcq);
 
             }else if(tx == m_channel && rx == m_channel)
@@ -389,11 +390,11 @@ void mTcpClient::readMessage()
                  // continue
                 qDebug() << tx << rx;
             }
-            else
-            {
-                // send data acknowledgement
-                writeData(ack);
-            }
+            // else
+            // {
+            //     // send data acknowledgement
+            //     writeData(ack);
+            // }
 
 #ifndef FRAMERATE_CONTROL
             emit dataReady(m_readyData.constData());
@@ -401,7 +402,7 @@ void mTcpClient::readMessage()
 #else
             if(prf <= FRAMERATE)
             {
-                emit dataReady(m_readyData.constData());
+                emit dataReady(m_data.constData());
                 dataEmitCounter++;
             }
 #endif
@@ -437,6 +438,7 @@ void mTcpClient::disconnected()
 
 void mTcpClient::notifyServerDown()
 {
+
     m_socket->flush();
     emit serverReady(false);
     shutdownLock = false;

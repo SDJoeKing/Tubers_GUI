@@ -21,7 +21,7 @@ Processor::Processor(QObject *parent)
 
     processTimer.start();
 
-
+    tfm_required = false;
     m_sequenceA = genPulse(std::make_unique<std::vector<int>>(std::vector<int>{1,1,-1,1,1,1,-1,1,1,1,-1,1,1,1,-1,1}), 10);
     // calPoint.reserve( DATA_SIZE/2);
 
@@ -309,6 +309,9 @@ void Processor::process(const char *dataptr, bool headerOnly)
         processTimer.restart();
         emit sendHeaderInfo(_temperature, linkSpeed, m_errorCode,  QVector<qint16>{_imu_x, _imu_y, _imu_z});
     }
+
+    if(!headerOnly)
+        emit requestAcq();
 }
 
 void Processor::setVel(const float &vel)

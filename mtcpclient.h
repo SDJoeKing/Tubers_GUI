@@ -38,6 +38,7 @@ public slots:
     void timerOn(bool);
     void setPrf(const int);
     void requestStatus();
+    void writeAcq();
 private:
     QMutex mu;
     QTcpSocket *m_socket;
@@ -47,7 +48,7 @@ private:
     QString errorToType(int);
     QTcpSocket::SocketState m_state;
     QByteArray m_data;
-    QByteArray m_readyData;
+    // QByteArray m_readyData;
     quint16 counter_data=0;
     quint16 m_readSize = 0;
     bool m_commence = 0;

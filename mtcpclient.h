@@ -24,7 +24,7 @@ public:
     void stop();
     void writeData(QByteArray arr);
     bool isOpen();
-    const QByteArray& data();
+    // const QByteArray& data();
     void setHostPort(const QString&, const quint16&);
 
 public slots:
@@ -35,10 +35,11 @@ public slots:
     void flush();
     void setChannel(int);
     void setStopAcq();
-    void timerOn(bool);
     void setPrf(const int);
     void requestStatus();
     void writeAcq();
+    void do_timeout();
+
 private:
     QMutex mu;
     QTcpSocket *m_socket;
@@ -59,8 +60,8 @@ private:
     quint16 m_port;
     bool shutdownLock;
     bool acquisitionRunning;
-    QTimer *m_timer;
     int prf;
+    QTimer *m_timer;
 #ifdef FRAMERATE_CONTROL
     QTimer *m_frameControlTimer;
 #endif
@@ -74,8 +75,7 @@ private slots:
     void notifyServerDown();
     void updateState(QTcpSocket::SocketState);
     bool parseServerMsg(QByteArray &);
-    void do_timeout();
-    void do_frameRateControl();
+
 signals:
     void clientMessage(const QString &msg);
     void tcpMessage(const QString &msg);

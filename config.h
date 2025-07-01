@@ -12,7 +12,7 @@ static const QByteArray ack = QString("data acknowledged").toUtf8();
 static const QByteArray stopAcq = QString("stop").toUtf8();
 
 #ifdef FRAMERATE_CONTROL
-#define FRAMERATE 120
+#define FRAMERATE 30
 #endif
 
 enum HEADER {
@@ -101,43 +101,9 @@ static const QString LED_NONCONNECT_STYLE {"QRadioButton::indicator {"
 
 static int TrueSeq(int x)
 {
-    switch(x)
-    {
-    case 7:
-        return 0;
-    case 6:
-        return 1;
-    case 5:
-        return 2;
-    case 4:
-        return 3;
-    case 3:
-        return 4;
-    case 2:
-        return 5;
-    case 1:
-        return 6;
-    case 0:
-        return 7;
-    case 15:
-        return 8;
-    case 14:
-        return 9;
-    case 13:
-        return 10;
-    case 12:
-        return 11;
-    case 11:
-        return 12;
-    case 10:
-        return 13;
-    case 9:
-        return 14;
-    case 8:
-        return 15;
-    default:
-        return 0;
-    }
+    int arr[16] = {7,6,5,4,3,2,1,0,8,15,14,13,12,11,10,9};
+    return arr[x];
+    // return x;
 };
 
 template <class T>

@@ -5,7 +5,7 @@ QElapsedTimer processTimer;
 
 QMutex mu;
 int golayTrack = 0;
-
+QList<QPair<int, int>> _holder;
 float lerp(int a, int b, float t);
 void correlate(const float * dataArr, quint16 len, std::shared_ptr<std::vector<float>> SEQ, float *);
 std::shared_ptr<std::vector<float>> genPulse(std::unique_ptr<std::vector<int>>, quint16 );
@@ -220,7 +220,6 @@ void Processor::process(const char *dataptr, bool headerOnly)
         QMutexLocker lk(&mu);
         if(golaySeq)
         {
-
             correlate(dataPoint[0], DATA_SIZE/2,  m_sequenceA, m_golayData);
             m_golayASeq = false;
 
@@ -289,14 +288,15 @@ void Processor::process(const char *dataptr, bool headerOnly)
 
     if(tfm_required)
     {
+        _holder.emplace_back(tx, rx);
         populateFMC(_temp, tx, rx);
 
         if(tx == m_chan && rx== m_chan)
-        {   qDebug() << m_chan;
-
+        {
+            qDebug() << _holder.size();
             ArrayXXf tfm_result = ArrayXXf::Zero(lookUpTable[0].rows(), lookUpTable[0].cols());
             MATH::TFM(fmc_data, tfm_result, lookUpTable, m_fs*1e6);
-
+            _holder.clear();
             emit tfmReady(tfm_result);
         }
 

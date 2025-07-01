@@ -32,7 +32,18 @@ bool mTcpClient::start(const QString &address, const quint16 port)
     return(m_socket->waitForConnected(3000));
 
 }
+void mTcpClient::do_timeout()
+{
+    if(m_timer->isActive())
+    {
+        emit fps(static_cast<float>(counter-old_counter) / m_timer->interval() * 1000.0);
+        old_counter = counter;
 
+        emit plotRate(FRAMERATE * 1.0);
+        dataEmitTracker = dataEmitCounter;
+
+    }
+}
 void mTcpClient::stop()
 {
 
@@ -88,23 +99,7 @@ void mTcpClient::setStopAcq()
     m_stopAcq = 1;
 }
 
-void mTcpClient::timerOn(bool on)
-{
-    if(on)
-    {
-        m_timer->start();
-#ifdef FRAMERATE_CONTROL
-        m_frameControlTimer->start();
-#endif
-    }
-    else
-    {
-        m_timer->stop();
-#ifdef FRAMERATE_CONTROL
-        m_frameControlTimer->stop();
-#endif
-    }
-}
+
 
 void mTcpClient::setPrf(const int newPrf)
 {
@@ -159,10 +154,10 @@ QString mTcpClient::errorToType(int i)
     return key.valueToKey(i);
 }
 
-const QByteArray & mTcpClient::data()
-{
-    return m_readyData;
-}
+// const QByteArray & mTcpClient::data()
+// {
+//     return m_readyData;
+// }
 
 void mTcpClient::setHostPort(const QString& addr, const quint16& port)
 {
@@ -255,43 +250,10 @@ bool mTcpClient::parseServerMsg(QByteArray &arr)
     }
 }
 
-void mTcpClient::do_timeout()
-{
-    if(m_timer->isActive())
-    {
-        emit fps(static_cast<float>(counter-old_counter) / m_timer->interval() * 1000.0);
-        old_counter = counter;
-
-        emit plotRate(static_cast<float>(dataEmitCounter-dataEmitTracker) / m_timer->interval() * 1000.0);
-        dataEmitTracker = dataEmitCounter;
-
-    }
-}
-
-void mTcpClient::do_frameRateControl()
-{
-#ifdef FRAMERATE_CONTROL
-    if(m_frameControlTimer->isActive())
-    {
-        if(prf > FRAMERATE)
-        {
-            emit dataReady(m_data.constData());
-            dataEmitCounter++;
-        }
-    }
-#endif
-}
-
 void mTcpClient::run()
 {
     m_loop = new QEventLoop(this);
     m_timer = new QTimer(this);
-
-#ifdef FRAMERATE_CONTROL
-    m_frameControlTimer = new QTimer(this);
-    m_frameControlTimer->setInterval(1000.0/FRAMERATE);
-    connect(m_frameControlTimer, &QTimer::timeout, this, &mTcpClient::do_frameRateControl);
-#endif
 
     m_timer->setInterval(1000);
     m_timer->start();
@@ -388,24 +350,16 @@ void mTcpClient::readMessage()
             }else if(tx == m_channel && rx == m_channel)
             {
                  // continue
-                qDebug() << tx << rx;
+                // qDebug() << tx << rx;
             }
             // else
             // {
             //     // send data acknowledgement
             //     writeData(ack);
             // }
-
-#ifndef FRAMERATE_CONTROL
-            emit dataReady(m_readyData.constData());
+            emit dataReady(m_data.constData());
             dataEmitCounter++;
-#else
-            if(prf <= FRAMERATE)
-            {
-                emit dataReady(m_data.constData());
-                dataEmitCounter++;
-            }
-#endif
+
             counter++;
             counter_data = 0;
             m_readSize = 0;

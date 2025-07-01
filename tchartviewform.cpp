@@ -116,6 +116,7 @@ TChartViewForm::TChartViewForm(QWidget *parent)
     ui->spinGain->setValue(m_spinGain);
     ui->comboAxis->setCurrentIndex(1);
 
+    timerV.start();
 }
 
 TChartViewForm::~TChartViewForm()
@@ -127,17 +128,23 @@ TChartViewForm::~TChartViewForm()
 void TChartViewForm::plot(const QList<QPointF> &dataptr)
 {
 
+#ifdef FRAMERATE_CONTROL
+
+    if(timerV.elapsed() > 1.0/FRAMERATE * 1000)
+    {
+        timerV.restart();
+        m_series->replace(dataptr);
+    }
+    // m_chart->update();
+#else
+
     // const QSignalBlocker blocker(m_chartView);
 
     {
-        timerV.restart();
-
         m_series->replace(dataptr);
     }
-
-
-    m_chartView->update();
-
+    m_chart->update();
+#endif
 }
 
 void TChartViewForm::changeXAxisType(const TChartViewForm::x_AXISTYPE &type)
@@ -629,7 +636,7 @@ void TChartViewForm::doThicknessCal()
 
 qreal TChartViewForm::maxInd(const QRectF &rect, bool thres)
 {
-    // if acquisition is not started or the plot is empty;
+    // if acquisition is not started or the  is empty;
     if(m_series->count() <= 0)
         return -1;
 

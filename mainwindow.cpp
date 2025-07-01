@@ -384,7 +384,6 @@ void MainWindow::on_btnConnect_clicked(bool checked)
         connect(m_client, &mTcpClient::fps, this, &MainWindow::do_fps, Qt::QueuedConnection);
         connect(m_client, &mTcpClient::plotRate, this, &MainWindow::do_plotRate, Qt::QueuedConnection);
         connect(m_client, &mTcpClient::settingReady, this, &MainWindow::do_settingReady, Qt::QueuedConnection);
-        connect(this, &MainWindow::acquisitionRun, m_client, &mTcpClient::timerOn, Qt::QueuedConnection);
         connect(m_settings, &TSettings::prf, m_client, &mTcpClient::setPrf);
         // connect error handling
         connect(m_client, &mTcpClient::errorOccured, this, &MainWindow::do_ConnectLost, Qt::QueuedConnection);

@@ -27,7 +27,7 @@
 #include "DspFilters/Dsp.h"
 #include "processor.h"
 #include "testserver.h"
-#include "tmath.h"
+
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -70,7 +70,7 @@ private slots:
     void on_ckDepthAxis_clicked(bool checked);
 
     void on_ckRectify_clicked(bool checked);
-    void updateBScan( const ArrayXXf &);
+    void updateBScan( const float &);
     void on_actionReset_triggered(bool);
     void setRectifyChecked();
 
@@ -145,7 +145,7 @@ private:
 
     quint8 m_chan = 0;
 
-    // tfm
+    // tfm / bscan /cscan rescale
     int tfmWidth;
     int tfmHeight;
     QHBoxLayout *tfmLayout;
@@ -170,5 +170,6 @@ signals:
     void filterParam(const quint8 & order, const float &fs, const float &fc, const float &fw);
     void golayCoding(bool, const QString &, const float&, quint8);
     void sendTfmSettings(quint8 channels, quint16 rows, quint16 cols, quint16 samples, float pitch, float offsetX, float offsetY, float resolution, bool required);
+    void c_scan(bool);
 };
 #endif // MAINWINDOW_H

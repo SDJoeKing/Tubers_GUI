@@ -11,6 +11,8 @@
 #include <QMutexLocker>
 #include "config.h"
 #include <QReadWriteLock>
+#include <QSerialPort>
+#include <QSerialPortInfo>
 
 class mTcpClient : public QObject
 {
@@ -39,7 +41,7 @@ public slots:
     void requestStatus();
     void writeAcq();
     void do_timeout();
-
+    void setCscan(bool newCscan);
 private:
     QMutex mu;
     QTcpSocket *m_socket;
@@ -66,6 +68,9 @@ private:
     QTimer *m_frameControlTimer;
 #endif
 
+    QSerialPort *m_serial;
+    bool c_scan = 0;
+
     QReadWriteLock wrLock;
 private slots:
     void readMessage(); //  signal readyRead, slot readMessage
@@ -90,6 +95,7 @@ signals:
     void connectFail();
     void errorOccured();
     void badSettings();
+    void pleaseSendSetting();
     // QRunnable interface
 public:
     void run();

@@ -36,19 +36,15 @@ private:
     float m_scale = 1.0;
     const float m_maxValue = 3180;
     quint8 m_errorCode;
-    quint8 m_chan;
-    bool tfm_required;
-    // TFM FMC
-    QList<Eigen::ArrayXXf> lookUpTable;
-    QList<Eigen::ArrayXXf> fmc_data;
+
 
 
 signals:
     void dataProcessed(const QList<QPointF> &);
     void dataLogger(const char *);
     void sendHeaderInfo(const float &, const float &, const quint8 &, const QVector<qint16> &imus); // temp. speed
-    void tfmReady(const ArrayXXf &);
     void requestAcq();
+    void thickness(const float &);
 public slots:
     void process(const char *, bool headerOnly = false);
     void setVel(const float &vel);
@@ -58,10 +54,7 @@ public slots:
     void updateFilter(const quint8 & order, const float &fs, const float &fc, const float &fw);
     void updateGolaySetting(bool useGolay, const QString &seq, const float &freq, quint8);
     void updateScale(const float &);
-    void updateTfmSetting(quint8 channels, quint16 rows, quint16 cols, quint16 samples, float pitch, float offsetX, float offsetY, float resolution, bool required);
 
-private:
-    void populateFMC(float* data, quint8 tx, quint8 rx);
 
 };
 

@@ -13,8 +13,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # #set(CMAKE_CXX_FLAGS_RELEASE "-O2")
 # set(CMAKE_CXX_FLAGS_DEBUG "-O2")
 # set(CMAKE_BUILD_TYPE debug)
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Widgets Concurrent)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Widgets Charts Network Concurrent)
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Core Widgets Concurrent SerialPort)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Core Widgets Charts Network Concurrent SerialPort)
 
 ## openGL compilation for QCustomPlot - detrimental so do not use
 # add_definitions(-DQCUSTOMPLOT_USE_OPENGL)
@@ -75,7 +75,7 @@ string(TOLOWER ${CMAKE_BUILD_TYPE} build_type)
 #     target_compile_definitions(Tubers_GUI PUBLIC QT_NO_DEBUG_OUTPUT)
 # endif()
 
-target_link_libraries(Tubers_GUI PRIVATE Qt6::Core Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Charts Qt${QT_VERSION_MAJOR}::Network Qt${QT_VERSION_MAJOR}::Concurrent)
+target_link_libraries(Tubers_GUI PRIVATE Qt6::Core Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::Charts Qt${QT_VERSION_MAJOR}::Network Qt${QT_VERSION_MAJOR}::Concurrent Qt6::SerialPort)
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an

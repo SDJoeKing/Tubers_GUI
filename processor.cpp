@@ -1,6 +1,26 @@
 #include "processor.h"
 #include "mainwindow.h"
 
+
+const float vel_water = 1480; // m/s
+float pulseWidth = 4.0; // mm to skip from one pulse peak to search for another
+uint16_t postLockSample = 3;
+float ID = 125; // inner diameter mm
+float vel_material = 2292.7; // m/s							//INPUT BY CAN BUS USER
+const float _thres = 0.05;  										//INPUT BY CAN BUS USER
+float targetThick = 5; // mm
+AscanFeatures features {0.0};
+constexpr auto NUM_OF_ADC_SAMPLES = DATA_SIZE/2;
+
+/////// FUNCTION DECLARATION //////////
+float thickCal(const float *arr,  float velocity, float fs, float id, float targetThick, float _thres);
+void getAscanFeatures(const float *arr, AscanFeatures* features, float fs, float id );
+uint16_t argFirstLarger(const float *arr, uint16_t start, uint16_t end, float threshold);
+uint16_t argFirstSmaller(const float *arr, uint16_t start, uint16_t end, float threshold);
+uint16_t argmax(const float* arr, uint16_t startPoint, uint16_t endPoint);
+///////////////////////////////////////////////////////////////////////////////
+
+
 QElapsedTimer processTimer;
 
 QMutex mu;
@@ -21,7 +41,7 @@ Processor::Processor(QObject *parent)
 
     processTimer.start();
 
-    tfm_required = false;
+
     m_sequenceA = genPulse(std::make_unique<std::vector<int>>(std::vector<int>{1,1,-1,1,1,1,-1,1,1,1,-1,1,1,1,-1,1}), 10);
     // calPoint.reserve( DATA_SIZE/2);
 
@@ -96,34 +116,6 @@ void Processor::updateScale(const float & newScale)
     m_scale = newScale;
 }
 
-void Processor::updateTfmSetting(quint8 channels, quint16 rows, quint16 cols, quint16 samples, float pitch, float offsetX, float offsetY, float resolution, bool required)
-{
-    tfm_required = required;
-    m_chan = channels;
-
-
-    // initialise LookTable
-    lookUpTable.clear();
-    fmc_data.clear();
-
-    for(int i=0; i<m_chan+1; i++)
-    {
-        lookUpTable.emplace_back(ArrayXXf::Zero(rows, cols));
-        fmc_data.emplace_back(ArrayXXf::Zero(m_chan+1, samples));
-    }
-
-    m_chan = TrueSeq(m_chan);
-    // calculate the lookTable
-    MATH::generateLookTable(lookUpTable, m_vel, pitch, offsetX, offsetY, resolution);
-}
-
-void Processor::populateFMC(float * data, quint8 tx, quint8 rx)
-{
-    // test and optimise THIS !!!
-
-    fmc_data[tx].row(rx) = Map<VectorXf>(data, fmc_data[tx].cols()).transpose().segment(0, fmc_data[tx].cols());
-
-}
 
 
 void Processor::run()
@@ -276,6 +268,12 @@ void Processor::process(const char *dataptr, bool headerOnly)
 
     emit dataLogger(reinterpret_cast<const char *>(&_temp));
 
+    getAscanFeatures(_temp, &features, m_fs*1e6, ID);
+    float _thickness = thickCal(_temp,vel_material, m_fs*1e6, ID, targetThick, _thres);
+    emit thickness(_thickness);
+
+
+
     // empty m_golayData
     for(auto &i : m_golayData)
     {
@@ -284,25 +282,7 @@ void Processor::process(const char *dataptr, bool headerOnly)
 
     emit dataProcessed(calPoint);
 
-    // populate FMC array
 
-    if(tfm_required)
-    {
-        _holder.emplace_back(tx, rx);
-        populateFMC(_temp, tx, rx);
-
-        if(tx == m_chan && rx== m_chan)
-        {
-            qDebug() << _holder.size();
-            ArrayXXf tfm_result = ArrayXXf::Zero(lookUpTable[0].rows(), lookUpTable[0].cols());
-            MATH::TFM(fmc_data, tfm_result, lookUpTable, m_fs*1e6);
-            _holder.clear();
-            emit tfmReady(tfm_result);
-        }
-
-        // if(tx > m_chan || rx > m_chan)
-        //     throw std::runtime_error("Wrong tx/rx channels out of range");
-    }
 
     if(processTimer.elapsed() > 500)
     {
@@ -334,6 +314,204 @@ void Processor::setFiltering(const bool &filt)
 {
     filtering = filt;
 }
+
+
+//////////////////////////////////////////////////////////////////////////////More actions
+uint16_t argmax(const float *arr, uint16_t startPoint, uint16_t endPoint)
+{
+    uint16_t tempMax = startPoint;
+    for(size_t i = startPoint+1; i< endPoint; i++)
+    {
+        if(*(arr+i) >= *(arr+tempMax))
+            tempMax = i;
+    }
+
+    return tempMax;
+}
+
+
+//////////////////////////////////////////////////////////////////////////////
+uint16_t argFirstLarger(const float *arr, uint16_t start, uint16_t end, float threshold){
+
+    uint16_t maxInd = start;
+
+    for(size_t i=start; i<end; i++){
+        if((*(arr+i)) >= threshold)
+        {
+            maxInd = i;
+            for(size_t j = i+1; j < i+postLockSample; j++)
+            {
+
+                if(j >= end)
+                    return 0;
+
+                if( (*(arr+j)) < threshold)
+                {
+                    maxInd = j;
+                    return argFirstLarger(arr, maxInd, end, threshold);
+                }
+            }
+            return maxInd;
+        }
+    }
+    return 0;
+}
+
+//////////////////////////////////////////////////////////////////////////////
+uint16_t argFirstSmaller(const float *arr, uint16_t start, uint16_t end, float threshold){
+
+
+    uint16_t minInd = start;
+
+    for(size_t i=start; i<end; i++){
+        if( (*(arr+i)) <= threshold)
+        {
+            minInd = i;
+            for(size_t j = i+1; j < i+postLockSample; j++)
+            {
+
+                if(j >= end)
+                    return 0;
+
+                if( (*(arr+j)) > threshold)
+                {
+                    minInd = j;
+                    return argFirstSmaller(arr, minInd, end, threshold);
+                }
+            }
+            return minInd;
+        }
+
+    }
+    return 0;
+
+}
+
+//@brief C function to output parameters of input Asan
+//@param arr Ptr to the float array containing ABSOLUTE Ascan data; features AscanFeatures struct containing calculated Ascan features
+
+void getAscanFeatures(const float* arr, AscanFeatures* features, float fs, float id )
+{
+
+
+    uint16_t mirrorGap = 18.0 / 1000 / vel_water * fs; // 9 mm mirror distance
+    uint16_t waterGap = (id - pulseWidth)/1000 / vel_water * fs;
+
+
+
+    if(waterGap >= NUM_OF_ADC_SAMPLES)
+        waterGap = NUM_OF_ADC_SAMPLES - 1;
+
+
+    float _tempMax = 0;
+    float _tempMin = 1000;
+    float _tempSum = 0;
+    float _tempRMS = 0;
+    float _tempStd = 0;
+    float _noiseAvg = 0;
+
+
+    for(size_t i = waterGap; i< NUM_OF_ADC_SAMPLES; i++)
+    {
+        float _tempV = arr[i];
+
+        if(_tempMax <= _tempV)
+            _tempMax = _tempV;
+        if(_tempMin >= _tempV)
+            _tempMin = _tempV;
+
+        _tempRMS+=arr[i]*arr[i];
+        _tempSum+=_tempV;
+
+    }
+
+    features->max = _tempMax;
+    features->min = _tempMin;
+    features->rms = sqrtf(_tempRMS / (NUM_OF_ADC_SAMPLES - waterGap));
+    features->mean = _tempSum / (NUM_OF_ADC_SAMPLES - waterGap);
+
+    features->noiseV = features->mean;
+
+    if(waterGap > mirrorGap)
+    {
+        features->noiseV = 0;
+        for(size_t i = mirrorGap; i< waterGap; i++)
+        {
+            //    	    	uint16_t _tempV = arr[i];
+            //
+            //    	        if(features->noiseV <= _tempV)
+            //    	            features->noiseV =  _tempV;
+
+            _noiseAvg += arr[i];
+
+        }
+        features->noiseV = _noiseAvg / (waterGap - mirrorGap);
+    }
+
+    for(size_t i=waterGap; i< NUM_OF_ADC_SAMPLES; i++)
+    {
+        _tempStd += powf(arr[i] - features->mean, 2);
+    }
+
+    features->std = sqrtf(_tempStd / (NUM_OF_ADC_SAMPLES - waterGap - 1));
+
+}
+
+
+// @brief: Function calculating the thickness based on inputs of velocity, sampling rate, pipe inner diameter, norminal thickness and threshold to try in (0-1]
+float thickCal(const float *arr,  float velocity, float fs, float id, float targetThick, float _thres)
+{
+
+
+    // 0. preparation calculation
+    uint16_t waterGap = (id - pulseWidth * 2)/1000 / vel_water * fs;
+    uint16_t targetThickDataPoint = targetThick/1000 * 2 / velocity * fs;
+
+    // ! 5 times noise level to find first peak
+    //    float threshold = 5.0 * features.noiseV;
+    float threshold = 10.0 * features.noiseV;
+
+
+    // 1. front wall with waterGap data points margin in the beginning
+    // uint16_t _front = argFirstLarger(arr, waterGap, dataLength, threshold);
+
+    uint16_t gateA_f = argFirstLarger(arr, waterGap, NUM_OF_ADC_SAMPLES, threshold);
+    //    gateInfo.gateA_f = gateA_f;
+
+    if(gateA_f == 0)
+        return -1;
+
+    uint16_t gateA_b = argFirstSmaller(arr, gateA_f, gateA_f + targetThickDataPoint, threshold);
+    //    gateInfo.gateA_b = gateA_b;
+
+    if(gateA_b == 0)
+        return -2;
+
+    uint16_t gateA = argmax(arr, gateA_f, gateA_b);
+
+    threshold = _thres * arr[gateA];
+
+    // 2. find backwall
+    uint16_t margin = gateA_b + (pulseWidth*2/1000 / velocity * fs); // margin of pulse, i.e. minimum resolution of scan
+
+    uint16_t gateB_f = argFirstLarger(arr, margin, margin + targetThickDataPoint, threshold);
+    //    gateInfo.gateB_f = gateB_f;
+
+    if(gateB_f == 0)
+        return -3;
+
+    uint16_t gateB_b = argFirstSmaller(arr,gateB_f, margin + targetThickDataPoint, threshold);
+    //    gateInfo.gateB_b = gateB_b;
+    if(gateB_b == 0)
+        return -4;
+
+    uint16_t gateB = argmax(arr, gateB_f, gateB_b);
+
+    // 3. return calculated thickness
+
+    return (gateB - gateA) / 2.0 / fs * velocity *1000;
+}
+
 
 std::shared_ptr<std::vector<float>> genPulse(std::unique_ptr<std::vector<int>> SEQ, quint16 len)
 {

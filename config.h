@@ -11,6 +11,8 @@ static const quint16 DATA_SIZE_RECV = DATA_SIZE + HEADER_SIZE;
 static const QByteArray ack = QString("data acknowledged").toUtf8();
 static const QByteArray stopAcq = QString("stop").toUtf8();
 
+const float maxThick = 6.0;
+
 #ifdef FRAMERATE_CONTROL
 #define FRAMERATE 30
 #endif
@@ -108,6 +110,16 @@ static int TrueSeq(int x)
 
 template <class T>
 static const QString getImuLabel(const QString &axis, const T &v)  {return QString("IMU - %1: %2 milli-G").arg(axis).arg(v);}
+typedef struct
+{
+    float max;		// OUTPUT TO CAN BUS
+    float min;
+    float mean;		// OUTPUT TO CAN BUS
+    float std;			// OUTPUT TO CAN BUS
+    float rms;		// OUTPUT TO CAN BUS
+    float noiseV;		// OUTPUT TO CAN BUS
+}AscanFeatures;
+
 
 #endif // CONFIG_H
 

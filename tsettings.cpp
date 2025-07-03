@@ -35,8 +35,7 @@ TSettings::TSettings(QWidget *parent)
     ui->lineGolayA->setVisible(false);
     ui->lineGolayB->setVisible(false);
     ui->radioManualGolay->setVisible(false);
-    ui->spinTFMSamples->setMaximum(DATA_SIZE/2);
-    ui->spinTFMSamples->setValue(DATA_SIZE/2);
+
 
 
     // connections:
@@ -55,10 +54,7 @@ TSettings::TSettings(QWidget *parent)
     connect(ui->spinOrder, &QSpinBox::editingFinished, this, &TSettings::sendSetting);
     connect(ui->spinHighCut, &QSpinBox::editingFinished, this, &TSettings::sendSetting);
     connect(ui->spinLowCut, &QSpinBox::editingFinished, this, &TSettings::sendSetting);
-    connect(ui->spinPitch, &QSpinBox::editingFinished, this, &TSettings::sendSetting);
-    connect(ui->spinTFMWidth, &QSpinBox::editingFinished, this, &TSettings::sendSetting);
-    connect(ui->spinRes, &QSpinBox::editingFinished, this, &TSettings::sendSetting);
-    connect(ui->spinTFMSamples, &QSpinBox::editingFinished, this, &TSettings::sendSetting);
+
     connect(ui->motorAngle, &QSpinBox::editingFinished, this, &TSettings::sendSetting);
     connect(ui->motorSpeed, &QSpinBox::editingFinished, this, &TSettings::sendSetting);
     connect(ui->pulseSequence, &QLineEdit::editingFinished, this, &TSettings::sendSetting);
@@ -241,17 +237,15 @@ void TSettings::on_btnConfirm_clicked()
     if(ui->groupBscan->isChecked())
         encoderTrigger = 4;
 
-    float pitch = ui->spinPitch->value();
-    float width = ui->spinTFMWidth->value();
-    float height = ui->spinTFMHeight->value();
-    float tfmOffsetX = ui->spinTFMOffsetX->value();
-    float tfmOffsetY = ui->spinTFMOffsetY->value();
-    int samples = ui->spinTFMSamples->value();
-    float res = ui->spinRes->value();
+    float width = ui->spinWidth->value();
+    float height = ui->spinHeight->value();
+    float tfmOffsetX = ui->spinXRes->value();
+    float tfmOffsetY = ui->spinYRes->value();
 
 
-    setting+= QString::number(encoderTrigger)+ ";"; // encoder triggering
-    // setting+=QString::number(0) + ";"; // encoder never triggers
+
+    // setting+= QString::number(encoderTrigger)+ ";"; // encoder triggering
+    setting+=QString::number(1) + ";"; // encoder never triggers
     setting+= QString::number(1)+ ";"; // encoder skips //for tfm function only
 
     // motor speed
@@ -281,14 +275,12 @@ void TSettings::on_btnConfirm_clicked()
 
     QList<double> fmcSetting;
 
-    fmcSetting.emplaceBack(pitch);
+
     fmcSetting.emplaceBack(width);
     fmcSetting.emplaceBack(height);
     fmcSetting.emplaceBack(tfmOffsetX);
     fmcSetting.emplaceBack(tfmOffsetY);
-    fmcSetting.emplaceBack(samples);
-    fmcSetting.emplaceBack(res);
-    fmcSetting.emplaceBack(ui->spinTFMChannel->value());
+
     fmcSetting.emplaceBack(ui->groupBscan->isChecked());
     emit bScanSetting(ui->groupBscan->isChecked(), fmcSetting);
 

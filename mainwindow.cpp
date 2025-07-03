@@ -6,6 +6,7 @@ double MainWindow::m_ga = 0;
 double MainWindow::m_gr = 0;
 static int bscanUpdateOnce = 0;
 QElapsedTimer timer;
+quint16 cscanRow = 0;
 
 using namespace Eigen;
 
@@ -104,12 +105,9 @@ MainWindow::MainWindow(QWidget *parent)
     connect(this, &MainWindow::velocitySet, m_processor, &Processor::setVel, Qt::QueuedConnection);
 
     connect(m_processor, &Processor::dataProcessed, m_Ascan, &TChartViewForm::plot, Qt::QueuedConnection);
-
-    connect(m_processor, &Processor::tfmReady, this, &MainWindow::updateBScan);
-    connect(this, &MainWindow::sendTfmSettings, m_processor, &Processor::updateTfmSetting);
-
     connect(m_processor, &Processor::sendHeaderInfo, this, &MainWindow::updateHeaderInfo, Qt::QueuedConnection);
     connect(this, &MainWindow::golayCoding, m_processor, &Processor::updateGolaySetting, Qt::QueuedConnection);
+    connect(m_processor, &Processor::thickness, this, &MainWindow::updateBScan);
 
     connect(&processorThread, &QThread::finished, this, &MainWindow::threadFinished);
     processorThread.start();
@@ -337,6 +335,12 @@ void MainWindow::doSettingsConfirmed(QString str)
         return;
     }
 
+
+    if(use_bscan)
+        cscanRow++; // each time new settings sent will cause cscan jump to the next row
+
+    m_currentLine = -1;
+
     emit golayCoding(list[SETTINGS::golay].toInt(), list[SETTINGS::pulseSequence], list[SETTINGS::pulseFreq].toFloat(), m_settings->pulseLength());
 
     emit mainSendSetting(settings);
@@ -364,7 +368,7 @@ void MainWindow::on_btnConnect_clicked(bool checked)
 
         // TCP Client
         m_client = new mTcpClient();
-
+        connect(m_client, &mTcpClient::pleaseSendSetting, m_settings, [&](){m_settings->sendSetting();}, Qt::QueuedConnection);
         connect(m_client, &mTcpClient::clientMessage, this, &MainWindow::logMsg, Qt::QueuedConnection);
         connect(m_client, qOverload<const QString &>(&mTcpClient::tcpMessage), this, &MainWindow::logMsg, Qt::QueuedConnection);
         connect(m_client, &mTcpClient::serverReady, this, &MainWindow::toggleStatus, Qt::QueuedConnection);
@@ -388,6 +392,7 @@ void MainWindow::on_btnConnect_clicked(bool checked)
         // connect error handling
         connect(m_client, &mTcpClient::errorOccured, this, &MainWindow::do_ConnectLost, Qt::QueuedConnection);
         connect(m_client,  &mTcpClient::badSettings, this, &MainWindow::do_badSettings);
+        connect(this, &MainWindow::c_scan, m_client, &mTcpClient::setCscan);
 
         QString address = ui->ipAddress->text().simplified().replace(" ", "");
         quint16 port = ui->port->text().toInt();
@@ -573,64 +578,38 @@ int findFrontWall(const QList<QPointF> &data, int start, int end)
 }
 
 
-void MainWindow::updateBScan(const ArrayXXf &tfm_result)
+void MainWindow::updateBScan(const float& thickness)
 {
 
-
-    if(!use_bscan)
-        return;
-
-
-
-    auto _colorMap = static_cast<QCPColorMap *>(m_Bscan->plottable());
-    int valueSize = _colorMap->data()->valueSize();
-    // functions to find the first front wall peaks
-
-    int _start = 0;
-
-
-
-    _colorMap->rescaleAxes();
-    _colorMap->setGradient(QCPColorGradient::gpJet);
-
-    auto nx = tfm_result.cols();
-    auto ny = tfm_result.rows();
-
-    QCPColorMap *_map = static_cast<QCPColorMap *>(m_Bscan->plottable());
-
-    auto key = _map->data()->keySize();
-    auto value = _map->data()->valueSize();
-
-    if(key != nx || value != ny)
+    if(use_bscan)
     {
-        ui->btnConnect->click(); // disconnect
-        QMessageBox::critical(this,  "Critical Error", QString("The TFM array shape (%1, %2) does not match ColorMap (%3, %4)").arg(ny).arg(nx).arg(value).arg( key));
+        auto plotValue = thickness > 0 ?  maxThick/6 : (thickness > -3 ? 0 : 0.3);
+        // conditions to mitigate extraneous point
+        if(plotValue > maxThick * 1.1)
+            plotValue = 1;
+
+        QCPColorMap * _map = static_cast<QCPColorMap *>(m_Bscan->plottable());
+
+        quint16 _x = _map->data()->keySize();
+
+        m_currentLine >= _x ? m_currentLine=0: m_currentLine++;
+        _map->data()->setCell(m_currentLine, cscanRow, thickness);
+
+        quint16 _y = _map->data()->valueSize();
+        // qDebug() << " ------------------------------------- VALUE ------------------------------------ " << _y << cscanRow;
+        if(cscanRow >= _y)
+        {
+            auto _oldData = new QCPColorMapData(*_map->data());
+            _map->data()->setSize(_x, _y*1.25);
+            _map->data()->setRange(_map->data()->keyRange(),  _map->data()->valueRange()*1.25);
+            _map->setData(_oldData);
+        }
+
+        _map->rescaleDataRange();
+        _map->rescaleAxes();
+        _map->setGradient(QCPColorGradient::gpJet);
+        m_Bscan->replot(QCustomPlot::rpQueuedRefresh);
     }
-
-    for(int row = 0; row< value; row++)
-    {
-        for(int col = 0; col < key; col++)
-            _map->data()->setCell(col, row, qAbs(tfm_result(row, col)));
-    }
-    _map->setGradient(QCPColorGradient::gpJet);
-    _map->rescaleDataRange();
-    _map->rescaleAxes();
-    m_Bscan->replot(QCustomPlot::rpQueuedRefresh);
-
-
-    // if(timer.hasExpired(30))
-    //     {
-    //         timer.restart();
-    //         m_Bscan->replot(QCustomPlot::rpQueuedRefresh);
-    //     }
-
-
-    // m_Bscan->setUpdatesEnabled(false);
-    // auto f = QtConcurrent::run(QThreadPool::globalInstance(), &QCustomPlot::replot, m_Bscan, QCustomPlot::rpQueuedRefresh );
-    // f.waitForFinished();
-    // m_Bscan->setUpdatesEnabled(true);
-
-    QTimer::singleShot(0, m_client, [&](){m_client->writeData(ack);}); // resume acquisition
 
 }
 
@@ -701,6 +680,8 @@ void MainWindow::do_bScanSetting(bool arg, const QList<double> &settings)
     use_bscan = arg;
     ui->ckBscan->setEnabled(use_bscan);
 
+    emit c_scan(use_bscan);
+
     if(use_bscan)
     {
         setBscanVisible(true);
@@ -713,10 +694,8 @@ void MainWindow::do_bScanSetting(bool arg, const QList<double> &settings)
 
     if(use_bscan)
     {
-
-
-        m_Bscan->xAxis->setLabel("TFM Width [mm]");
-        m_Bscan->yAxis->setLabel("TFM Height [mm]");
+        m_Bscan->xAxis->setLabel("C-scan Width [mm]");
+        m_Bscan->yAxis->setLabel("C-scan Height [mm]");
 
         QCPColorMap * _map = static_cast<QCPColorMap *>(m_Bscan->plottable());
 
@@ -727,28 +706,20 @@ void MainWindow::do_bScanSetting(bool arg, const QList<double> &settings)
         m_currentLine = -1;
         if(_map)
         {
-            float pitch = settings[0];
-            float width = settings[1];
-            float height = settings[2];
-            float offsetX = settings[3];
-            float offsetY = settings[4];
-            int samples = static_cast<int>(settings[5]);
-            float resolution = settings[6];
-            int channels = settings[7];
-            bool required = static_cast<int>(settings[8]);
-            m_chan = channels - 1;
 
-            emit channel(m_chan);
+            float width = settings[0];
+            float height = settings[1];
+            float xRes = settings[2];
+            float yRes = settings[3];
 
             // x/y axis array size
 
-            int nx = width / resolution;
-            int ny = height/ resolution;
-
+            int nx = width / xRes;
+            int ny = height/ yRes;
             tfmHeight = ny;
             tfmWidth = nx;
 
-            emit sendTfmSettings(m_chan, ny, nx, samples, pitch, offsetX, offsetY, resolution, required);
+            qDebug() << width<< height<< xRes << yRes << ny << nx;
 
             _map->data()->setSize(nx, ny); // we want the color map to have nx * ny data points
             _map->data()->setRange(QCPRange(0, width), QCPRange(0, height));

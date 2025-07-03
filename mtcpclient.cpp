@@ -6,12 +6,16 @@ static int old_counter = 0;
 static int dataEmitCounter = 0;
 static int dataEmitTracker = 0;
 
+QTimer * ackTimer;
+static int ackCounter = 0;
+static int ackCounterMax = 20;
+
+
 mTcpClient::mTcpClient(QObject *parent)
     :QObject{parent}
 {
     shutdownLock = true;
     acquisitionRunning = false;
-
 }
 
 mTcpClient::~mTcpClient()
@@ -20,7 +24,8 @@ mTcpClient::~mTcpClient()
     qDebug() << "client is open ? " << isOpen();
     qDebug() << counter << " acquisitions received";
     delete m_socket;
-
+    if(m_serial->isOpen())
+        m_serial->close();
 }
 
 bool mTcpClient::start(const QString &address, const quint16 port)
@@ -39,10 +44,18 @@ void mTcpClient::do_timeout()
         emit fps(static_cast<float>(counter-old_counter) / m_timer->interval() * 1000.0);
         old_counter = counter;
 
+#ifdef FRAMERATE_CONTROL
         emit plotRate(FRAMERATE * 1.0);
+#endif
+
         dataEmitTracker = dataEmitCounter;
 
     }
+}
+
+void mTcpClient::setCscan(bool newCscan)
+{
+    c_scan = newCscan;
 }
 void mTcpClient::stop()
 {
@@ -261,6 +274,27 @@ void mTcpClient::run()
     m_socket = new QTcpSocket(this);
     m_socket->setReadBufferSize(32768);
 
+
+    m_serial = new QSerialPort(this);
+    m_serial->setBaudRate(9600);
+    auto const port = QSerialPortInfo::availablePorts();
+    QString portName = "";
+    for (const QSerialPortInfo &portInfo : port) {if(portInfo.description().toLower().contains("arduino")) portName = portInfo.portName();break;}
+    m_serial->setPortName(portName);
+    if(!m_serial->open(QIODevice::ReadWrite)) throw std::runtime_error("Cannot open serial");
+
+    connect(ackTimer, &QTimer::timeout, this,  [&]() {
+        if(c_scan)
+        {
+            ackTimer->stop();
+            const char * step = "-1000";
+            m_serial->write(reinterpret_cast<const char*>(step));
+            ackCounter++;
+            if(ackCounter > ackCounterMax)
+                this->stop();
+            QTimer::singleShot(1500, this, [this](){emit pleaseSendSetting();});
+        }
+    });
 
     m_socket->setSocketOption(QAbstractSocket::LowDelayOption, 1);
     qDebug() << "socket thread: "<< this->thread();

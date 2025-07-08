@@ -137,6 +137,12 @@ static void dataConversion(T& dest,const QByteArray& src, int lowIndex, int high
     dest = static_cast<T>(((src.at(highIndex) << 8) & 0xFF00 ) | ( (src.at(lowIndex)  & 0xFF )));
 }
 
+static void dataConversion(quint32 & dest,const QByteArray& src, int ind1, int ind2, int ind3, int ind4)
+{
+    dest = static_cast<quint32>(((src.at(ind4) << 24) & 0xFF000000 ) | ( (src.at(ind3) << 16)  & 0x00FF0000 ) |
+                                ((src.at(ind2) << 8)  & 0x0000FF00) | ((src.at(ind1)  )  & 0xFF));
+}
+
 void Processor::process(const char *dataptr, bool headerOnly)
 {
 
@@ -176,7 +182,6 @@ void Processor::process(const char *dataptr, bool headerOnly)
 
     if(headerOnly)
     {
-        qDebug() << serverData;
         qDebug() << "linkspeed " << serverData.at(HEADER::linkSpeed);
     }
     m_errorCode = static_cast<quint8>(serverData.at(HEADER::errorFlags));
@@ -191,6 +196,24 @@ void Processor::process(const char *dataptr, bool headerOnly)
     dataConversion<decltype(_imu_x)>(_imu_x, serverData, HEADER::imuXLow, HEADER::imuXHigh);
     dataConversion<decltype(_imu_x)>(_imu_y, serverData, HEADER::imuYLow, HEADER::imuYHigh);
     dataConversion<decltype(_imu_x)>(_imu_z, serverData, HEADER::imuZLow, HEADER::imuZHigh);
+
+    // features reading;
+    qint16 _max;
+    dataConversion<decltype(_max)>(_max, serverData, HEADER::featureMax_l, HEADER::featureMax_h);
+    quint32 _noise;
+
+    dataConversion(_noise, serverData, HEADER::featureNoise_1, HEADER::featureNoise_2, HEADER::featureNoise_3, HEADER::featureNoise_4);
+    float noise = *(reinterpret_cast<float *>(&_noise));
+    qDebug() << "max " << _max;
+    emit featuresReading(_max, noise);
+
+    quint32 _thick;
+
+    dataConversion(_thick, serverData, HEADER::thick1, HEADER::thick2, HEADER::thick3, HEADER::thick4);
+
+    float _thickness = *(reinterpret_cast<float *>(&_thick));
+    qDebug() << "Extracted thick " << _thickness;
+
 
     if(headerOnly)
     {
@@ -266,10 +289,10 @@ void Processor::process(const char *dataptr, bool headerOnly)
     //reset envelope;
     MainWindow::_env = 0;
 
-    emit dataLogger(reinterpret_cast<const char *>(&_temp));
+    // emit dataLogger(reinterpret_cast<const char *>(&_temp));
 
-    getAscanFeatures(_temp, &features, m_fs*1e6, ID);
-    float _thickness = thickCal(_temp,vel_material, m_fs*1e6, ID, targetThick, _thres);
+    // getAscanFeatures(_temp, &features, m_fs*1e6, ID);
+    // float _thickness = thickCal(_temp,vel_material, m_fs*1e6, ID, targetThick, _thres);
     emit thickness(_thickness);
 
 

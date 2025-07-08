@@ -245,7 +245,7 @@ void TSettings::on_btnConfirm_clicked()
 
 
     // setting+= QString::number(encoderTrigger)+ ";"; // encoder triggering
-    setting+=QString::number(1) + ";"; // encoder never triggers
+    setting+=QString::number(1) + ";"; // encoder always triggers
     setting+= QString::number(1)+ ";"; // encoder skips //for tfm function only
 
     // motor speed

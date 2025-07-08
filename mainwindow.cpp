@@ -106,6 +106,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     connect(m_processor, &Processor::dataProcessed, m_Ascan, &TChartViewForm::plot, Qt::QueuedConnection);
     connect(m_processor, &Processor::sendHeaderInfo, this, &MainWindow::updateHeaderInfo, Qt::QueuedConnection);
+    connect(m_processor, &Processor::featuresReading, this, &MainWindow::updateFeatures, Qt::QueuedConnection);
+
     connect(this, &MainWindow::golayCoding, m_processor, &Processor::updateGolaySetting, Qt::QueuedConnection);
     connect(m_processor, &Processor::thickness, this, &MainWindow::updateBScan);
 
@@ -204,7 +206,7 @@ void MainWindow::resetUI()
     toggleOff(ui->ckRectify);// so that by default rectify
     ui->ckRectify->click();
     toggleOff(ui->ckFilter);// so that by default rectify
-    ui->ckFilter->click();
+    // ui->ckFilter->click();
 
     toggleOff(ui->ckDepthAxis);
     toggleOff(ui->ckGates);
@@ -326,14 +328,13 @@ void MainWindow::doSettingsConfirmed(QString str)
     encoderTriggerMode = list[SETTINGS::encoderTriggering].toUInt();
     m_settings->encoderTriggerMode(encoderTriggerMode);
 
-    // for motor testing only
-    if(encoderTriggerMode && acquisitionRunning)
-    {
-
-        ui->btnRun->click();
-        QTimer::singleShot(50, this, [&](){ui->btnRun->click();});
-        return;
-    }
+    // // for motor testing only
+    // if(encoderTriggerMode && acquisitionRunning)
+    // {
+    //     ui->btnRun->click();
+    //     QTimer::singleShot(50, this, [&](){ui->btnRun->click();});
+    //     return;
+    // }
 
 
     if(use_bscan)
@@ -628,17 +629,52 @@ void MainWindow::bScanCustomContext(const QPoint &pos)
 {
     QMenu _tempMenu(this);
     QAction _tempAction("Save B-Scan", this);
+    QAction _tempAction2("Save Data", this);
+    _tempMenu.addAction(&_tempAction2);
     _tempMenu.addAction(&_tempAction);
     connect(&_tempAction, &QAction::triggered, this, [this]()\
-    {
-        QPixmap _bscan = m_Bscan->grab();
-        QString path = QFileDialog::getSaveFileName(this, "Save Figure", QApplication::applicationDirPath(), "Image (*.png *.jpg)");
-        bool success = false;
-        success = _bscan.save(path);
-        if(!success && !path.isEmpty())
-            QMessageBox::warning(this, "Warning", "Not able to save the image");
-    });
+            {
+                QPixmap _bscan = m_Bscan->grab();
+                QString path = QFileDialog::getSaveFileName(this, "Save Figure", QApplication::applicationDirPath(), "Image (*.png *.jpg)");
+                bool success = false;
+                success = _bscan.save(path);
+                if(!success && !path.isEmpty())
+                    QMessageBox::warning(this, "Warning", "Not able to save the image");
+            });
 
+    connect(&_tempAction2, &QAction::triggered, this, [this]()\
+            {
+                auto _colorMap = static_cast<QCPColorMap *>(m_Bscan->plottable());
+                if(_colorMap)
+                {
+                    QString path = QFileDialog::getSaveFileName(this, "Save Data", QApplication::applicationDirPath(), "Data (*.csv)");
+
+                    QFile file(path);
+
+                    bool ok = file.open(QIODevice::WriteOnly|QIODevice::NewOnly);
+                    if(!ok)
+                    {
+                        QMessageBox::warning(this, "Warning", "Cannot save!");
+                        return;
+                    }
+
+                    quint16 _x = _colorMap->data()->keySize(); // x len
+                    quint16 _y = _colorMap->data()->valueSize(); // y len
+
+                    float _data[_x];
+                    for(size_t i = 0; i <_y; i++)
+                    {
+                        for(size_t j = 0; j<_x; j++)
+                        {
+                            _data[j] = _colorMap->data()->cell(j, i);
+                        }
+                        file.write((QByteArray::fromRawData(reinterpret_cast<char *>(_data), sizeof(float)*_x)));
+                    }
+                    file.close();
+                    QMessageBox::information(this, "Done", "Saving complete");
+                }
+
+            });
     _tempMenu.exec(m_Bscan->mapToGlobal(pos));
 }
 
@@ -692,8 +728,9 @@ void MainWindow::do_bScanSetting(bool arg, const QList<double> &settings)
         ui->ckBscan->setCheckState(Qt::Unchecked);
     }
 
-    if(use_bscan)
+    if(use_bscan && !acquisitionRunning)
     {
+        qDebug() << "Acquisition Running " << acquisitionRunning;
         m_Bscan->xAxis->setLabel("C-scan Width [mm]");
         m_Bscan->yAxis->setLabel("C-scan Height [mm]");
 
@@ -714,15 +751,15 @@ void MainWindow::do_bScanSetting(bool arg, const QList<double> &settings)
 
             // x/y axis array size
 
-            int nx = width / xRes;
-            int ny = height/ yRes;
-            tfmHeight = ny;
-            tfmWidth = nx;
+            int nx = width / xRes *1.2;
+            int ny = height/ yRes * 1.2;
+            tfmHeight = height;
+            tfmWidth = width;
 
             qDebug() << width<< height<< xRes << yRes << ny << nx;
 
             _map->data()->setSize(nx, ny); // we want the color map to have nx * ny data points
-            _map->data()->setRange(QCPRange(0, width), QCPRange(0, height));
+            _map->data()->setRange(QCPRange(0, width * 1.2), QCPRange(0, height * 1.2));
             _map->setGradient(QCPColorGradient::gpJet);
             _map->rescaleDataRange();
             _map->rescaleAxes();
@@ -802,6 +839,13 @@ void MainWindow::updateHeaderInfo(const float &temp, const float &speed, const q
     }
 }
 
+void MainWindow::updateFeatures(qint16 _max,  float _noise)
+{
+    ui->Ascan_Max->setText(QString("Ascan_Max: %1").arg(_max));
+    ui->Ascan_Noise->setText(QString("Ascan_Noise: %1").arg(_noise));
+    qDebug() << "Noisssss " << _noise;
+}
+
 void MainWindow::do_badSettings()
 {
     stopAcquisition();
@@ -809,7 +853,7 @@ void MainWindow::do_badSettings()
 
 void MainWindow::do_settingReady()
 {
-    qDebug() << ui->btnRun->isChecked() << acquisitionRunning;
+
     if(ui->btnRun->isChecked() && !acquisitionRunning)
         QTimer::singleShot(0, m_client, [&](){m_client->startAcquisition();});
 }

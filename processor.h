@@ -45,6 +45,7 @@ signals:
     void sendHeaderInfo(const float &, const float &, const quint8 &, const QVector<qint16> &imus); // temp. speed
     void requestAcq();
     void thickness(const float &);
+    void featuresReading(qint16, float);
 public slots:
     void process(const char *, bool headerOnly = false);
     void setVel(const float &vel);

@@ -167,7 +167,7 @@
              <number>16</number>
             </property>
             <property name="value">
-             <number>1</number>
+             <number>16</number>
             </property>
            </widget>
           </item>
@@ -205,7 +205,7 @@
              <number>16</number>
             </property>
             <property name="value">
-             <number>1</number>
+             <number>16</number>
             </property>
            </widget>
           </item>
@@ -1017,7 +1017,7 @@
              <double>9999.000000000000000</double>
             </property>
             <property name="value">
-             <double>30.000000000000000</double>
+             <double>50.000000000000000</double>
             </property>
            </widget>
           </item>
@@ -1043,7 +1043,7 @@
              <double>9999.000000000000000</double>
             </property>
             <property name="value">
-             <double>30.000000000000000</double>
+             <double>400.000000000000000</double>
             </property>
            </widget>
           </item>

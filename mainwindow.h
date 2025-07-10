@@ -70,7 +70,7 @@ private slots:
     void on_ckDepthAxis_clicked(bool checked);
 
     void on_ckRectify_clicked(bool checked);
-    void updateBScan( const float &);
+    void updateBScan( const float *);
     void on_actionReset_triggered(bool);
     void setRectifyChecked();
 

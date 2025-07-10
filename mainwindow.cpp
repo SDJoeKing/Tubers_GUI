@@ -6,7 +6,7 @@ double MainWindow::m_ga = 0;
 double MainWindow::m_gr = 0;
 static int bscanUpdateOnce = 0;
 QElapsedTimer timer;
-quint16 cscanRow = 0;
+qint16 cscanRow = -1;
 
 using namespace Eigen;
 
@@ -579,22 +579,28 @@ int findFrontWall(const QList<QPointF> &data, int start, int end)
 }
 
 
-void MainWindow::updateBScan(const float& thickness)
+void MainWindow::updateBScan(const float* thickness)
 {
 
     if(use_bscan)
     {
-        auto plotValue = thickness > 0 ?  maxThick/6 : (thickness > -3 ? 0 : 0.3);
-        // conditions to mitigate extraneous point
-        if(plotValue > maxThick * 1.1)
-            plotValue = 1;
 
         QCPColorMap * _map = static_cast<QCPColorMap *>(m_Bscan->plottable());
 
         quint16 _x = _map->data()->keySize();
 
-        m_currentLine >= _x ? m_currentLine=0: m_currentLine++;
-        _map->data()->setCell(m_currentLine, cscanRow, thickness);
+        m_currentLine = -1;
+
+        for(int i = 0; i< 800; i++)
+        {
+            auto plotValue = thickness[i] > 0 ?  maxThick/6 : (thickness[i] > -3 ? 0 : 0.3);
+            // conditions to mitigate extraneous point
+            if(plotValue > maxThick * 1.1)
+                plotValue = 1;
+
+            m_currentLine >= _x ? m_currentLine=0: m_currentLine++;
+            _map->data()->setCell(i, cscanRow, thickness[i]);
+        }
 
         quint16 _y = _map->data()->valueSize();
         // qDebug() << " ------------------------------------- VALUE ------------------------------------ " << _y << cscanRow;
@@ -751,7 +757,7 @@ void MainWindow::do_bScanSetting(bool arg, const QList<double> &settings)
 
             // x/y axis array size
 
-            int nx = width / xRes *1.2;
+            int nx = width / xRes *1.4;
             int ny = height/ yRes * 1.2;
             tfmHeight = height;
             tfmWidth = width;

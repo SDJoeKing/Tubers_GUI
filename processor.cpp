@@ -1,5 +1,6 @@
 #include "processor.h"
 #include "mainwindow.h"
+#include <iostream>
 
 
 const float vel_water = 1480; // m/s
@@ -204,15 +205,15 @@ void Processor::process(const char *dataptr, bool headerOnly)
 
     dataConversion(_noise, serverData, HEADER::featureNoise_1, HEADER::featureNoise_2, HEADER::featureNoise_3, HEADER::featureNoise_4);
     float noise = *(reinterpret_cast<float *>(&_noise));
-    qDebug() << "max " << _max;
+
     emit featuresReading(_max, noise);
 
     quint32 _thick;
 
-    dataConversion(_thick, serverData, HEADER::thick1, HEADER::thick2, HEADER::thick3, HEADER::thick4);
+    // dataConversion(_thick, serverData, HEADER::thick1, HEADER::thick2, HEADER::thick3, HEADER::thick4);
 
-    float _thickness = *(reinterpret_cast<float *>(&_thick));
-    qDebug() << "Extracted thick " << _thickness;
+    // float _thickness = *(reinterpret_cast<float *>(&_thick));
+    // qDebug() << "Extracted thick " << _thickness;
 
 
     if(headerOnly)
@@ -221,13 +222,12 @@ void Processor::process(const char *dataptr, bool headerOnly)
         return;
     }
 
-    for (int i = 0; i <  DATA_SIZE/2; i++)
+    for (int i = 0; i <  DATA_SIZE/4; i++)
     {
-        temp1 =(serverData.at(j + 1) << 8) & 0xFF00;
-        temp2 = (serverData.at(j)) & 0xFF;
-        dataPoint[0][i] = static_cast<qint16>(temp2 | temp1)/ 32768.0  * 3.18 * 1.0 * 1000.0;
-        // dataPoint[0][i] = static_cast<qint16>(temp2 | temp1);
-        j += 2;
+        dataConversion(_thick, serverData, j , j+1, j+2, j+3);
+        dataPoint[0][i] = *(reinterpret_cast<float *>(&_thick));
+        _temp[i] = dataPoint[0][i];
+        j+=4;
     }
 
     if(m_golay)
@@ -283,7 +283,7 @@ void Processor::process(const char *dataptr, bool headerOnly)
 
         dataPoint[0][i] /= (m_maxValue / 100 / m_scale);
         calPoint.emplace_back(xpoint, dataPoint[0][i]);
-        _temp[i] = dataPoint[0][i];
+
     }
 
     //reset envelope;
@@ -293,7 +293,7 @@ void Processor::process(const char *dataptr, bool headerOnly)
 
     // getAscanFeatures(_temp, &features, m_fs*1e6, ID);
     // float _thickness = thickCal(_temp,vel_material, m_fs*1e6, ID, targetThick, _thres);
-    emit thickness(_thickness);
+    emit thickness(_temp);
 
 
 
@@ -303,7 +303,7 @@ void Processor::process(const char *dataptr, bool headerOnly)
         i = 0;
     }
 
-    emit dataProcessed(calPoint);
+    // emit dataProcessed(calPoint);
 
 
 

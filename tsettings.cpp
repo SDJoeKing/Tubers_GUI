@@ -234,8 +234,8 @@ void TSettings::on_btnConfirm_clicked()
         encoderTrigger = 2;
     else if(encoderTrigger && ui->radioPresetGolay->isChecked())
         encoderTrigger = 3;
-    if(ui->groupBscan->isChecked())
-        encoderTrigger = 4;
+    // if(ui->groupBscan->isChecked())
+    //     encoderTrigger = 4;
 
     float width = ui->spinWidth->value();
     float height = ui->spinHeight->value();
@@ -244,8 +244,8 @@ void TSettings::on_btnConfirm_clicked()
 
 
 
-    // setting+= QString::number(encoderTrigger)+ ";"; // encoder triggering
-    setting+=QString::number(1) + ";"; // encoder always triggers
+    setting+= QString::number(encoderTrigger)+ ";"; // encoder triggering
+    // setting+=QString::number(1) + ";"; // encoder always triggers
     setting+= QString::number(1)+ ";"; // encoder skips //for tfm function only
 
     // motor speed

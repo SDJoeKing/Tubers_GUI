@@ -4,8 +4,8 @@
 #include "qtypes.h"
 #include <QString>
 #include <QMap>
-static const quint16 DATA_SIZE = 16000*2 ;
-static const quint8 HEADER_SIZE = 27;
+static const quint16 DATA_SIZE = 800*4 ;
+static const quint8 HEADER_SIZE = 23;
 static const quint16 DATA_SIZE_RECV = DATA_SIZE + HEADER_SIZE;
 
 static const QByteArray ack = QString("data acknowledged").toUtf8();
@@ -36,11 +36,7 @@ enum HEADER {
     featureNoise_1,
     featureNoise_2,
     featureNoise_3,
-    featureNoise_4,
-    thick1,
-    thick2,
-    thick3,
-    thick4
+    featureNoise_4
 };
 enum GOLAY
 {

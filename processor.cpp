@@ -228,6 +228,7 @@ void Processor::process(const char *dataptr, bool headerOnly)
         dataPoint[0][i] = *(reinterpret_cast<float *>(&_thick));
         _temp[i] = dataPoint[0][i];
         j+=4;
+
     }
 
     if(m_golay)
@@ -273,18 +274,18 @@ void Processor::process(const char *dataptr, bool headerOnly)
 
 
 
-    for(int i = 0; i < DATA_SIZE/2; i++)
-    {
+    // for(int i = 0; i < DATA_SIZE/2; i++)
+    // {
 
-        if(depthAxis)
-            xpoint = i / m_fs /2/ 1e6 * m_vel * 1000;
-        else
-            xpoint = i / m_fs /1e6 *1000;
+    //     if(depthAxis)
+    //         xpoint = i / m_fs /2/ 1e6 * m_vel * 1000;
+    //     else
+    //         xpoint = i / m_fs /1e6 *1000;
 
-        dataPoint[0][i] /= (m_maxValue / 100 / m_scale);
-        calPoint.emplace_back(xpoint, dataPoint[0][i]);
+        // dataPoint[0][i] /= (m_maxValue / 100 / m_scale);
+        // calPoint.emplace_back(xpoint, dataPoint[0][i]);
 
-    }
+    // }
 
     //reset envelope;
     MainWindow::_env = 0;

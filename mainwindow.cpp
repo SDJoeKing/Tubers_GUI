@@ -593,13 +593,14 @@ void MainWindow::updateBScan(const float* thickness)
 
         for(int i = 0; i< 800; i++)
         {
-            auto plotValue = thickness[i] > 0 ?  maxThick/6 : (thickness[i] > -3 ? 0 : 0.3);
+
+            auto plotValue = thickness[i] > 0 ?  thickness[i] : (thickness[i] > -3 ? 0 : 1);
             // conditions to mitigate extraneous point
-            if(plotValue > maxThick * 1.1)
-                plotValue = 1;
+            if(plotValue >  maxThick)
+                plotValue = maxThick;
 
             m_currentLine >= _x ? m_currentLine=0: m_currentLine++;
-            _map->data()->setCell(i, cscanRow, thickness[i]);
+            _map->data()->setCell(i, cscanRow, plotValue);
         }
 
         quint16 _y = _map->data()->valueSize();
@@ -612,7 +613,7 @@ void MainWindow::updateBScan(const float* thickness)
             _map->setData(_oldData);
         }
 
-        _map->rescaleDataRange();
+        // _map->rescaleDataRange();
         _map->rescaleAxes();
         _map->setGradient(QCPColorGradient::gpJet);
         m_Bscan->replot(QCustomPlot::rpQueuedRefresh);

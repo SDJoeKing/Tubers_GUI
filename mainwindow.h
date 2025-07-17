@@ -71,7 +71,7 @@ private slots:
 
     void on_ckRectify_clicked(bool checked);
 
-    void updateBScan(float *, bool);
+    void updateBScan(const QList<QPointF> &,  bool);
 
     void on_actionReset_triggered(bool);
     void setRectifyChecked();

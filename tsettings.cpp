@@ -36,6 +36,11 @@ TSettings::TSettings(QWidget *parent)
     ui->lineGolayB->setVisible(false);
     ui->radioManualGolay->setVisible(false);
 
+    // PCS Calculation:
+    ui->spinPCS->setValue(4.0/3 * ui->spinThick->value() * qTan(qDegreesToRadians(55)));
+
+    ui->spinPCS->setToolTip("When changing the thickness, PCS will be recalculated automatically to reflect distance between probes according to standard.");
+
     // connections:
     connect(ui->powerOutput, &QComboBox::currentIndexChanged, this, &TSettings::sendSetting);
     connect(ui->comboLength, &QComboBox::currentIndexChanged, this, &TSettings::sendSetting);
@@ -61,8 +66,8 @@ TSettings::TSettings(QWidget *parent)
     connect(ui->pulseSequence, &QLineEdit::editingFinished, this, &TSettings::sendSetting);
     connect(ui->radioManual, &QRadioButton::clicked, this, &TSettings::do_settingChanged);
     connect(ui->radioPresetGolay,&QRadioButton::clicked, this, &TSettings::do_settingChanged);
-
-
+    connect(ui->spinThick, &QSpinBox::editingFinished, this, [this](){ui->spinPCS->setValue(4.0/3 * ui->spinThick->value() * qTan(qDegreesToRadians(55)));});
+    connect(ui->spinPCS, &QSpinBox::editingFinished, this, &TSettings::sendSetting);
 }
 
 TSettings::~TSettings()
@@ -241,7 +246,7 @@ void TSettings::on_btnConfirm_clicked()
     float scanLength = ui->spinLength->value();
     float partThick = ui->spinThick->value();
     float res = ui->spinRes->value();
-
+    float pcs = ui->spinPCS->value();
 
     setting+= QString::number(encoderTrigger)+ ";"; // encoder triggering
     // setting+=QString::number(0) + ";"; // encoder never triggers
@@ -279,7 +284,7 @@ void TSettings::on_btnConfirm_clicked()
     bSettings.emplaceBack(scanLength);
     bSettings.emplaceBack(partThick);
     bSettings.emplaceBack(res*skip);
-
+    bSettings.emplaceBack(pcs);
     emit bScanSetting(ui->groupBscan->isChecked(), bSettings);
 
 

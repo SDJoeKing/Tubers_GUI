@@ -262,7 +262,7 @@ void Processor::process(const char *dataptr, bool headerOnly)
     {
 
         if(depthAxis)
-            xpoint = i / m_fs /2/ 1e6 * m_vel * 1000;
+            xpoint = i / m_fs / 1e6 * m_vel * 1000;
         else
             xpoint = i / m_fs /1e6 *1000;
 
@@ -282,9 +282,7 @@ void Processor::process(const char *dataptr, bool headerOnly)
         i = 0;
     }
 
-    emit dataProcessed(calPoint);
-    emit dataProcessed(_temp,  _forward == 2 ? false : true);
-
+    emit dataProcessed(calPoint, _forward == 2 ? false : true);
 
     if(processTimer.elapsed() > 500)
     {

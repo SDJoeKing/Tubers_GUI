@@ -103,8 +103,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(this, &MainWindow::filterParam, m_processor, &Processor::updateFilter, Qt::QueuedConnection);
     connect(this, &MainWindow::velocitySet, m_processor, &Processor::setVel, Qt::QueuedConnection);
 
-    connect(m_processor, qOverload<const QList<QPointF>&>(&Processor::dataProcessed), m_Ascan, &TChartViewForm::plot, Qt::QueuedConnection);
-    connect(m_processor, qOverload<float *, bool>(&Processor::dataProcessed), this, &MainWindow::updateBScan);
+    connect(m_processor, &Processor::dataProcessed, m_Ascan, &TChartViewForm::plot, Qt::QueuedConnection);
+    connect(m_processor, &Processor::dataProcessed, this, &MainWindow::updateBScan);
 
     connect(m_processor, &Processor::sendHeaderInfo, this, &MainWindow::updateHeaderInfo, Qt::QueuedConnection);
     connect(this, &MainWindow::golayCoding, m_processor, &Processor::updateGolaySetting, Qt::QueuedConnection);
@@ -230,6 +230,7 @@ void MainWindow::resetUI()
 
     // update timer
     m_updateTimer.stop();
+    setThreshold(0.0);
 }
 
 void MainWindow::toggleOff(QCheckBox *widget)
@@ -572,7 +573,7 @@ int findFrontWall(const QList<QPointF> &data, int start, int end)
     return _max;
 }
 
-void MainWindow::updateBScan(float *data, bool _forward)
+void MainWindow::updateBScan(const QList<QPointF> &data, bool _forward)
 {
 
     if(!use_bscan)
@@ -581,22 +582,20 @@ void MainWindow::updateBScan(float *data, bool _forward)
     auto _colorMap = static_cast<QCPColorMap *>(m_Bscan->plottable());
     int valueSize = _colorMap->data()->valueSize();
 
-    _colorMap->rescaleAxes();
-    _colorMap->setGradient(QCPColorGradient::gpJet);
-
-
-
-
     QCPColorMap *_map = static_cast<QCPColorMap *>(m_Bscan->plottable());
 
     auto key = _map->data()->keySize();
     auto value = _map->data()->valueSize();
 
+    if(m_Ascan->gatesToggled())
+        m_start = m_Ascan->gateInitial(true);
 
 
     for(int row = 0; row< value; row++)
     {
-        _map->data()->setCell(m_currentLine, row, qAbs(data[m_start+row]));
+        if(m_start+row >= DATA_SIZE/2)
+            break;
+        _map->data()->setCell(m_currentLine, row, qAbs(data[m_start+row].y()) < m_thres ? 0 : qAbs(data[m_start+row].y()));
     }
 
     if(_forward)
@@ -604,13 +603,13 @@ void MainWindow::updateBScan(float *data, bool _forward)
     else
         m_currentLine > 0 ? m_currentLine-- : m_currentLine = 0;
 
-    _map->setGradient(QCPColorGradient::gpJet);
-    _map->rescaleDataRange();
-    _map->rescaleAxes();
+
 
     if(timer.hasExpired(30))
         {
             timer.restart();
+            _map->rescaleDataRange();
+            // _map->rescaleAxes();
             m_Bscan->replot(QCustomPlot::rpQueuedRefresh);
         }
 
@@ -697,7 +696,6 @@ void MainWindow::do_bScanSetting(bool arg, const QList<double> &settings)
     if(use_bscan)
     {
 
-
         m_Bscan->xAxis->setLabel("BScan Length [mm]");
         m_Bscan->yAxis->setLabel("Depth [mm]");
 
@@ -709,34 +707,49 @@ void MainWindow::do_bScanSetting(bool arg, const QList<double> &settings)
         // reset front head to -1
         m_currentLine = 0;
 
-
-
-
         if(_map)
         {
 
             m_partThick = settings.at(1);
             m_scanLength = settings.at(0);
             float resolution = settings.at(2);
+            float pcs = settings.at(3);
 
             // convert thickness in relation to angle:
-            m_partThick /= qCos(qDegreesToRadians(55));
+            m_partThick = qSqrt(qPow(pcs/2, 2) + qPow(m_partThick, 2));
             m_partThick *= 2;
 
+            // PCS based start point
+            m_start = pcs/1000/m_velFast * m_fs *1e6;
+            m_end = m_partThick*1.2 / 1000 / m_vel * m_fs * 1e6 + 150;
+            int distance = m_end-m_start;
+            auto distanceDepth = distance/m_fs /1e6 *m_vel * 1000;
+
             // find start point to be slightly ahead of transversal peak
-            m_start = qSin(qDegreesToRadians(55)) * (m_partThick / 2) * 2 / 1000 / m_velFast * m_fs *1e6 - 150; // 300 margin for plot
-            m_end = m_partThick / 1000 / m_vel * m_fs * 1e6 + 150;
-            // qDebug() << "START " << m_start;
-            // qDebug() << "END " << m_end;
+            if(m_Ascan->gatesToggled())
+            {
+                auto _gateStart = m_Ascan->gateInitial(true);
+                if(_gateStart > 0)
+                    m_start = _gateStart;
+            }
+            //
+
+            // if(m_start > startPCSBased)
+            // {
+            //     m_start = startPCSBased;
+            // }
+
+            m_start -= 150;
+
+            auto startDepth = m_start/m_fs /1e6 *m_velFast * 1000;
 
             // x/y axis array size
 
             int nx = m_scanLength*1.2 / resolution;
-            int ny = m_partThick*1.2 / resolution;
-
+            int ny = distance;
 
             _map->data()->setSize(nx, ny); // we want the color map to have nx * ny data points
-            _map->data()->setRange(QCPRange(0, m_scanLength*1.2), QCPRange(0, m_partThick*1.2));
+            _map->data()->setRange(QCPRange(0, m_scanLength*1.2), QCPRange(startDepth,startDepth+distanceDepth));
             _map->setGradient(QCPColorGradient::gpJet);
             _map->rescaleDataRange();
             _map->rescaleAxes();

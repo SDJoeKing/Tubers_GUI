@@ -44,7 +44,7 @@ public:
     };
 
 public slots:
-    void plot(const QList<QPointF> &  );
+    void plot(const QList<QPointF> & , bool );
     void toggleGates(bool);
     void changeXAxisType(const TChartViewForm::x_AXISTYPE&);
     void changeYAxisType(const TChartViewForm::y_AXISTYPE&);
@@ -60,6 +60,7 @@ public slots:
     QPointF ascanValue(const QPointF &) const;
     bool gatesToggled();
     int gatePeak();
+    int gateInitial(bool _thres  );
 private slots:
 
     void backButtonEnabled(bool);

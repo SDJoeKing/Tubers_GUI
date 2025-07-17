@@ -104,8 +104,6 @@ TChartViewForm::TChartViewForm(QWidget *parent)
 
     // connect
     connect(m_X, &QValueAxis::rangeChanged, ui->btnBack, &QPushButton::setEnabled);
-    connect(m_X, &QValueAxis::rangeChanged, this, &TChartViewForm::updateGatePosition);
-    connect(m_Y, &QValueAxis::rangeChanged, this, &TChartViewForm::updateGatePosition);
     connect(&m_timer, &QTimer::timeout, this, &TChartViewForm::doThicknessCal);
 
 
@@ -125,9 +123,10 @@ TChartViewForm::~TChartViewForm()
 }
 
 
-void TChartViewForm::plot(const QList<QPointF> &dataptr)
+void TChartViewForm::plot(const QList<QPointF> &dataptr, bool ok = true)
 {
 
+    Q_UNUSED(ok);
 #ifdef FRAMERATE_CONTROL
 
     if(timerV.elapsed() > 1.0/FRAMERATE * 1000)
@@ -168,9 +167,14 @@ void TChartViewForm::changeXAxisType(const TChartViewForm::x_AXISTYPE &type)
             plot(_tempPoints);
         }
 
+        m_gate1->updateAscanValue();
+        m_gate2->updateAscanValue();
+
+        qDebug() << "GATE 1 A SCAN VALUE " << m_gate1->ascanValue();
+
         m_X->setRange( _tempMin, _tempMax);
         updateLabelPosition();
-
+        updateGatePosition();
         setXUnit("mm");
     }
     else if(_xAxisType == x_AXISTYPE::DEPTH && type == x_AXISTYPE::TIME)
@@ -191,9 +195,12 @@ void TChartViewForm::changeXAxisType(const TChartViewForm::x_AXISTYPE &type)
             plot(_tempPoints);
         }
 
+        m_gate1->updateAscanValue();
+        m_gate2->updateAscanValue();
+
         m_X->setRange(_tempMin, _tempMax);
         updateLabelPosition();
-
+        updateGatePosition();
         setXUnit("ms");
     }
 
@@ -244,7 +251,7 @@ void TChartViewForm::setVelocity(double vel)
         m_X->setRange( _tempMin, _tempMax);
     }
 
-
+    updateGatePosition();
     updateLabelPosition();
 }
 
@@ -360,6 +367,7 @@ bool TChartViewForm::eventFilter(QObject *watched, QEvent *event)
             ui->spinGain->setValue(--_tempV);
         }
         updateLabelPosition();
+
     }
 
     return QWidget::eventFilter(watched, event);
@@ -429,7 +437,7 @@ void TChartViewForm::doZoomInOut(QRectF rubberband)
     m_Y->setRange(endPos.y(), startPos.y());
 
     updateLabelPosition();
-
+    updateGatePosition();
     qDebug()<< startPos << endPos << rubberband;
 }
 
@@ -487,6 +495,39 @@ int TChartViewForm::gatePeak()
     return maxInd(m_gate1->posRange(), true);
 }
 
+int TChartViewForm::gateInitial(bool thres )
+{
+
+    auto rect = m_gate1->posRange();
+    // if acquisition is not started or the  is empty;
+    if(m_series->count() <= 0)
+        return -1;
+
+    // convert to series position
+    QPointF value_left = m_chart->mapToValue(rect.topLeft(), m_series);
+    QPointF value_right = m_chart->mapToValue(rect.bottomRight(), m_series);
+    qreal _left = value_left.x();
+    qreal _right = value_right.x();
+
+    if(_xAxisType == x_AXISTYPE::DEPTH)
+    {
+        _left = depthToTime(value_left.x());
+        _right = depthToTime(value_right.x());
+    }
+
+    int leftInd = (_left / xMax) *  DATA_SIZE /2;
+    int rightInd = (_right/ xMax) *  DATA_SIZE /2;
+    double threshold = qAbs(value_left.y() + value_right.y()) / 2; // absolute thres
+
+    if(thres)
+        emit sendThreshold(threshold);
+
+    leftInd < 0 ? leftInd =0 : leftInd;
+    leftInd = leftInd > DATA_SIZE/2 ?  DATA_SIZE/2 : leftInd;
+
+    return leftInd;
+}
+
 
 void TChartViewForm::on_btnReset_clicked(bool checked)
 {
@@ -495,6 +536,7 @@ void TChartViewForm::on_btnReset_clicked(bool checked)
     auto currentPosition = m_ruler->points();
     m_ruler->replace(QList<QPointF>{QPointF(currentPosition.at(0).x(), yMin), QPointF(currentPosition.at(0).x(), yMax)});
     updateLabelPosition();
+
     if(_yAxisType==y_AXISTYPE::FULL)
     {
         emit setRectifyCheck();
@@ -503,6 +545,10 @@ void TChartViewForm::on_btnReset_clicked(bool checked)
     {
         m_X->setRange(timeToDepth(xMin), timeToDepth(xMax));
     }
+
+    m_gate1->updateAscanValue();
+    m_gate2->updateAscanValue();
+    updateGatePosition();
 
     // empty any residual zoomRectTrack
     zoomRectTrack.clear();
@@ -525,12 +571,12 @@ QLabel *TChartViewForm::generateLabel(QWidget *parent)
 
 double TChartViewForm::depthToTime(const double &depth)
 {
-    return depth* 2 / m_vel  ;
+    return depth/ m_vel  ;
 }
 
 double TChartViewForm::timeToDepth(const double &time)
 {
-    return time * m_vel / 2  ;
+    return time * m_vel ;
 }
 
 void TChartViewForm::on_btnSave_clicked()
@@ -550,6 +596,7 @@ void TChartViewForm::updateXMax(const float &newFs)
     qDebug() << newFs;
     xMax = DATA_SIZE/2/newFs * 1e3;
     m_X->setRange(xMin, xMax);
+    updateGatePosition();
 }
 
 void TChartViewForm::updateLabelPosition()
@@ -613,6 +660,9 @@ void TChartViewForm::on_btnBack_clicked()
 
     updateLabelPosition();
 
+    m_gate1->updateAscanValue();
+    m_gate2->updateAscanValue();
+    updateGatePosition();
     if(zoomRectTrack.isEmpty())
         ui->btnBack->setEnabled(false);
 }
@@ -626,8 +676,7 @@ void TChartViewForm::doThicknessCal()
     int indGate1 = maxInd(gate1_range, true);
     int indGate2 = maxInd(gate2_range, false);
 
-    qDebug() << "gate1 " << indGate1;
-    qDebug() << "gate2 " << indGate2;
+
     if(indGate1 == -1 || indGate2 == -1)
         return;
 
@@ -646,8 +695,6 @@ qreal TChartViewForm::maxInd(const QRectF &rect, bool thres)
     qreal _left = value_left.x();
     qreal _right = value_right.x();
 
-    qDebug() << "left: "<< _left;
-    qDebug() << "right: "<< _right;
 
     if(_xAxisType == x_AXISTYPE::DEPTH)
     {
@@ -734,7 +781,7 @@ void TChartViewForm::setXUnit(const QString &newXUnit)
 void TChartViewForm::setXRange(const float &min, const float &max)
 {
     float _min = 0;
-    float _max = (_xAxisType == x_AXISTYPE::TIME) ? xMax : xMax*m_vel/2;
+    float _max = (_xAxisType == x_AXISTYPE::TIME) ? xMax : xMax*m_vel;
 
     if(min <=0)
         _min = 0;
@@ -825,6 +872,7 @@ void TChartViewForm::updateGatePosition()
     // if gates
     if(m_gate1->isVisible() || m_gate2->isVisible())
     {
+        qDebug() <<"Gate 1 ascanvalue "<<  m_gate1->ascanValue();
         auto newPosGate1 = m_chart->mapToPosition(m_gate1->ascanValue(), m_series);
         auto newPosGate2 = m_chart->mapToPosition(m_gate2->ascanValue(), m_series);
 
@@ -845,7 +893,7 @@ void TChartViewForm::on_comboAxis_currentIndexChanged(int index)
     {
     case 0: // X selected
         ui->labelUnit->setText(m_xUnit.first);
-        ui->steps->setMaximum((_xAxisType == x_AXISTYPE::TIME) ? xMax : xMax*m_vel/2);
+        ui->steps->setMaximum((_xAxisType == x_AXISTYPE::TIME) ? xMax : xMax*m_vel);
         if(m_X)
             ui->steps->setValue((m_X->max() - m_X->min()) * 0.05);
         break;

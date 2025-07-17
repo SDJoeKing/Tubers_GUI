@@ -284,25 +284,8 @@ void Processor::process(const char *dataptr, bool headerOnly)
 
     emit dataProcessed(calPoint);
 
-    // populate FMC array
+    emit dataProcessed(_temp,  _forward == 2 ? false : true);
 
-    if(tfm_required)
-    {
-        _holder.emplace_back(tx, rx);
-        populateFMC(_temp, tx, rx);
-
-        if(tx == m_chan && rx== m_chan)
-        {
-            qDebug() << _holder.size();
-            ArrayXXf tfm_result = ArrayXXf::Zero(lookUpTable[0].rows(), lookUpTable[0].cols());
-            MATH::TFM(fmc_data, tfm_result, lookUpTable, m_fs*1e6);
-            _holder.clear();
-            emit tfmReady(tfm_result);
-        }
-
-        // if(tx > m_chan || rx > m_chan)
-        //     throw std::runtime_error("Wrong tx/rx channels out of range");
-    }
 
     if(processTimer.elapsed() > 500)
     {

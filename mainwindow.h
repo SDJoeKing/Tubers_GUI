@@ -70,7 +70,9 @@ private slots:
     void on_ckDepthAxis_clicked(bool checked);
 
     void on_ckRectify_clicked(bool checked);
-    void updateBScan( const ArrayXXf &);
+
+    void updateBScan(float *, bool);
+
     void on_actionReset_triggered(bool);
     void setRectifyChecked();
 
@@ -113,7 +115,13 @@ private:
     Tlogging *m_logging;
     QLabel *m_status;
     QByteArray m_serverData;
-    float m_vel=5890.0;
+    float m_vel=3250.0;
+    float m_velFast = 5890;
+
+    int m_start = 0;
+    int m_end = DATA_SIZE /2;
+
+    float m_partThick = 1.0;
     bool encoderTriggerMode = false;
     static void resetEnv();
     int m_currentLine=-1;

@@ -103,10 +103,8 @@ MainWindow::MainWindow(QWidget *parent)
     connect(this, &MainWindow::filterParam, m_processor, &Processor::updateFilter, Qt::QueuedConnection);
     connect(this, &MainWindow::velocitySet, m_processor, &Processor::setVel, Qt::QueuedConnection);
 
-    connect(m_processor, &Processor::dataProcessed, m_Ascan, &TChartViewForm::plot, Qt::QueuedConnection);
-
-    connect(m_processor, &Processor::tfmReady, this, &MainWindow::updateBScan);
-    connect(this, &MainWindow::sendTfmSettings, m_processor, &Processor::updateTfmSetting);
+    connect(m_processor, qOverload<const QList<QPointF>&>(&Processor::dataProcessed), m_Ascan, &TChartViewForm::plot, Qt::QueuedConnection);
+    connect(m_processor, qOverload<float *, bool>(&Processor::dataProcessed), this, &MainWindow::updateBScan);
 
     connect(m_processor, &Processor::sendHeaderInfo, this, &MainWindow::updateHeaderInfo, Qt::QueuedConnection);
     connect(this, &MainWindow::golayCoding, m_processor, &Processor::updateGolaySetting, Qt::QueuedConnection);
@@ -302,6 +300,8 @@ void MainWindow::doSettingsConfirmed(QString str)
     auto list = str.split(";");
 
     m_vel = list[SETTINGS::velocity].toDouble();
+    m_velFast = list[SETTINGS::velocityFast].toDouble();
+
     emit velocitySet(m_vel);
 
     m_order = list[SETTINGS::order].toInt();
@@ -572,65 +572,48 @@ int findFrontWall(const QList<QPointF> &data, int start, int end)
     return _max;
 }
 
-
-void MainWindow::updateBScan(const ArrayXXf &tfm_result)
+void MainWindow::updateBScan(float *data, bool _forward)
 {
-
 
     if(!use_bscan)
         return;
 
-
-
     auto _colorMap = static_cast<QCPColorMap *>(m_Bscan->plottable());
     int valueSize = _colorMap->data()->valueSize();
-    // functions to find the first front wall peaks
-
-    int _start = 0;
-
-
 
     _colorMap->rescaleAxes();
     _colorMap->setGradient(QCPColorGradient::gpJet);
 
-    auto nx = tfm_result.cols();
-    auto ny = tfm_result.rows();
+
+
 
     QCPColorMap *_map = static_cast<QCPColorMap *>(m_Bscan->plottable());
 
     auto key = _map->data()->keySize();
     auto value = _map->data()->valueSize();
 
-    if(key != nx || value != ny)
-    {
-        ui->btnConnect->click(); // disconnect
-        QMessageBox::critical(this,  "Critical Error", QString("The TFM array shape (%1, %2) does not match ColorMap (%3, %4)").arg(ny).arg(nx).arg(value).arg( key));
-    }
+
 
     for(int row = 0; row< value; row++)
     {
-        for(int col = 0; col < key; col++)
-            _map->data()->setCell(col, row, qAbs(tfm_result(row, col)));
+        _map->data()->setCell(m_currentLine, row, qAbs(data[m_start+row]));
     }
+
+    if(_forward)
+        m_currentLine < key - 1 ? m_currentLine++ : m_currentLine = 0;
+    else
+        m_currentLine > 0 ? m_currentLine-- : m_currentLine = 0;
+
     _map->setGradient(QCPColorGradient::gpJet);
     _map->rescaleDataRange();
     _map->rescaleAxes();
-    m_Bscan->replot(QCustomPlot::rpQueuedRefresh);
 
+    if(timer.hasExpired(30))
+        {
+            timer.restart();
+            m_Bscan->replot(QCustomPlot::rpQueuedRefresh);
+        }
 
-    // if(timer.hasExpired(30))
-    //     {
-    //         timer.restart();
-    //         m_Bscan->replot(QCustomPlot::rpQueuedRefresh);
-    //     }
-
-
-    // m_Bscan->setUpdatesEnabled(false);
-    // auto f = QtConcurrent::run(QThreadPool::globalInstance(), &QCustomPlot::replot, m_Bscan, QCustomPlot::rpQueuedRefresh );
-    // f.waitForFinished();
-    // m_Bscan->setUpdatesEnabled(true);
-
-    QTimer::singleShot(0, m_client, [&](){m_client->writeData(ack);}); // resume acquisition
 
 }
 
@@ -715,8 +698,8 @@ void MainWindow::do_bScanSetting(bool arg, const QList<double> &settings)
     {
 
 
-        m_Bscan->xAxis->setLabel("TFM Width [mm]");
-        m_Bscan->yAxis->setLabel("TFM Height [mm]");
+        m_Bscan->xAxis->setLabel("BScan Length [mm]");
+        m_Bscan->yAxis->setLabel("Depth [mm]");
 
         QCPColorMap * _map = static_cast<QCPColorMap *>(m_Bscan->plottable());
 
@@ -724,34 +707,35 @@ void MainWindow::do_bScanSetting(bool arg, const QList<double> &settings)
         _map->data()->fill(0);
         bscanUpdateOnce = 0;
         // reset front head to -1
-        m_currentLine = -1;
+        m_currentLine = 0;
+
+
+
+
         if(_map)
         {
-            float pitch = settings[0];
-            float width = settings[1];
-            float height = settings[2];
-            float offsetX = settings[3];
-            float offsetY = settings[4];
-            int samples = static_cast<int>(settings[5]);
-            float resolution = settings[6];
-            int channels = settings[7];
-            bool required = static_cast<int>(settings[8]);
-            m_chan = channels - 1;
 
-            emit channel(m_chan);
+            m_partThick = settings.at(1);
+            float scanLength = settings.at(0);
+            float resolution = settings.at(2);
+
+            // convert thickness in relation to angle:
+            m_partThick /= qCos(qDegreesToRadians(55));
+            m_partThick *= 2;
+
+            // find start point to be slightly ahead of transversal peak
+            m_start = qSin(qDegreesToRadians(55)) * (m_partThick / 2) * 2 / 1000 / m_velFast * m_fs *1e6 - 150; // 300 margin for plot
+            m_end = m_partThick / 1000 / m_vel * m_fs * 1e6 + 150;
+
 
             // x/y axis array size
 
-            int nx = width / resolution;
-            int ny = height/ resolution;
+            int nx = scanLength*1.2 / resolution;
+            int ny = m_partThick*1.2 / resolution;
 
-            tfmHeight = ny;
-            tfmWidth = nx;
-
-            emit sendTfmSettings(m_chan, ny, nx, samples, pitch, offsetX, offsetY, resolution, required);
 
             _map->data()->setSize(nx, ny); // we want the color map to have nx * ny data points
-            _map->data()->setRange(QCPRange(0, width), QCPRange(0, height));
+            _map->data()->setRange(QCPRange(0, scanLength), QCPRange(0, m_partThick));
             _map->setGradient(QCPColorGradient::gpJet);
             _map->rescaleDataRange();
             _map->rescaleAxes();

@@ -35,9 +35,6 @@ TSettings::TSettings(QWidget *parent)
     ui->lineGolayA->setVisible(false);
     ui->lineGolayB->setVisible(false);
     ui->radioManualGolay->setVisible(false);
-    ui->spinTFMSamples->setMaximum(DATA_SIZE/2);
-    ui->spinTFMSamples->setValue(DATA_SIZE/2);
-
 
     // connections:
     connect(ui->powerOutput, &QComboBox::currentIndexChanged, this, &TSettings::sendSetting);
@@ -55,14 +52,13 @@ TSettings::TSettings(QWidget *parent)
     connect(ui->spinOrder, &QSpinBox::editingFinished, this, &TSettings::sendSetting);
     connect(ui->spinHighCut, &QSpinBox::editingFinished, this, &TSettings::sendSetting);
     connect(ui->spinLowCut, &QSpinBox::editingFinished, this, &TSettings::sendSetting);
-    connect(ui->spinPitch, &QSpinBox::editingFinished, this, &TSettings::sendSetting);
-    connect(ui->spinTFMWidth, &QSpinBox::editingFinished, this, &TSettings::sendSetting);
+    connect(ui->spinLength, &QSpinBox::editingFinished, this, &TSettings::sendSetting);
+    connect(ui->spinThick, &QSpinBox::editingFinished, this, &TSettings::sendSetting);
     connect(ui->spinRes, &QSpinBox::editingFinished, this, &TSettings::sendSetting);
-    connect(ui->spinTFMSamples, &QSpinBox::editingFinished, this, &TSettings::sendSetting);
+    connect(ui->spinSkip, &QSpinBox::editingFinished, this, &TSettings::sendSetting);
     connect(ui->motorAngle, &QSpinBox::editingFinished, this, &TSettings::sendSetting);
     connect(ui->motorSpeed, &QSpinBox::editingFinished, this, &TSettings::sendSetting);
     connect(ui->pulseSequence, &QLineEdit::editingFinished, this, &TSettings::sendSetting);
-
     connect(ui->radioManual, &QRadioButton::clicked, this, &TSettings::do_settingChanged);
     connect(ui->radioPresetGolay,&QRadioButton::clicked, this, &TSettings::do_settingChanged);
 
@@ -238,21 +234,18 @@ void TSettings::on_btnConfirm_clicked()
         encoderTrigger = 2;
     else if(encoderTrigger && ui->radioPresetGolay->isChecked())
         encoderTrigger = 3;
-    if(ui->groupBscan->isChecked())
-        encoderTrigger = 4;
+    // if(ui->groupBscan->isChecked()) // disable fmc mode;
+    //     encoderTrigger = 4;
 
-    float pitch = ui->spinPitch->value();
-    float width = ui->spinTFMWidth->value();
-    float height = ui->spinTFMHeight->value();
-    float tfmOffsetX = ui->spinTFMOffsetX->value();
-    float tfmOffsetY = ui->spinTFMOffsetY->value();
-    int samples = ui->spinTFMSamples->value();
+    float skip = ui->spinSkip->value();
+    float scanLength = ui->spinLength->value();
+    float partThick = ui->spinThick->value();
     float res = ui->spinRes->value();
 
 
     setting+= QString::number(encoderTrigger)+ ";"; // encoder triggering
     // setting+=QString::number(0) + ";"; // encoder never triggers
-    setting+= QString::number(1)+ ";"; // encoder skips //for tfm function only
+    setting+= QString::number(skip)+ ";"; // encoder skips //for tfm function only
 
     // motor speed
     setting+= QString::number(ui->motorSpeed->value()) + ";"; // motor speed
@@ -275,22 +268,20 @@ void TSettings::on_btnConfirm_clicked()
     }
 
     setting+= QString::number( (ui->radioManual->isChecked() ? 0 : 1) ) + ";";
+    setting+= QString::number(ui->spinVelFast->value()) + ";";
 
     emit settingConfirm(setting);
     emit prf(ui->prf->value());
 
-    QList<double> fmcSetting;
+    QList<double> bSettings;
 
-    fmcSetting.emplaceBack(pitch);
-    fmcSetting.emplaceBack(width);
-    fmcSetting.emplaceBack(height);
-    fmcSetting.emplaceBack(tfmOffsetX);
-    fmcSetting.emplaceBack(tfmOffsetY);
-    fmcSetting.emplaceBack(samples);
-    fmcSetting.emplaceBack(res);
-    fmcSetting.emplaceBack(ui->spinTFMChannel->value());
-    fmcSetting.emplaceBack(ui->groupBscan->isChecked());
-    emit bScanSetting(ui->groupBscan->isChecked(), fmcSetting);
+
+    bSettings.emplaceBack(scanLength);
+    bSettings.emplaceBack(partThick);
+    bSettings.emplaceBack(res*skip);
+
+    emit bScanSetting(ui->groupBscan->isChecked(), bSettings);
+
 
 
 }

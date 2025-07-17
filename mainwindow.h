@@ -121,6 +121,7 @@ private:
     int m_start = 0;
     int m_end = DATA_SIZE /2;
 
+    float m_scanLength = 1.0;
     float m_partThick = 1.0;
     bool encoderTriggerMode = false;
     static void resetEnv();
@@ -154,8 +155,7 @@ private:
     quint8 m_chan = 0;
 
     // tfm
-    int tfmWidth;
-    int tfmHeight;
+
     QHBoxLayout *tfmLayout;
 // private functions
 private:

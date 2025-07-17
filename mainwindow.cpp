@@ -716,7 +716,7 @@ void MainWindow::do_bScanSetting(bool arg, const QList<double> &settings)
         {
 
             m_partThick = settings.at(1);
-            float scanLength = settings.at(0);
+            m_scanLength = settings.at(0);
             float resolution = settings.at(2);
 
             // convert thickness in relation to angle:
@@ -726,16 +726,17 @@ void MainWindow::do_bScanSetting(bool arg, const QList<double> &settings)
             // find start point to be slightly ahead of transversal peak
             m_start = qSin(qDegreesToRadians(55)) * (m_partThick / 2) * 2 / 1000 / m_velFast * m_fs *1e6 - 150; // 300 margin for plot
             m_end = m_partThick / 1000 / m_vel * m_fs * 1e6 + 150;
-
+            // qDebug() << "START " << m_start;
+            // qDebug() << "END " << m_end;
 
             // x/y axis array size
 
-            int nx = scanLength*1.2 / resolution;
+            int nx = m_scanLength*1.2 / resolution;
             int ny = m_partThick*1.2 / resolution;
 
 
             _map->data()->setSize(nx, ny); // we want the color map to have nx * ny data points
-            _map->data()->setRange(QCPRange(0, scanLength), QCPRange(0, m_partThick));
+            _map->data()->setRange(QCPRange(0, m_scanLength*1.2), QCPRange(0, m_partThick*1.2));
             _map->setGradient(QCPColorGradient::gpJet);
             _map->rescaleDataRange();
             _map->rescaleAxes();
@@ -931,7 +932,7 @@ void MainWindow::rescaleBscan()
     float height = totalRect.height() - ascanRect.height();
     float width  = totalRect.width();
 
-    _rescaleBscan(m_Bscan, width, height, tfmWidth, tfmHeight);
+    _rescaleBscan(m_Bscan, width, height, m_scanLength, m_partThick);
 
 }
 

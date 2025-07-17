@@ -14,8 +14,8 @@ static void dataGen(char * byteArr, uint8_t * arr, float scale)
         // bool _t = (i < 1000 && QRandomGenerator::global()->bounded(0, 10000) > 9998) ? 1 : 0;
         bool _t = 0;
 
-        // qint16 _temp = static_cast<qint16>( _t ?  32768*1.8 : _df[i]*scale / 1000 / 3.18 * 32768 );
-        qint16 _temp = static_cast<qint16>( _t ?  32768*1.8 : _df[i]);
+        qint16 _temp = static_cast<qint16>( _t ?  32768*1.8 : _df[i]*scale / 1000 / 3.18 * 32768 );
+        // qint16 _temp = static_cast<qint16>( _t ?  32768*1.8 : _df[i]);
         arr[j] = (_temp) & 0x00FF;
         arr[j+1] = (_temp >>8) &0x00FF;
         j+=2;
@@ -30,20 +30,20 @@ testServer::testServer(QWidget *parent) : QObject(parent)
     m_loop = nullptr;
 
 
-     _data[0] = 0;
-     _data[1] = 0x00FF;
-     _data[2] = 0;
-     _data[3] = 0x00FF;
+     _data[0] = 0x0F;
+     _data[1] = 0x0F;
+     _data[2] = 0x0F;
+     _data[3] = 0x0F;
      _data[6] = 5;
 
 
-     m_file.setFileName("../../data_128_128_10000.dat");
+     m_file.setFileName("../../test_data");
 
      if(m_file.open(QIODevice::ReadOnly))
      {
-         m_arr =  m_file.read(16*16*40000);
-         // char * _d = m_arr.data();
-         // dataGen(_d, _data, m_scale);
+         m_arr =  m_file.readAll();
+         char * _d = m_arr.data();
+         dataGen(_d, _data, m_scale);
      }else
      {
          qDebug()<< "Open file not successful";
@@ -162,27 +162,9 @@ void testServer::do_sendData()
     {
         data_release = false;
 
-
-        QByteArray sec = m_arr.sliced((tx*16 + rx) * 40000, 40000);
-
-        _data[HEADER::TxRx] = (tx << 4 | rx ) & 0x00FF;
-
-        rx++;
-        if(rx > 15)
-        {
-            rx = 0;
-            tx++;
-            if(tx > 15)
-                tx=0;
-        }
-
-        dataGen(sec.data(), _data, m_scale);
-        // log_file.write(reinterpret_cast<const char *>(_data));
+        dataGen(m_arr.data(), _data, m_scale);
         // datasending logic
         m_socket->write(reinterpret_cast<const char *>(_data), DATA_SIZE_RECV);
-
-
-
         sent++;
     }
 }

@@ -283,7 +283,6 @@ void Processor::process(const char *dataptr, bool headerOnly)
     }
 
     emit dataProcessed(calPoint);
-
     emit dataProcessed(_temp,  _forward == 2 ? false : true);
 
 

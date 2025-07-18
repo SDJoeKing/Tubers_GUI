@@ -23,7 +23,7 @@ add_definitions(-DFRAMERATE_CONTROL)
 
 # add_definitions(-DQCUSTOMPLOT_USE_OPENGL)
 ## testing server enabling - note the settings wont work for testing servers except prf
-# add_definitions(-DTEST_SERVER)
+add_definitions(-DTEST_SERVER)
 
 aux_source_directory(${CMAKE_CURRENT_SOURCE_DIR}/source SOURCE_LIB)
 

@@ -595,7 +595,7 @@ void MainWindow::updateBScan(const QList<QPointF> &data, bool _forward)
     {
         if(m_start+row >= DATA_SIZE/2)
             break;
-        _map->data()->setCell(m_currentLine, row, qAbs(data[m_start+row].y()) < m_thres ? 0 : qAbs(data[m_start+row].y()));
+        _map->data()->setCell(m_currentLine, row,  (data[m_start+row].y()) < m_thres ? 0 :  (data[m_start+row].y()));
     }
 
     if(_forward)
@@ -750,7 +750,7 @@ void MainWindow::do_bScanSetting(bool arg, const QList<double> &settings)
 
             _map->data()->setSize(nx, ny); // we want the color map to have nx * ny data points
             _map->data()->setRange(QCPRange(0, m_scanLength*1.2), QCPRange(startDepth,startDepth+distanceDepth));
-            _map->setGradient(QCPColorGradient::gpJet);
+            _map->setGradient(QCPColorGradient::gpGrayscale);
             _map->rescaleDataRange();
             _map->rescaleAxes();
             m_Bscan->replot(QCustomPlot::rpImmediateRefresh);

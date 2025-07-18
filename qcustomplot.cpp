@@ -16885,8 +16885,14 @@ void QCPColorGradient::loadPreset(GradientPreset preset)
   {
     case gpGrayscale:
       setColorInterpolation(ciRGB);
-      setColorStopAt(0, Qt::black);
-      setColorStopAt(1, Qt::white);
+
+      setColorStopAt(0.1, QColor(150, 150, 150));
+      setColorStopAt(0.33, QColor(175, 175, 175));
+      setColorStopAt(0.6, QColor(255, 255, 255));
+
+      // setColorInterpolation(ciRGB);
+      // setColorStopAt(0, Qt::black);
+      // setColorStopAt(1, Qt::white);
       break;
     case gpHot:
       setColorInterpolation(ciRGB);
@@ -16966,12 +16972,20 @@ void QCPColorGradient::loadPreset(GradientPreset preset)
     case gpJet:
       setColorInterpolation(ciRGB);
       setColorStopAt(0, QColor(0, 0, 100));
-      setColorStopAt(0.15, QColor(0, 50, 255));
-      setColorStopAt(0.35, QColor(0, 255, 255));
-      setColorStopAt(0.65, QColor(255, 255, 0));
-      setColorStopAt(0.85, QColor(255, 30, 0));
-      setColorStopAt(1, QColor(100, 0, 0));
+      setColorStopAt(0.05, QColor(0, 50, 255));
+      setColorStopAt(0.15, QColor(0, 255, 255));
+      setColorStopAt(0.25, QColor(255, 255, 0));
+      setColorStopAt(0.45, QColor(255, 30, 0));
+      setColorStopAt(0.6, QColor(100, 0, 0));
       break;
+      // setColorInterpolation(ciRGB);
+      // setColorStopAt(0, QColor(0, 0, 100));
+      // setColorStopAt(0.15, QColor(0, 50, 255));
+      // setColorStopAt(0.35, QColor(0, 255, 255));
+      // setColorStopAt(0.65, QColor(255, 255, 0));
+      // setColorStopAt(0.85, QColor(255, 30, 0));
+      // setColorStopAt(1, QColor(100, 0, 0));
+      // break;
     case gpHues:
       setColorInterpolation(ciHSV);
       setColorStopAt(0, QColor(255, 0, 0));

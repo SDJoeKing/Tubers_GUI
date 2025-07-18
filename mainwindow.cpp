@@ -587,9 +587,8 @@ void MainWindow::updateBScan(const QList<QPointF> &data, bool _forward)
     auto key = _map->data()->keySize();
     auto value = _map->data()->valueSize();
 
-    if(m_Ascan->gatesToggled())
-        m_start = m_Ascan->gateInitial(true);
-
+    // if(m_Ascan->gatesToggled())
+    //     m_start = m_Ascan->gateInitial(true);
 
     for(int row = 0; row< value; row++)
     {
@@ -723,7 +722,7 @@ void MainWindow::do_bScanSetting(bool arg, const QList<double> &settings)
             m_start = pcs/1000/m_velFast * m_fs *1e6;
             m_end = m_partThick*1.2 / 1000 / m_vel * m_fs * 1e6 + 150;
             int distance = m_end-m_start;
-            auto distanceDepth = distance/m_fs /1e6 *m_vel * 1000;
+            auto endDepth = m_end/m_fs /1e6 *m_vel * 1000;
 
             // find start point to be slightly ahead of transversal peak
             if(m_Ascan->gatesToggled())
@@ -749,7 +748,7 @@ void MainWindow::do_bScanSetting(bool arg, const QList<double> &settings)
             int ny = distance;
 
             _map->data()->setSize(nx, ny); // we want the color map to have nx * ny data points
-            _map->data()->setRange(QCPRange(0, m_scanLength*1.2), QCPRange(startDepth,startDepth+distanceDepth));
+            _map->data()->setRange(QCPRange(0, m_scanLength*1.2), QCPRange(startDepth,endDepth));
             _map->setGradient(QCPColorGradient::gpGrayscale);
             _map->rescaleDataRange();
             _map->rescaleAxes();

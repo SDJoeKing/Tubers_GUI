@@ -594,7 +594,7 @@ void MainWindow::updateBScan(const QList<QPointF> &data, bool _forward)
     {
         if(m_start+row >= DATA_SIZE/2)
             break;
-        _map->data()->setCell(m_currentLine, row,  (data[m_start+row].y()) < m_thres ? 0 :  (data[m_start+row].y()));
+        _map->data()->setCell(m_currentLine, row,  qAbs(data[m_start+row].y()) < m_thres ? 0 :  (data[m_start+row].y()));
     }
 
     if(_forward)
@@ -608,7 +608,7 @@ void MainWindow::updateBScan(const QList<QPointF> &data, bool _forward)
         {
             timer.restart();
             _map->rescaleDataRange();
-            // _map->rescaleAxes();
+            _map->rescaleAxes();
             m_Bscan->replot(QCustomPlot::rpQueuedRefresh);
         }
 

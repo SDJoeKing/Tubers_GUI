@@ -38,7 +38,7 @@
       <property name="geometry">
        <rect>
         <x>0</x>
-        <y>-193</y>
+        <y>0</y>
         <width>411</width>
         <height>1104</height>
        </rect>
@@ -492,7 +492,7 @@
              <double>9999.989999999999782</double>
             </property>
             <property name="value">
-             <double>5890.000000000000000</double>
+             <double>3000.000000000000000</double>
             </property>
            </widget>
           </item>
@@ -569,7 +569,7 @@
           <item row="11" column="0">
            <widget class="QLabel" name="label_19">
             <property name="text">
-             <string>Longitudinal Velocity</string>
+             <string>L-wave Velocity</string>
             </property>
            </widget>
           </item>

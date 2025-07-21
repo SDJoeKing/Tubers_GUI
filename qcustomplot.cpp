@@ -16886,13 +16886,13 @@ void QCPColorGradient::loadPreset(GradientPreset preset)
     case gpGrayscale:
       setColorInterpolation(ciRGB);
 
-      setColorStopAt(0.1, QColor(150, 150, 150));
-      setColorStopAt(0.33, QColor(175, 175, 175));
-      setColorStopAt(0.6, QColor(255, 255, 255));
-
-      // setColorInterpolation(ciRGB);
-      // setColorStopAt(0, Qt::black);
+      // setColorStopAt(-1, Qt::black);
       // setColorStopAt(1, Qt::white);
+
+
+      setColorInterpolation(ciRGB);
+      setColorStopAt(0, Qt::black);
+      setColorStopAt(1, Qt::white);
       break;
     case gpHot:
       setColorInterpolation(ciRGB);

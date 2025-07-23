@@ -170,7 +170,7 @@ MainWindow::MainWindow(QWidget *parent)
     ui->radioTemp->setText(QString::asprintf("Temperature: %.1f \u2103", 0.0));
     ui->radioError->setText(QString("Error Status"));
     resetUI();
-
+    toggleOff(ui->ckRectify);
 }
 
 void MainWindow::resetUI()
@@ -200,13 +200,16 @@ void MainWindow::resetUI()
     ui->btnConnect->setChecked(false);
     ui->spinEnvLevel->setMinimum(0);
     ui->spinEnvLevel->setValue(0);
+    ui->ckRectify->setCheckState(Qt::Unchecked);
+    // toggleOff(ui->ckRectify);// so that by default rectify
+    // toggleOff(ui->ckRectify);
 
-    toggleOff(ui->ckRectify);// so that by default rectify
-    ui->ckRectify->click();
     toggleOff(ui->ckFilter);// so that by default rectify
     ui->ckFilter->click();
 
     toggleOff(ui->ckDepthAxis);
+    ui->ckDepthAxis->click();
+
     toggleOff(ui->ckGates);
 
     ui->spinDepth->setValue(0.00);
@@ -231,6 +234,7 @@ void MainWindow::resetUI()
     // update timer
     m_updateTimer.stop();
     setThreshold(0.0);
+    toggleOff(ui->ckRectify);
 }
 
 void MainWindow::toggleOff(QCheckBox *widget)
@@ -587,14 +591,16 @@ void MainWindow::updateBScan(const QList<QPointF> &data, bool _forward)
     auto key = _map->data()->keySize();
     auto value = _map->data()->valueSize();
 
-    // if(m_Ascan->gatesToggled())
-    //     m_start = m_Ascan->gateInitial(true);
+    if(m_Ascan->gatesToggled())
+        m_Ascan->gateInitial(true);
 
     for(int row = 0; row< value; row++)
     {
         if(m_start+row >= DATA_SIZE/2)
             break;
-        _map->data()->setCell(m_currentLine, row,  qAbs(data[m_start+row].y()) < m_thres ? 0 :  (data[m_start+row].y()));
+        auto originalData = _map->data()->data(m_currentLine, row);
+        auto newData = data[m_start+row].y();
+        _map->data()->setCell(m_currentLine, row,  qAbs(newData) < qAbs(m_thres) ? 0 :  (qAbs(newData) > qAbs(originalData) ? newData : originalData));
     }
 
     if(_forward)
@@ -894,6 +900,12 @@ void MainWindow::on_btnImuBase_toggled(bool checked)
         m_imu_x = 0;
         m_imu_y = 0;
         m_imu_z = 0;
+
+        // doublylinked list miantain the order of the key/val pairs
+        // hash map to ensure O(1) access of elements
+        // map<k,v> + list(k);
+        // access k -> move k from list to the head
+        // insert k -> remove <k', v'> from map where k' is at the list tail;
     }
 }
 

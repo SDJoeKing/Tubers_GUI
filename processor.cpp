@@ -267,6 +267,10 @@ void Processor::process(const char *dataptr, bool headerOnly)
             xpoint = i / m_fs /1e6 *1000;
 
         dataPoint[0][i] /= (m_maxValue / 100 / m_scale);
+        if(dataPoint[0][i] > 100)
+            dataPoint[0][i] = 100;
+        else if(dataPoint[0][i] < -100)
+            dataPoint[0][i] = -100;
         calPoint.emplace_back(xpoint, dataPoint[0][i]);
         _temp[i] = dataPoint[0][i];
     }

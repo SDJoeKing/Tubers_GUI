@@ -101,7 +101,6 @@ void Processor::updateTfmSetting(quint8 channels, quint16 rows, quint16 cols, qu
     tfm_required = required;
     m_chan = channels;
 
-
     // initialise LookTable
     lookUpTable.clear();
     fmc_data.clear();
@@ -174,8 +173,8 @@ void Processor::process(const char *dataptr, bool headerOnly)
     int j=  HEADER_SIZE;
 
     // get current tx rx
-    quint8 tx = static_cast<quint8>(serverData.at(HEADER::TxRx) >> 4 & 0x0F);
-    quint8 rx = static_cast<quint8>(serverData.at(HEADER::TxRx) & 0x0F);
+    quint8 tx = TrueSeq(static_cast<quint8>(serverData.at(HEADER::TxRx) >> 4 & 0x0F));
+    quint8 rx = TrueSeq(static_cast<quint8>(serverData.at(HEADER::TxRx) & 0x0F));
 
     // get system information from the header data
     quint8 _forward = static_cast<quint8>(serverData.at(HEADER::encoderDirection));
@@ -211,7 +210,7 @@ void Processor::process(const char *dataptr, bool headerOnly)
         temp1 =(serverData.at(j + 1) << 8) & 0xFF00;
         temp2 = (serverData.at(j)) & 0xFF;
         dataPoint[0][i] = static_cast<qint16>(temp2 | temp1)/ 32768.0  * 3.18 * 1.0 * 1000.0;
-        // dataPoint[0][i] = static_cast<qint16>(temp2 | temp1);
+
         j += 2;
     }
 

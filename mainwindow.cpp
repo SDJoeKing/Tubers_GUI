@@ -15,7 +15,6 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
     setWindowState(Qt::WindowMaximized);
-    // setWindowFlag(Qt::MSWindowsFixedSizeDialogHint);
     setWindowFlags(  Qt::Window | Qt::CustomizeWindowHint | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint) ;
     ui->log->setEnabled(false);
     ui->ckBscan->setEnabled(false);
@@ -44,24 +43,20 @@ MainWindow::MainWindow(QWidget *parent)
     graphFrame->setCentralWidget(_splitter);
     ui->mdiArea->setViewMode(QMdiArea::SubWindowView);
 
-    // A/B-scan dock
+    // AScan / ColorMap dock
     m_Ascan = new TChartViewForm(_splitter);
     m_Bscan = new QCustomPlot(_splitter);
-    // B-scan uses openGL support
-    // m_Bscan->setOpenGl(true);
 
     // configure B-scan
-    // m_Bscan->addGraph()
     m_Bscan->yAxis->setRangeReversed(true);
     QCPColorMap *_colorMap = new QCPColorMap(m_Bscan->xAxis, m_Bscan->yAxis);
 
     m_Bscan->setContextMenuPolicy(Qt::CustomContextMenu);
-    // add a color scale:
     QCPColorScale *colorScale = new QCPColorScale(m_Bscan);
-    // scale shall be vertical bar with tick/axis labels right (actually atRight is already the default)
-    _colorMap->setColorScale(colorScale); // associate the color map with the color scale
+    _colorMap->setColorScale(colorScale);
     _splitter->addWidget(m_Ascan);
 
+    // allocate space for ColorMap plots
     QWidget *tfmArea = new QWidget(this);
     tfmArea->setObjectName("tfmArea");
     tfmLayout = new QHBoxLayout;
@@ -95,40 +90,35 @@ MainWindow::MainWindow(QWidget *parent)
     m_processor->updateFilter(m_order, m_fs, m_fc, m_fw);
     m_processor->moveToThread(&processorThread);
     connect(&processorThread, &QThread::started, m_processor, &Processor::run);
-    // processor class
+
+    // processor signals connections
     connect(ui->ckDepthAxis, &QCheckBox::clicked, m_processor, &Processor::setDepth, Qt::QueuedConnection);
     connect(ui->ckRectify, &QCheckBox::clicked, m_processor, &Processor::setRectified, Qt::QueuedConnection);
     connect(ui->ckFilter, &QCheckBox::clicked, m_processor, &Processor::setFiltering, Qt::QueuedConnection);
     connect(m_processor, &Processor::dataLogger, m_logging, &Tlogging::setData, Qt::QueuedConnection);
     connect(this, &MainWindow::filterParam, m_processor, &Processor::updateFilter, Qt::QueuedConnection);
     connect(this, &MainWindow::velocitySet, m_processor, &Processor::setVel, Qt::QueuedConnection);
-
     connect(m_processor, &Processor::dataProcessed, m_Ascan, &TChartViewForm::plot, Qt::QueuedConnection);
     connect(m_processor, &Processor::dataProcessed, this, &MainWindow::updateBScan);
-
     connect(m_processor, &Processor::sendHeaderInfo, this, &MainWindow::updateHeaderInfo, Qt::QueuedConnection);
     connect(this, &MainWindow::golayCoding, m_processor, &Processor::updateGolaySetting, Qt::QueuedConnection);
-
     connect(&processorThread, &QThread::finished, this, &MainWindow::threadFinished);
     processorThread.start();
 
-    // connect settings
+    // connect setting dock signals
     connect(m_settings, &TSettings::settingConfirm, this, &MainWindow::doSettingsConfirmed);
     connect(m_settings, &TSettings::settingHide, this, &MainWindow::hideSetting);
 
-    // acquisition related
-
+    // acquisition related signals
     connect(this, &MainWindow::velocitySet, m_Ascan, &TChartViewForm::setVelocity);
     connect(this, qOverload<const TChartViewForm::x_AXISTYPE &>(&MainWindow::axisTypeChanged), m_Ascan,&TChartViewForm::changeXAxisType);
     connect(this, qOverload<const TChartViewForm::y_AXISTYPE &>(&MainWindow::axisTypeChanged), m_Ascan,&TChartViewForm::changeYAxisType);
-
 
     // key acquisitionRun or not
     connect(m_settings, &TSettings::fsChanged, this, &MainWindow::updateFs);
     connect(m_settings, &TSettings::fsChanged, m_Ascan, &TChartViewForm::updateFs);
     connect(this, &MainWindow::acquisitionRun, m_Ascan, &TChartViewForm::acquisitionStatus);
     connect(this, &MainWindow::acquisitionRun, m_Ascan, &TChartViewForm::toggleSave);
-
     connect(ui->ckGates, &QCheckBox::checkStateChanged, m_Ascan, &TChartViewForm::startThickCal);
     connect(ui->ckGates, &QCheckBox::checkStateChanged, ui->btnCal, &QPushButton::setEnabled);
     connect(m_Ascan, &TChartViewForm::scaleSet, m_processor, &Processor::updateScale);
@@ -136,12 +126,12 @@ MainWindow::MainWindow(QWidget *parent)
     connect(m_Ascan, &TChartViewForm::calculatedThickness, ui->spinDepth, &QDoubleSpinBox::setValue);
     connect(m_Bscan, &QCustomPlot::customContextMenuRequested, this, &MainWindow::bScanCustomContext);
     connect(m_settings, &TSettings::bScanSetting, this, &MainWindow::do_bScanSetting);
-
     connect(m_Ascan, &TChartViewForm::sendThreshold, this, &MainWindow::setThreshold);
 
     // setting/logging related
     connect(m_settings,  &TSettings::badSettings, this, [&](){emit stopAcqSig(); });
     connect(this, &MainWindow::velocitySet, m_settings, &TSettings::updateVel);
+
     // tcpclient
     m_client = nullptr;
 
@@ -160,7 +150,7 @@ MainWindow::MainWindow(QWidget *parent)
     m_server = nullptr;
 #endif
 
-    // timer for updating info
+    // timer for updating header info
     m_updateTimer.setInterval(500); // this is the status request timer
     timer.start(); // this is the bscan plot update timer
 
@@ -191,27 +181,24 @@ void MainWindow::resetUI()
     ui->actionLogging->setChecked(false);
 
     // UI elements
-
     if(ui->btnRun->isChecked())
         ui->btnRun->setChecked(false);
 
+    // initiallly hide Bscan
     setBscanVisible(false);
+
     ui->log->clear();
     ui->btnConnect->setChecked(false);
     ui->spinEnvLevel->setMinimum(0);
     ui->spinEnvLevel->setValue(0);
     ui->ckRectify->setCheckState(Qt::Unchecked);
-    // toggleOff(ui->ckRectify);// so that by default rectify
-    // toggleOff(ui->ckRectify);
 
+    //set status of filter, gate status checkboxes
     toggleOff(ui->ckFilter);// so that by default rectify
     ui->ckFilter->click();
-
     toggleOff(ui->ckDepthAxis);
     ui->ckDepthAxis->click();
-
     toggleOff(ui->ckGates);
-
     ui->spinDepth->setValue(0.00);
     m_settings->disableScroll(false);
 
@@ -246,9 +233,7 @@ void MainWindow::toggleOff(QCheckBox *widget)
 void MainWindow::setConnectionIndicator()
 {
     ui->radioStatus->setStyleSheet(LED_NETCONNECTED_STYLE);
-
     ui->radioTemp->setStyleSheet(LED_NONCONNECT_STYLE);
-
     ui->radioError->setStyleSheet(LED_NONCONNECT_STYLE);
 }
 
@@ -264,7 +249,6 @@ MainWindow::~MainWindow()
 
     QTimer::singleShot(0, m_processor, &Processor::close);
     processorThread.quit();
-
     m_quitEvent.exec();
 
 #ifdef TEST_SERVER
@@ -343,7 +327,6 @@ void MainWindow::doSettingsConfirmed(QString str)
     }
 
     emit golayCoding(list[SETTINGS::golay].toInt(), list[SETTINGS::pulseSequence], list[SETTINGS::pulseFreq].toFloat(), m_settings->pulseLength());
-
     emit mainSendSetting(settings);
 
 
@@ -381,15 +364,16 @@ void MainWindow::on_btnConnect_clicked(bool checked)
         connect(this, &MainWindow::dataReceived, m_client, &mTcpClient::clearData, Qt::QueuedConnection);
         connect(m_client, &mTcpClient::dataReady, m_processor, &Processor::process, Qt::QueuedConnection);
         connect(  m_processor, &Processor::requestAcq, m_client, &mTcpClient::writeAcq, Qt::QueuedConnection);
-
         connect(m_client, &mTcpClient::connectFail, this, [this](){ui->btnConnect->setChecked(false); connected=false;
                 QMessageBox::information(this, "Error", "Unable to make connection to server. Please check connection.");}, Qt::QueuedConnection);
         connect(this, &MainWindow::mainSendSetting, m_client, &mTcpClient::sendSetting, Qt::QueuedConnection);
+
         // connect fps
         connect(m_client, &mTcpClient::fps, this, &MainWindow::do_fps, Qt::QueuedConnection);
         connect(m_client, &mTcpClient::plotRate, this, &MainWindow::do_plotRate, Qt::QueuedConnection);
         connect(m_client, &mTcpClient::settingReady, this, &MainWindow::do_settingReady, Qt::QueuedConnection);
         connect(m_settings, &TSettings::prf, m_client, &mTcpClient::setPrf);
+
         // connect error handling
         connect(m_client, &mTcpClient::errorOccured, this, &MainWindow::do_ConnectLost, Qt::QueuedConnection);
         connect(m_client,  &mTcpClient::badSettings, this, &MainWindow::do_badSettings);
@@ -414,11 +398,9 @@ void MainWindow::on_btnConnect_clicked(bool checked)
     {
 
         // disconnect
-
         ui->radioStatus->setChecked(false);
         QTimer::singleShot(0, m_client, &mTcpClient::stopAcquisition);
         QTimer::singleShot(100, m_client, &mTcpClient::stop);
-
         resetUI();
     }
 }
@@ -460,17 +442,13 @@ void MainWindow::runAcquisition()
 {
     emit acquisitionRun(true);
     acquisitionRunning = true;
-    // m_settings->disableScroll(true);
-
     ui->btnRun->setText("Stop");
-
 }
 
 void MainWindow::stopAcquisition()
 {
     emit acquisitionRun(false);
     acquisitionRunning = false;
-
     ui->btnRun->setText("Run");
     ui->btnRun->setChecked(false);
 }
@@ -497,7 +475,6 @@ void MainWindow::on_btnRun_clicked(bool checked)
 
         }else
         {
-
             if(encoderTriggerMode)
             {
                 QTimer::singleShot(10, m_client, [&](){m_client->writeData("stop");});
@@ -507,10 +484,7 @@ void MainWindow::on_btnRun_clicked(bool checked)
             QTimer::singleShot(0, m_client, [&](){m_client->flush();});
         }
     }
-
 }
-
-
 
 void MainWindow::set_envelope(float attack, float release)
 {
@@ -533,7 +507,6 @@ void MainWindow::on_ckGates_clicked(bool checked)
 
 void MainWindow::on_ckDepthAxis_clicked(bool checked)
 {
-
     if(checked)
         emit axisTypeChanged(TChartViewForm::DEPTH);
     else
@@ -608,8 +581,6 @@ void MainWindow::updateBScan(const QList<QPointF> &data, bool _forward)
     else
         m_currentLine > 0 ? m_currentLine-- : m_currentLine = 0;
 
-
-
     if(timer.hasExpired(30))
         {
             timer.restart();
@@ -617,8 +588,6 @@ void MainWindow::updateBScan(const QList<QPointF> &data, bool _forward)
             _map->rescaleAxes();
             m_Bscan->replot(QCustomPlot::rpQueuedRefresh);
         }
-
-
 }
 
 
@@ -655,7 +624,7 @@ void MainWindow::bScanCustomContext(const QPoint &pos)
 void MainWindow::on_btnCal_clicked()
 {
     bool ok = false;
-    // ui->btnRun->toggle();
+
     auto newDepth = QInputDialog::getDouble(this, "Please input true thickness", "Thickness (mm): ", 0, 0, 5000.0, 2, &ok);
     qDebug() << "\n\n\n Old Depth " << newDepth;
     if(ok)
@@ -737,19 +706,12 @@ void MainWindow::do_bScanSetting(bool arg, const QList<double> &settings)
                 if(_gateStart > 0)
                     m_start = _gateStart;
             }
-            //
-
-            // if(m_start > startPCSBased)
-            // {
-            //     m_start = startPCSBased;
-            // }
 
             m_start -= 150;
 
             auto startDepth = m_start/m_fs /1e6 *m_velFast * 1000;
 
             // x/y axis array size
-
             int nx = m_scanLength*1.2 / resolution;
             int ny = distance;
 
@@ -900,12 +862,6 @@ void MainWindow::on_btnImuBase_toggled(bool checked)
         m_imu_x = 0;
         m_imu_y = 0;
         m_imu_z = 0;
-
-        // doublylinked list miantain the order of the key/val pairs
-        // hash map to ensure O(1) access of elements
-        // map<k,v> + list(k);
-        // access k -> move k from list to the head
-        // insert k -> remove <k', v'> from map where k' is at the list tail;
     }
 }
 
@@ -931,8 +887,6 @@ void MainWindow::_rescaleBscan(QCustomPlot *plot, const float &w, const float &h
         float targetHeight = w * _h / _w ;
         tfmLayout->setContentsMargins(0, h/2 - targetHeight/2, 0, h/2 - targetHeight/2);
     }
-
-    // m_Bscan->replot(QCustomPlot::rpQueuedReplot);
 }
 
 void MainWindow::setBscanVisible(bool visible)

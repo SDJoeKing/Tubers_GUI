@@ -3,6 +3,11 @@
 #include <csignal>
 #include <qdebug.h>
 
+/*
+ * This module is for TFM FMC processing.
+ * Kept only for maintaining the codebased
+ */
+
 namespace MATH{
 
 void generateLookTable(QList<ArrayXXf> &arr, float speed, float pitch,

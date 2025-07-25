@@ -154,11 +154,6 @@ QString mTcpClient::errorToType(int i)
     return key.valueToKey(i);
 }
 
-// const QByteArray & mTcpClient::data()
-// {
-//     return m_readyData;
-// }
-
 void mTcpClient::setHostPort(const QString& addr, const quint16& port)
 {
     m_address = addr;
@@ -340,7 +335,6 @@ void mTcpClient::readMessage()
             rx = TrueSeq(rx);
 
             m_data[HEADER::TxRx] = (tx << 4 | rx) & 0x00FF;
-            // qDebug() << "Received : tx " << tx << " rx " << rx;
             m_commence = 0;
 
             if(m_stopAcq)
@@ -349,14 +343,9 @@ void mTcpClient::readMessage()
 
             }else if(tx == m_channel && rx == m_channel)
             {
-                 // continue
-                // qDebug() << tx << rx;
+                // does not apply for non-tfmFmc plots
             }
-            // else
-            // {
-            //     // send data acknowledgement
-            //     writeData(ack);
-            // }
+
             emit dataReady(m_data.constData());
             dataEmitCounter++;
 

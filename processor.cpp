@@ -23,8 +23,6 @@ Processor::Processor(QObject *parent)
 
     tfm_required = false;
     m_sequenceA = genPulse(std::make_unique<std::vector<int>>(std::vector<int>{1,1,-1,1,1,1,-1,1,1,1,-1,1,1,1,-1,1}), 10);
-    // calPoint.reserve( DATA_SIZE/2);
-
     qDebug() << "Processor on ";
 }
 
@@ -156,14 +154,11 @@ void Processor::process(const char *dataptr, bool headerOnly)
     else
         serverData = QByteArray::fromRawData(dataptr, HEADER_SIZE);
 
-
-
     double xpoint=0;
     quint16 temp1;
     quint16 temp2;
     float *dataPoint[1];
     float _temp[ DATA_SIZE/2]{0};
-    // normalise data to (0, 1]
 
     // serverData
     QList<QPointF>calPoint /*= QList<QPointF>(DATA_SIZE/2, QPointF(1.0f, 1.0f))*/;
@@ -211,7 +206,6 @@ void Processor::process(const char *dataptr, bool headerOnly)
         temp1 =(serverData.at(j + 1) << 8) & 0xFF00;
         temp2 = (serverData.at(j)) & 0xFF;
         dataPoint[0][i] = static_cast<qint16>(temp2 | temp1)/ 32768.0  * 3.18 * 1.0 * 1000.0;
-        // dataPoint[0][i] = static_cast<qint16>(temp2 | temp1);
         j += 2;
     }
 
@@ -337,8 +331,6 @@ std::shared_ptr<std::vector<float>> genPulse(std::unique_ptr<std::vector<int>> S
 
 void correlate(const float * dataArr, quint16 len, std::shared_ptr<std::vector<float>> SEQ, float *output)
 {
-
-
     if(SEQ->size() > len)
         return ;
 
@@ -357,7 +349,6 @@ void correlate(const float * dataArr, quint16 len, std::shared_ptr<std::vector<f
         output[i] += _tempV / sum_counter;
         sum_counter = 1;
     }
-
 }
 
 float lerp(int a, int b, float t)

@@ -68,24 +68,20 @@ private slots:
     void on_spinEnvLevel_valueChanged(int arg1);
     void on_ckGates_clicked(bool checked);
     void on_ckDepthAxis_clicked(bool checked);
-
     void on_ckRectify_clicked(bool checked);
-
     void updateBScan(const QList<QPointF> &,  bool);
-
     void on_actionReset_triggered(bool);
     void setRectifyChecked();
-
     void bScanCustomContext(const QPoint &pos);
     void on_btnCal_clicked();
-
     void do_bScanSetting(bool, const QList<double> &);
-
     void updateFs(double);
+
     // debugging fps
     void do_fps(float);
     void do_plotRate(const float&);
     void do_ConnectLost();
+
     // processing
     void threadFinished();
     void setThreshold(double);
@@ -98,7 +94,7 @@ private slots:
     void do_settingReady();
     void on_btnImuBase_toggled(bool checked);
 
-    // tfm
+    // maintain aspect ratio for ColorMap style plots (TOFD, BSCAN. TFM, CSCAN)
     void rescaleBscan();
 private:
     QThread socketThread;
@@ -128,7 +124,6 @@ private:
     int m_currentLine=-1;
 
     // filter param
-
     int m_order = 4;
     double m_fc = 5;
     double m_fw = 8;
@@ -136,6 +131,7 @@ private:
 
     bool use_bscan = 0;
     double m_thres = 0.0;
+
     // processor
     Processor *m_processor;
     QEventLoop m_quitEvent;
@@ -145,18 +141,16 @@ private:
     bool connected = false;
     QString m_err {"No Error"};
 
-
     // imu
     QVector<qint16 > m_imus{0,0,0};
     qint16 m_imu_x = 0;
     qint16 m_imu_y = 0;
     qint16 m_imu_z = 0;
-
     quint8 m_chan = 0;
 
-    // tfm
-
+    // Layout for ColorMap plots including TFM, B/C SCAN, TOFD
     QHBoxLayout *tfmLayout;
+
 // private functions
 private:
     void resetUI();

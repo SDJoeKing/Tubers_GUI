@@ -71,7 +71,6 @@ static const QString LED_NETCONNECTED_STYLE {"QRadioButton::indicator {"
                                "border:                 2px solid white;"
                                "}"};
 
-
 static const QString LED_CONNECTED_STYLE {"QRadioButton::indicator {"
                             "width:                  10px;"
                             "height:                 10px;"
@@ -100,6 +99,7 @@ static const QString LED_NONCONNECT_STYLE {"QRadioButton::indicator {"
                              "border:                 2px solid white;"
                              "}"};
 
+// Map the sending/receiving channels from hardware to true channels from probe.
 static int TrueSeq(int x)
 {
     int arr[16] = {7,6,5,4,3,2,1,0,8,15,14,13,12,11,10,9};

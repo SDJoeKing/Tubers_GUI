@@ -18,7 +18,8 @@ Part of this development was funded by [TUBERS](https://tubers-project.eu/) proj
     ## testing server enabling - note the settings wont work for testing servers except prf
     # add_definitions(-DTEST_SERVER) // uncomment this line
    ```
-
+## License
+[GPL license](License/gpl-3.0.txt)
 ## Functions
   - MainWindow, resides in main thread, handles signals connection from other classes and plotting of time-series UT A-scan, and C-scan/TFM/TOFD if these are enabled.
   - mtcpClient, resides in a separate thread, which handles the communication to the hardware server, parses information, and notifies processor class for processing.

@@ -35,7 +35,9 @@ Part of this development was funded by [TUBERS](https://tubers-project.eu/) proj
   - A-scans: 16000, 16 bits data points are received and processed at 400 Hz.
   - Color Map plots (B/C-scan, TOFD): all received A-scans are used for processing to generate the color map plots, but the plot are limited to be updated at 30 Hz to avoid main thread jamming.
   - TFM: best performance 2 Hz TFM for 16 x 16 x 32kB FMC @125MHz sampling rate in real time acquisition.
-    
+## TODOs
+ - Investigate incorporating SIMD to enhance performance.
+ - Investigate CUDA (it's going to be a long run) for optimisation. 
 ## Demonstration
  [Release Branch] A TOFD trial test scan. A-Scan plot is hidden to give larger space for TOFD plot. Igore the "BScan Length" axis name.
  

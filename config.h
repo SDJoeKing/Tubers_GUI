@@ -54,8 +54,7 @@ enum SETTINGS
     order,
     lowCut,
     highCut,
-    golay,
-    velocityFast
+    golay
 };
 static const QString LED_NETCONNECTED_STYLE {"QRadioButton::indicator {"
                                "width:                  10px;"

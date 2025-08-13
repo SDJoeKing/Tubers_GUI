@@ -289,7 +289,6 @@ void MainWindow::doSettingsConfirmed(QString str)
     auto list = str.split(";");
 
     m_vel = list[SETTINGS::velocity].toDouble();
-    m_velFast = list[SETTINGS::velocityFast].toDouble();
 
     emit velocitySet(m_vel);
 
@@ -687,37 +686,32 @@ void MainWindow::do_bScanSetting(bool arg, const QList<double> &settings)
             m_partThick = settings.at(1);
             m_scanLength = settings.at(0);
             float resolution = settings.at(2);
-            float pcs = settings.at(3);
 
-            // convert thickness in relation to angle:
-            m_partThick = qSqrt(qPow(pcs/2, 2) + qPow(m_partThick, 2));
-            m_partThick *= 2;
 
-            // PCS based start point
-            m_start = pcs/1000/m_velFast * m_fs *1e6;
-            m_end = m_partThick*1.2 / 1000 / m_vel * m_fs * 1e6 + 150;
-            int distance = m_end-m_start;
-            auto endDepth = m_end/m_fs /1e6 *m_vel * 1000;
-
+            // start of bscan
             // find start point to be slightly ahead of transversal peak
+            m_start = 0;
             if(m_Ascan->gatesToggled())
             {
                 auto _gateStart = m_Ascan->gateInitial(true);
                 if(_gateStart > 0)
-                    m_start = _gateStart;
+                    m_start = qMax(_gateStart, 0);
             }
 
-            m_start -= 150;
+            auto startDepth = m_start/m_fs /1e6 *m_vel * 1000;;
+            m_end = m_partThick*1.1 / 1000 / m_vel * m_fs * 1e6  ;
+            int distance = m_end;
+            auto endDepth = m_end/m_fs /1e6 *m_vel * 1000 + startDepth;
 
-            auto startDepth = m_start/m_fs /1e6 *m_velFast * 1000;
+
 
             // x/y axis array size
-            int nx = m_scanLength*1.2 / resolution;
+            int nx = m_scanLength*1.1 / resolution;
             int ny = distance;
 
             _map->data()->setSize(nx, ny); // we want the color map to have nx * ny data points
-            _map->data()->setRange(QCPRange(0, m_scanLength*1.2), QCPRange(startDepth,endDepth));
-            _map->setGradient(QCPColorGradient::gpGrayscale);
+            _map->data()->setRange(QCPRange(0, m_scanLength*1.1), QCPRange(startDepth,endDepth));
+            _map->setGradient(QCPColorGradient::gpJet);
             _map->rescaleDataRange();
             _map->rescaleAxes();
             m_Bscan->replot(QCustomPlot::rpImmediateRefresh);
